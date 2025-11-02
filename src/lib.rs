@@ -7,12 +7,11 @@ use std::{
 
 use crate::{
     audio::Audio,
-    bindings::{storage_clear, storage_read, storage_size, storage_write},
     color::Color,
     framebuffer::{clear_framebuffer, init_fb},
     input::is_key_just_pressed,
     keys::{KEY_C, KEY_L, KEY_P},
-    mem::alloc_bytes,
+    storage::{storage_clear, storage_read_value, storage_size, storage_write_value},
     text::draw_text,
     timer::Timer,
 };
@@ -26,6 +25,7 @@ pub mod input;
 pub mod keys;
 pub mod mem;
 pub mod runtime;
+pub mod storage;
 pub mod text;
 pub mod timer;
 
@@ -48,16 +48,14 @@ pub extern "C" fn update(nano_time: i64) {
         SOUND.play();
     }
 
-    let ptr = alloc_bytes(1);
-    unsafe { storage_read(0, ptr, 1) };
-    let value = unsafe { *(ptr as *const u8) };
+    let value: u8 = storage_read_value(0);
 
     draw_text(
         0,
         0,
         format!(
             "size: {}\nraw: {}\nchar: {}",
-            unsafe { storage_size() },
+            storage_size(),
             value,
             char::from_u32(value as u32).unwrap_or('?')
         )
@@ -66,24 +64,14 @@ pub extern "C" fn update(nano_time: i64) {
     );
 
     if is_key_just_pressed(KEY_L) {
-        let ch: u8 = b'L';
-        let ptr: *const u8 = &ch;
-        unsafe {
-            storage_write(0, ptr as i32, 1);
-        }
+        storage_write_value(0, b'L');
     }
 
     if is_key_just_pressed(KEY_P) {
-        let ch: u8 = b'P';
-        let ptr: *const u8 = &ch;
-        unsafe {
-            storage_write(0, ptr as i32, 1);
-        }
+        storage_write_value(0, b'P');
     }
 
     if is_key_just_pressed(KEY_C) {
-        unsafe {
-            storage_clear();
-        }
+        storage_clear();
     }
 }
