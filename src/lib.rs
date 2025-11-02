@@ -28,8 +28,7 @@ pub mod text;
 pub mod timer;
 
 static SOUND: LazyLock<Audio> = make_audio!(test);
-static SOUND_TIMER: LazyLock<Mutex<Timer>> =
-    LazyLock::new(|| Mutex::new(Timer::new(Duration::from_secs(1))));
+static SOUND_TIMER: LazyLock<Mutex<Timer>> = make_timer!(Duration::from_secs(1));
 
 #[unsafe(no_mangle)]
 pub extern "C" fn main() {

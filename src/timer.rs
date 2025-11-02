@@ -24,3 +24,10 @@ impl Timer {
         }
     }
 }
+
+#[macro_export]
+macro_rules! make_timer {
+    ($duration:expr) => {
+        std::sync::LazyLock::new(|| std::sync::Mutex::new(Timer::new($duration)))
+    };
+}
