@@ -7,7 +7,7 @@ unsafe extern "C" {
 unsafe extern "C" {
     pub(crate) fn get_framebuffer_width() -> usize;
     pub(crate) fn get_framebuffer_height() -> usize;
-    pub(crate) fn clear(color: i32);
+    pub(crate) fn clear_framebuffer(color: i32);
 }
 
 #[link(wasm_import_module = "memory")]
@@ -26,4 +26,12 @@ unsafe extern "C" {
 #[link(wasm_import_module = "audio")]
 unsafe extern "C" {
     pub(crate) fn play_audio(ptr: i32, len: i32);
+}
+
+#[link(wasm_import_module = "storage")]
+unsafe extern "C" {
+    pub(crate) fn storage_read(offset: i32, ptr: i32, len: i32) -> i32;
+    pub(crate) fn storage_write(offset: i32, ptr: i32, len: i32) -> i32;
+    pub(crate) fn storage_size() -> u32;
+    pub(crate) fn storage_clear();
 }

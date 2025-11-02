@@ -56,5 +56,5 @@ fn pack_abgr_i32(r: u8, g: u8, b: u8, a: u8) -> i32 {
 }
 
 pub fn clear_framebuffer(color: Color) {
-    unsafe { bindings::clear(pack_abgr_i32(color.r, color.g, color.b, color.a)) };
+    unsafe { bindings::clear_framebuffer(pack_abgr_i32(color.r, color.g, color.b, color.a)) };
 }
