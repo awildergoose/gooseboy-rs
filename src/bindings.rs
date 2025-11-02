@@ -14,3 +14,11 @@ unsafe extern "C" {
 unsafe extern "C" {
     pub fn mem_fill(addr: i32, len: i32, value: i32);
 }
+
+#[link(wasm_import_module = "input")]
+unsafe extern "C" {
+    pub fn get_key(key: i32) -> bool;
+    pub fn get_mouse_button(btn: i32) -> bool;
+    pub fn get_mouse_x() -> i32;
+    pub fn get_mouse_y() -> i32;
+}
