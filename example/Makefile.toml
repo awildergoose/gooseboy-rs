@@ -6,9 +6,8 @@ args = ["build", "--release"]
 command = "cmd"
 args = [
     "/C",
-    "copy target\\wasm32-unknown-unknown\\release\\gooseboy_rs.wasm G:\\steve\\gooseboy\\run\\gooseboy\\test.wasm",
+    "copy ..\\target\\wasm32-unknown-unknown\\release\\example.wasm G:\\steve\\gooseboy\\run\\gooseboy\\test.wasm",
 ]
-
 
 [tasks.default]
 clear = true

@@ -3,5 +3,12 @@
 version = 4
 
 [[package]]
-name = "gooseboy-rs"
+name = "example"
+version = "0.1.0"
+dependencies = [
+ "gooseboy",
+]
+
+[[package]]
+name = "gooseboy"
 version = "0.1.0"

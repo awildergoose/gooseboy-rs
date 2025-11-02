@@ -1,24 +1,12 @@
 #![no_main]
 
-use crate::color::Color;
-use crate::framebuffer::{
+use gooseboy::color::Color;
+use gooseboy::framebuffer::{
     clear_framebuffer, get_framebuffer_height, get_framebuffer_width, init_fb, set_pixel,
 };
-use crate::input::get_mouse_x;
-use crate::input::is_key_down;
-use crate::keys::{KEY_A, KEY_D, KEY_E, KEY_Q, KEY_S, KEY_W};
-
-pub mod audio;
-pub mod bindings;
-pub mod color;
-pub mod font;
-pub mod framebuffer;
-pub mod input;
-pub mod keys;
-pub mod mem;
-pub mod storage;
-pub mod text;
-pub mod timer;
+use gooseboy::input::get_mouse_x;
+use gooseboy::input::is_key_down;
+use gooseboy::keys::{KEY_A, KEY_D, KEY_E, KEY_Q, KEY_S, KEY_W};
 
 static mut LAST_NANO: i64 = 0;
 static mut PREV_MOUSE_X: i32 = 0;
@@ -283,7 +271,7 @@ pub extern "C" fn update(nano_time: i64) {
         }
     }
 
-    crate::text::draw_text(
+    gooseboy::text::draw_text(
         4,
         4,
         format!(
@@ -306,7 +294,7 @@ pub extern "C" fn update(nano_time: i64) {
         SMOOTH_FPS = SMOOTH_FPS * (1.0 - alpha) + instant_fps * alpha;
     }
     let fps_display = unsafe { SMOOTH_FPS.round() as i32 };
-    crate::text::draw_text(
+    gooseboy::text::draw_text(
         4,
         16,
         format!("fps: {}", fps_display).as_str(),
