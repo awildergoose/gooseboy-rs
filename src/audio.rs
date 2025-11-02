@@ -24,11 +24,6 @@ impl Audio {
     }
 
     pub fn play(&self) {
-        unsafe {
-            play_audio(
-                self.data.as_ptr() as i32,
-                self.data.len().try_into().unwrap(),
-            )
-        };
+        unsafe { play_audio(self.data.as_ptr() as i32, self.data.len() as i32) };
     }
 }

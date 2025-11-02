@@ -1,14 +1,18 @@
 #![no_main]
 
-use std::sync::LazyLock;
+use std::{
+    sync::{LazyLock, Mutex},
+    time::Duration,
+};
 
 use crate::{
     audio::Audio,
     color::Color,
     framebuffer::{clear_framebuffer, init_fb},
-    input::is_key_down,
+    input::is_key_just_pressed,
     keys::KEY_L,
     text::{draw_char, draw_text},
+    timer::Timer,
 };
 
 pub mod audio;
@@ -21,9 +25,11 @@ pub mod keys;
 pub mod mem;
 pub mod runtime;
 pub mod text;
+pub mod timer;
 
-pub static SOUND: LazyLock<Audio> = make_audio!(test);
-static mut KEY_L_PREV: bool = false;
+static SOUND: LazyLock<Audio> = make_audio!(test);
+static SOUND_TIMER: LazyLock<Mutex<Timer>> =
+    LazyLock::new(|| Mutex::new(Timer::new(Duration::from_secs(1))));
 
 #[unsafe(no_mangle)]
 pub extern "C" fn main() {
@@ -32,16 +38,16 @@ pub extern "C" fn main() {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn update(nano_time: i64) {
+    let elapsed = Duration::from_nanos(nano_time as u64);
+
     clear_framebuffer(Color::BLACK);
     draw_text(0, 0, format!("time: {}", nano_time).as_str(), Color::WHITE);
 
-    let key_pressed = is_key_down(KEY_L);
-
-    if key_pressed && unsafe { !KEY_L_PREV } {
-        draw_char(0, 0, b'L', Color::WHITE);
-
+    if SOUND_TIMER.lock().unwrap().tick(elapsed) {
         SOUND.play();
     }
 
-    unsafe { KEY_L_PREV = key_pressed };
+    if is_key_just_pressed(KEY_L) {
+        draw_char(0, 0, b'L', Color::WHITE);
+    }
 }
