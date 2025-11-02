@@ -1,0 +1,15 @@
+[tasks.build]
+command = "cargo"
+args = ["build", "--release"]
+
+[tasks.post_build]
+command = "cmd"
+args = [
+    "/C",
+    "copy target\\wasm32-unknown-unknown\\release\\gooseboy_rs.wasm G:\\steve\\gooseboy\\run\\gooseboy\\test.wasm",
+]
+
+
+[tasks.default]
+clear = true
+dependencies = ["build", "post_build"]
