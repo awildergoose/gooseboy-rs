@@ -2,10 +2,14 @@
 
 use black::{DepthBuffer, FragmentProgram, Interpolate, Raster, TargetBuffer, VertexProgram};
 use black::{Mat4, Vec3, Vec4};
+use gooseboy::audio::Audio;
 use gooseboy::color::Color;
 use gooseboy::framebuffer::{
     clear_framebuffer, get_framebuffer_height, get_framebuffer_width, init_fb, set_pixel,
 };
+use gooseboy::input::is_key_just_pressed;
+use gooseboy::keys::{KEY_F, KEY_N};
+use gooseboy::make_audio;
 use std::sync::LazyLock;
 
 static mut DEPTH_BUFFER: Option<DepthBuffer> = None;
@@ -134,10 +138,18 @@ pub extern "C" fn main() {
     init_fb();
 }
 
+static mut SOUND: LazyLock<Audio> = make_audio!(test);
+
 #[allow(static_mut_refs)]
 #[unsafe(no_mangle)]
 pub extern "C" fn update(_nano_time: i64) {
     unsafe {
+        if is_key_just_pressed(KEY_F) {
+            SOUND.play();
+        } else if is_key_just_pressed(KEY_N) {
+            SOUND.stop();
+        }
+
         clear_framebuffer(Color::BLACK);
 
         let w = get_framebuffer_width() as i32;

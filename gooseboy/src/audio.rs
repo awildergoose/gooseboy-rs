@@ -32,6 +32,6 @@ macro_rules! import_audio {
 #[macro_export]
 macro_rules! make_audio {
     ($name:ident) => {
-        std::sync::LazyLock::new(|| Audio::new(import_audio!($name).to_vec()))
+        std::sync::LazyLock::new(|| Audio::new($crate::import_audio!($name).to_vec()))
     };
 }
