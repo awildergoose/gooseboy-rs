@@ -26,7 +26,8 @@ unsafe extern "C" {
 
 #[link(wasm_import_module = "audio")]
 unsafe extern "C" {
-    pub(crate) fn play_audio(ptr: i32, len: i32);
+    pub(crate) fn play_audio(ptr: i32, len: i32) -> i64;
+    pub(crate) fn stop_audio(id: i64);
 }
 
 #[link(wasm_import_module = "storage")]

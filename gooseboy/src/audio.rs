@@ -1,16 +1,24 @@
-use crate::bindings::play_audio;
+use crate::bindings::{play_audio, stop_audio};
 
 pub struct Audio {
     data: Vec<u8>,
+    id: i64,
 }
 
 impl Audio {
     pub fn new(data: Vec<u8>) -> Audio {
-        Audio { data }
+        Audio { data, id: -1 }
     }
 
-    pub fn play(&self) {
-        unsafe { play_audio(self.data.as_ptr() as i32, self.data.len() as i32) };
+    pub fn play(&mut self) {
+        self.id = unsafe { play_audio(self.data.as_ptr() as i32, self.data.len() as i32) };
+    }
+
+    pub fn stop(&mut self) {
+        unsafe {
+            stop_audio(self.id);
+        }
+        self.id = -1;
     }
 }
 
