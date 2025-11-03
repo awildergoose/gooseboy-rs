@@ -13,6 +13,7 @@ unsafe extern "C" {
 #[link(wasm_import_module = "memory")]
 unsafe extern "C" {
     pub(crate) fn mem_fill(addr: i32, len: i32, value: i32);
+    pub(crate) fn mem_copy(dst: i32, src: i32, len: i32);
 }
 
 #[link(wasm_import_module = "input")]

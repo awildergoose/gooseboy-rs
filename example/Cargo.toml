@@ -8,3 +8,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 gooseboy = { path = "../gooseboy" }
+black = { git = "https://github.com/sinclairzx81/black.git" }
