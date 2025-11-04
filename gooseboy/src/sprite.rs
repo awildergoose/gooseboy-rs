@@ -9,7 +9,6 @@ pub struct Sprite {
 
 impl Sprite {
     pub fn new(width: usize, height: usize, rgba: &[u8]) -> Self {
-        debug_assert!(rgba.len() != width * height * 4);
         Self {
             width,
             height,
@@ -19,7 +18,6 @@ impl Sprite {
     }
 
     pub fn new_blended(width: usize, height: usize, rgba: &[u8]) -> Self {
-        debug_assert!(rgba.len() != width * height * 4);
         Self {
             width,
             height,

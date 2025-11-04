@@ -31,8 +31,9 @@ fn update(_nano_time: i64) {
     } else if is_key_just_pressed(KEY_N)
         && let Some(ref mut sound) = *last_sound
     {
-        sound.stop();
-        *last_sound = None;
+        // sound.stop();
+        // *last_sound = None;
+        sound.set_pitch(5.0);
     }
 
     clear_framebuffer(Color::BLACK);
