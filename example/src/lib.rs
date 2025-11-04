@@ -14,7 +14,6 @@ static mut SOUND: LazyLock<Audio> = make_audio!(test);
 #[gooseboy::main]
 fn main() {
     init_fb();
-    panic!("bih");
 }
 
 #[allow(static_mut_refs)]
@@ -31,4 +30,5 @@ fn update(_nano_time: i64) {
     }
 
     clear_framebuffer(Color::BLACK);
+    panic!("bih");
 }
