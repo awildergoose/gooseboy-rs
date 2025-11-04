@@ -15,28 +15,6 @@ pub fn draw_char(x: usize, y: usize, c: u8, color: Color) {
     }
 }
 
-pub fn draw_text<S: AsRef<str>>(x: usize, mut y: usize, text: S, color: Color) {
-    let text = text.as_ref();
-    let mut cx = x;
-
-    for ch in text.bytes() {
-        match ch {
-            b'\n' => {
-                y += 8;
-                cx = x;
-            }
-            _ => {
-                draw_char(cx, y, ch, color);
-                cx += 8;
-            }
-        }
-    }
-}
-
-pub fn draw_text_wrapped<S: AsRef<str>>(x: usize, y: usize, text: S, color: Color) {
-    draw_text_wrapped_ex(x, y, text.as_ref(), color, get_framebuffer_width())
-}
-
 pub fn draw_text_wrapped_ex<S: AsRef<str>>(
     x: usize,
     mut y: usize,
@@ -64,4 +42,12 @@ pub fn draw_text_wrapped_ex<S: AsRef<str>>(
             }
         }
     }
+}
+
+pub fn draw_text<S: AsRef<str>>(x: usize, y: usize, text: S, color: Color) {
+    draw_text_wrapped_ex(x, y, text.as_ref(), color, usize::MAX);
+}
+
+pub fn draw_text_wrapped<S: AsRef<str>>(x: usize, y: usize, text: S, color: Color) {
+    draw_text_wrapped_ex(x, y, text.as_ref(), color, get_framebuffer_width())
 }
