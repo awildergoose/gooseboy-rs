@@ -8,3 +8,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 gooseboy = { path = "../gooseboy" }
+
+[build-dependencies]
+png = "0.18.0"

@@ -8,6 +8,7 @@ pub mod keys;
 pub mod mem;
 pub mod panic;
 pub mod runtime;
+pub mod sprite;
 pub mod storage;
 pub mod text;
 pub mod timer;
