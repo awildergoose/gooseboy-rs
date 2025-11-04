@@ -18,6 +18,7 @@ unsafe extern "C" {
 
 #[link(wasm_import_module = "input")]
 unsafe extern "C" {
+    pub(crate) fn get_key_code() -> i32;
     pub(crate) fn get_key(key: i32) -> bool;
     pub(crate) fn get_mouse_button(btn: i32) -> bool;
     pub(crate) fn get_mouse_x() -> i32;

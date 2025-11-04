@@ -10,6 +10,18 @@ static PREV_KEYS: LazyLock<Mutex<HashMap<Key, bool>>> =
 static PREV_MOUSE: LazyLock<Mutex<HashMap<i32, bool>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
+pub fn is_any_key_down() -> bool {
+    unsafe { bindings::get_key_code() != -1 }
+}
+
+pub fn get_key() -> Option<i32> {
+    let key = unsafe { bindings::get_key_code() };
+    if key == -1 {
+        return None;
+    }
+    Some(key)
+}
+
 pub fn is_key_down(key: Key) -> bool {
     unsafe { bindings::get_key(key) }
 }
