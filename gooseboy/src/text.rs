@@ -20,7 +20,7 @@ pub fn draw_text_wrapped_ex<S: AsRef<str>>(
     mut y: usize,
     text: S,
     color: Color,
-    max_width: usize,
+    max_width: Option<usize>,
 ) {
     let text = text.as_ref();
     let mut cx = x;
@@ -32,7 +32,9 @@ pub fn draw_text_wrapped_ex<S: AsRef<str>>(
                 cx = x;
             }
             _ => {
-                if cx + 8 > x + max_width {
+                if let Some(mw) = max_width
+                    && cx + 8 > x + mw
+                {
                     cx = x;
                     y += 8;
                 }
@@ -45,9 +47,42 @@ pub fn draw_text_wrapped_ex<S: AsRef<str>>(
 }
 
 pub fn draw_text<S: AsRef<str>>(x: usize, y: usize, text: S, color: Color) {
-    draw_text_wrapped_ex(x, y, text.as_ref(), color, usize::MAX);
+    draw_text_wrapped_ex(x, y, text.as_ref(), color, None);
 }
 
 pub fn draw_text_wrapped<S: AsRef<str>>(x: usize, y: usize, text: S, color: Color) {
-    draw_text_wrapped_ex(x, y, text.as_ref(), color, get_framebuffer_width())
+    draw_text_wrapped_ex(x, y, text.as_ref(), color, Some(get_framebuffer_width()))
+}
+
+pub fn get_text_width<S: AsRef<str>>(text: S) -> usize {
+    let text = text.as_ref();
+    let mut max_width = 0;
+    let mut current_width = 0;
+
+    for ch in text.bytes() {
+        match ch {
+            b'\n' => {
+                max_width = max_width.max(current_width);
+                current_width = 0;
+            }
+            _ => {
+                current_width += 8;
+            }
+        }
+    }
+
+    max_width.max(current_width)
+}
+
+pub fn get_text_height<S: AsRef<str>>(text: S) -> usize {
+    let text = text.as_ref();
+    let mut lines = 1;
+
+    for ch in text.bytes() {
+        if ch == b'\n' {
+            lines += 1;
+        }
+    }
+
+    lines * 8
 }
