@@ -2,16 +2,29 @@ use crate::bindings::{play_audio, stop_audio};
 
 pub struct Audio {
     data: Vec<u8>,
-    id: i64,
 }
 
 impl Audio {
-    pub fn new(data: Vec<u8>) -> Audio {
-        Audio { data, id: -1 }
+    pub fn new(data: Vec<u8>) -> Self {
+        Self { data }
     }
 
-    pub fn play(&mut self) {
-        self.id = unsafe { play_audio(self.data.as_ptr() as i32, self.data.len() as i32) };
+    pub fn play(&mut self) -> Option<AudioInstance> {
+        let id = unsafe { play_audio(self.data.as_ptr() as i32, self.data.len() as i32) };
+        if id == -1 {
+            return None;
+        }
+        Some(AudioInstance::new(id))
+    }
+}
+
+pub struct AudioInstance {
+    id: i64,
+}
+
+impl AudioInstance {
+    fn new(id: i64) -> Self {
+        Self { id }
     }
 
     pub fn stop(&mut self) {

@@ -9,103 +9,103 @@ pub struct Color {
 }
 
 impl Color {
-    pub const BLACK: Color = Color {
+    pub const BLACK: Self = Self {
         r: 0,
         g: 0,
         b: 0,
         a: 255,
     };
-    pub const WHITE: Color = Color {
+    pub const WHITE: Self = Self {
         r: 255,
         g: 255,
         b: 255,
         a: 255,
     };
-    pub const RED: Color = Color {
+    pub const RED: Self = Self {
         r: 255,
         g: 0,
         b: 0,
         a: 255,
     };
-    pub const GREEN: Color = Color {
+    pub const GREEN: Self = Self {
         r: 0,
         g: 255,
         b: 0,
         a: 255,
     };
-    pub const BLUE: Color = Color {
+    pub const BLUE: Self = Self {
         r: 0,
         g: 0,
         b: 255,
         a: 255,
     };
-    pub const YELLOW: Color = Color {
+    pub const YELLOW: Self = Self {
         r: 255,
         g: 255,
         b: 0,
         a: 255,
     };
-    pub const CYAN: Color = Color {
+    pub const CYAN: Self = Self {
         r: 0,
         g: 255,
         b: 255,
         a: 255,
     };
-    pub const MAGENTA: Color = Color {
+    pub const MAGENTA: Self = Self {
         r: 255,
         g: 0,
         b: 255,
         a: 255,
     };
-    pub const ORANGE: Color = Color {
+    pub const ORANGE: Self = Self {
         r: 255,
         g: 165,
         b: 0,
         a: 255,
     };
-    pub const PURPLE: Color = Color {
+    pub const PURPLE: Self = Self {
         r: 128,
         g: 0,
         b: 128,
         a: 255,
     };
-    pub const PINK: Color = Color {
+    pub const PINK: Self = Self {
         r: 255,
         g: 192,
         b: 203,
         a: 255,
     };
-    pub const BROWN: Color = Color {
+    pub const BROWN: Self = Self {
         r: 165,
         g: 42,
         b: 42,
         a: 255,
     };
-    pub const GRAY: Color = Color {
+    pub const GRAY: Self = Self {
         r: 128,
         g: 128,
         b: 128,
         a: 255,
     };
-    pub const LIGHT_GRAY: Color = Color {
+    pub const LIGHT_GRAY: Self = Self {
         r: 211,
         g: 211,
         b: 211,
         a: 255,
     };
-    pub const DARK_GRAY: Color = Color {
+    pub const DARK_GRAY: Self = Self {
         r: 64,
         g: 64,
         b: 64,
         a: 255,
     };
 
-    pub fn new(r: u8, g: u8, b: u8, a: u8) -> Color {
-        Color { r, g, b, a }
+    pub fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
+        Self { r, g, b, a }
     }
 
-    pub fn new_opaque(r: u8, g: u8, b: u8) -> Color {
-        Color { r, g, b, a: 255 }
+    pub fn new_opaque(r: u8, g: u8, b: u8) -> Self {
+        Self { r, g, b, a: 255 }
     }
 
     /// # Safety
