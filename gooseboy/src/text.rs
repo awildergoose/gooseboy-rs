@@ -54,6 +54,103 @@ pub fn draw_text_wrapped<S: AsRef<str>>(x: usize, y: usize, text: S, color: Colo
     draw_text_wrapped_ex(x, y, text.as_ref(), color, Some(get_framebuffer_width()))
 }
 
+fn color_from_name(name: &str) -> Option<Color> {
+    match name.to_ascii_lowercase().as_str() {
+        "black" => Some(Color::BLACK),
+        "white" => Some(Color::WHITE),
+        "red" => Some(Color::RED),
+        "green" => Some(Color::GREEN),
+        "blue" => Some(Color::BLUE),
+        "yellow" => Some(Color::YELLOW),
+        "cyan" => Some(Color::CYAN),
+        "magenta" => Some(Color::MAGENTA),
+        "orange" => Some(Color::ORANGE),
+        "purple" => Some(Color::PURPLE),
+        "pink" => Some(Color::PINK),
+        "brown" => Some(Color::BROWN),
+        "gray" => Some(Color::GRAY),
+        "light_gray" | "lightgray" => Some(Color::LIGHT_GRAY),
+        "dark_gray" | "darkgray" => Some(Color::DARK_GRAY),
+        _ => None,
+    }
+}
+
+pub fn draw_text_formatted<S: AsRef<str>>(x: usize, y: usize, text: S, default_color: Color) {
+    draw_text_formatted_ex(x, y, text.as_ref(), default_color, None);
+}
+
+pub fn draw_text_formatted_wrapped<S: AsRef<str>>(
+    x: usize,
+    y: usize,
+    text: S,
+    default_color: Color,
+) {
+    let max = get_framebuffer_width();
+    draw_text_formatted_ex(x, y, text.as_ref(), default_color, Some(max));
+}
+
+fn draw_text_formatted_ex(
+    x: usize,
+    mut y: usize,
+    text: &str,
+    default_color: Color,
+    max_width: Option<usize>,
+) {
+    let bytes = text.as_bytes();
+    let mut cx = x;
+    let mut color = default_color;
+    let mut i = 0usize;
+
+    while i < bytes.len() {
+        let b = bytes[i];
+
+        if b == b'[' {
+            if i + 1 < bytes.len() && bytes[i + 1] == b'[' {
+                if let Some(mw) = max_width
+                    && cx + 8 > x + mw
+                {
+                    cx = x;
+                    y += 8;
+                }
+                draw_char(cx, y, b'[', color);
+                cx += 8;
+                i += 2;
+                continue;
+            }
+
+            if let Some(rel_pos) = bytes[i + 1..].iter().position(|&c| c == b']') {
+                let name_bytes = &bytes[i + 1..i + 1 + rel_pos];
+                if let Ok(name_str) = core::str::from_utf8(name_bytes)
+                    && let Some(col) = color_from_name(name_str)
+                {
+                    color = col;
+                    i += 1 + rel_pos + 1;
+                    continue;
+                }
+            }
+        }
+
+        match b {
+            b'\n' => {
+                y += 8;
+                cx = x;
+                i += 1;
+            }
+            _ => {
+                if let Some(mw) = max_width
+                    && cx + 8 > x + mw
+                {
+                    cx = x;
+                    y += 8;
+                }
+                draw_char(cx, y, b, color);
+                cx += 8;
+                i += 1;
+            }
+        }
+    }
+}
+
 pub fn get_text_width<S: AsRef<str>>(text: S) -> usize {
     let text = text.as_ref();
     let mut max_width = 0;
@@ -85,4 +182,41 @@ pub fn get_text_height<S: AsRef<str>>(text: S) -> usize {
     }
 
     lines * 8
+}
+
+pub fn get_formatted_text_width<S: AsRef<str>>(text: S) -> usize {
+    let text = text.as_ref();
+    let bytes = text.as_bytes();
+    let mut max_width = 0usize;
+    let mut current_width = 0usize;
+    let mut i = 0usize;
+
+    while i < bytes.len() {
+        let b = bytes[i];
+        if b == b'[' {
+            if i + 1 < bytes.len() && bytes[i + 1] == b'[' {
+                current_width += 8;
+                i += 2;
+                continue;
+            }
+            if let Some(rel_pos) = bytes[i + 1..].iter().position(|&c| c == b']') {
+                i += 1 + rel_pos + 1;
+                continue;
+            }
+        }
+
+        if b == b'\n' {
+            max_width = core::cmp::max(max_width, current_width);
+            current_width = 0;
+        } else {
+            current_width += 8;
+        }
+        i += 1;
+    }
+
+    core::cmp::max(max_width, current_width)
+}
+
+pub fn get_formatted_text_height<S: AsRef<str>>(text: S) -> usize {
+    get_text_height(text)
 }
