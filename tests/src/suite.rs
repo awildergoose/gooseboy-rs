@@ -1,4 +1,7 @@
-use crate::tests::storage::test_storage;
+use crate::tests::{
+    color::test_color, framebuffer::test_framebuffer, mem::test_mem, sprite::test_sprite,
+    storage::test_storage, text::test_text, timer::test_timer,
+};
 
 pub struct TestResult {
     pub name: String,
@@ -23,4 +26,10 @@ macro_rules! test {
 
 pub fn run_tests() {
     test_storage();
+    test_color();
+    test_framebuffer();
+    test_mem();
+    test_sprite();
+    test_text();
+    test_timer();
 }

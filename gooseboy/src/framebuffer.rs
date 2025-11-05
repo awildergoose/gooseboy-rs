@@ -47,14 +47,10 @@ pub fn get_framebuffer_height() -> usize {
     unsafe { HEIGHT }
 }
 
-fn pack_abgr_u32(r: u8, g: u8, b: u8, a: u8) -> u32 {
-    ((a as u32) << 24) | ((b as u32) << 16) | ((g as u32) << 8) | (r as u32)
-}
-
-fn pack_abgr_i32(r: u8, g: u8, b: u8, a: u8) -> i32 {
-    pack_abgr_u32(r, g, b, a) as i32
-}
-
 pub fn clear_framebuffer(color: Color) {
-    unsafe { bindings::clear_framebuffer(pack_abgr_i32(color.r, color.g, color.b, color.a)) };
+    let color_val = ((color.a as u32) << 24)
+        | ((color.b as u32) << 16)
+        | ((color.g as u32) << 8)
+        | (color.r as u32);
+    unsafe { bindings::clear_framebuffer(color_val as i32) };
 }
