@@ -7,8 +7,16 @@ use std::{
 const TARGET: &str = "wasm32-unknown-unknown";
 
 fn main() {
-    build();
-    copy("example.wasm");
+    if std::env::args().any(|a| a == "--test") {
+        do_project("tests");
+    } else {
+        do_project("example");
+    }
+}
+
+fn do_project(project: &str) {
+    build(project);
+    copy(&format!("{}.wasm", project).to_owned());
 }
 
 fn get_profile() -> String {
@@ -16,11 +24,11 @@ fn get_profile() -> String {
     (if is_release { "release" } else { "debug" }).to_string()
 }
 
-fn build() {
+fn build(project: &str) {
     let profile = get_profile();
     let mut cmd = Command::new("cargo");
 
-    cmd.args(["build", "-p", "example", "--target", TARGET]);
+    cmd.args(["build", "-p", project, "--target", TARGET]);
 
     if profile == "release" {
         cmd.arg("--release");

@@ -1,6 +1,7 @@
 [alias]
 bdebug = "run -p xtask"
 brelease = "run -p xtask -- --release"
+btests = "run -p xtask -- --test"
 
 [profile.release]
 opt-level = 3
