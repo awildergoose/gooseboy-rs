@@ -1,5 +1,5 @@
 [alias]
-bcopy = "run -p xtask"
+bdebug = "run -p xtask"
 brelease = "run -p xtask -- --release"
 
 [profile.release]
