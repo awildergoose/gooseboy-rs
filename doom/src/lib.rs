@@ -7,14 +7,14 @@ use gooseboy::framebuffer::init_fb;
 use gooseboy::{log, mem};
 use lazy_static::lazy_static;
 
-type DoomPrintFn = extern "C" fn(*const c_char);
+// type DoomPrintFn = extern "C" fn(*const c_char);
 type DoomExitFn = extern "C" fn(i32);
 type DoomMallocFn = extern "C" fn(i32) -> *mut std::ffi::c_void;
 type DoomFreeFn = extern "C" fn(*mut std::ffi::c_void);
 type DoomGetTimeFn = extern "C" fn(*mut i32, *mut i32);
 
 unsafe extern "C" {
-    fn doom_set_print(cb: DoomPrintFn);
+    // fn doom_set_print(cb: DoomPrintFn);
     fn doom_set_exit(cb: DoomExitFn);
     fn doom_set_malloc(cb: DoomMallocFn, cb2: DoomFreeFn);
     fn doom_set_gettime(cb: DoomGetTimeFn);
@@ -84,7 +84,7 @@ fn main() {
 
     unsafe {
         trace!(doom_set_exit(doom_exit_override), "set exit override");
-        trace!(doom_set_print(doom_print_callback), "set print override");
+        // trace!(doom_set_print(doom_print_callback), "set print override");
         trace!(
             doom_set_malloc(doom_malloc, doom_free),
             "set malloc override"
@@ -94,7 +94,7 @@ fn main() {
         let arg0 = CString::new("doom.wad").unwrap();
         let arg0_ptr = arg0.into_raw();
         let mut argv: [*mut c_char; 1] = [arg0_ptr];
-        trace!(doom_init(0, argv.as_mut_ptr(), 0), "call doom init");
+        trace!(doom_init(1, argv.as_mut_ptr(), 0), "call doom init");
         trace!(doom_force_update(), "force doom update");
 
         let _ = CString::from_raw(arg0_ptr);
