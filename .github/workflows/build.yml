@@ -1,0 +1,44 @@
+name: Build DOOM
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch:
+    pull_request:
+
+jobs:
+    build-wasm:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v3
+
+            - name: Install Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: stable
+                  override: true
+
+            - name: Add wasm target
+              run: rustup target add wasm32-unknown-unknown
+
+            - name: Install LLVM
+              run: |
+                  sudo apt update
+                  sudo apt install -y llvm clang lld
+
+            - name: Build Gooseboy WASM
+              run: cargo bci
+
+            - name: Upload WASM artifacts
+              uses: actions/upload-artifact@v3
+              with:
+                  name: doom-wasm
+                  path: target/wasm32-unknown-unknown/release/*.wasm
+
+            - name: Upload PureDOOM WASM library
+              uses: actions/upload-artifact@v3
+              with:
+                  name: puredoom-wasm
+                  path: target/wasm32-unknown-unknown/release/build/doom-*/out/*.wasm

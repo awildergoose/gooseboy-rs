@@ -7,16 +7,20 @@ use std::{
 const TARGET: &str = "wasm32-unknown-unknown";
 
 fn main() {
-    if std::env::args().any(|a| a == "--test") {
-        do_project("tests");
-    } else {
-        do_project("example");
-    }
+    let mut args = std::env::args();
+    let project = {
+        args.next();
+        args.next()
+            .expect("project name should be the first argument")
+    };
+    do_project(&project);
 }
 
 fn do_project(project: &str) {
     build(project);
-    copy(&format!("{}.wasm", project).to_owned());
+    if !std::env::args().any(|a| a == "--no-copy") {
+        copy(&format!("{}.wasm", project).to_owned());
+    }
 }
 
 fn get_profile() -> String {
