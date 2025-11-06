@@ -4,8 +4,8 @@ use gooseboy::framebuffer::{get_framebuffer_width, init_fb};
 use gooseboy::text::{draw_text, get_text_width};
 use gooseboy::{color::Color, framebuffer::clear_framebuffer};
 
-// Every script has to have a main function, make sure to decorate it
-// with gooseboy::main though, or else the script won't start
+// Every crate has to have a main function, make sure to decorate it
+// with gooseboy::main though, or else the crate won't start
 #[gooseboy::main]
 fn main() {
     // Initializes the framebuffer, you are required to initialize this
@@ -13,7 +13,7 @@ fn main() {
     init_fb();
 }
 
-// This is also required in every script, the gooseboy::update is required
+// This is also required in every crate, the gooseboy::update is required
 // here too, this function runs X times per second where X is equal to your
 // maximum framerate in the options
 #[gooseboy::update]

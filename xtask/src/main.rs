@@ -91,8 +91,8 @@ fn copy(filename: &str) {
     let profile = get_profile();
     let src_str = format!("target/{}/{}/{}", TARGET, profile, filename);
     let src = Path::new(&src_str);
-    let dst = Path::new(&std::env::var("GOOSEBOY_SCRIPTS_FOLDER").expect(
-        "the GOOSEBOY_SCRIPTS_FOLDER environment variable is missing! (ex: C:\\Users\\MyUser\\AppData\\Roaming\\.minecraft\\gooseboy\\scripts)"
+    let dst = Path::new(&std::env::var("GOOSEBOY_CRATES_FOLDER").expect(
+        "the GOOSEBOY_CRATES_FOLDER environment variable is missing! (ex: C:\\Users\\MyUser\\AppData\\Roaming\\.minecraft\\gooseboy\\crates)"
     )).join(filename);
 
     if !src.exists() {
