@@ -1,11 +1,9 @@
 #![no_main]
 
 use std::ffi::{CStr, CString, c_char};
-use std::sync::Mutex;
 
 use gooseboy::framebuffer::init_fb;
 use gooseboy::{log, mem};
-use lazy_static::lazy_static;
 
 type DoomPrintFn = extern "C" fn(*const c_char);
 type DoomExitFn = extern "C" fn(i32);
@@ -16,16 +14,12 @@ type DoomGetTimeFn = extern "C" fn(*mut i32, *mut i32);
 unsafe extern "C" {
     fn doom_set_print(cb: DoomPrintFn);
     fn doom_set_exit(cb: DoomExitFn);
-    fn doom_set_malloc(cb: DoomMallocFn, cb2: DoomFreeFn);
-    fn doom_set_gettime(cb: DoomGetTimeFn);
+    // fn doom_set_malloc(cb: DoomMallocFn, cb2: DoomFreeFn);
+    // fn doom_set_gettime(cb: DoomGetTimeFn);
     fn doom_init(argc: i32, argv: *mut *mut c_char, flags: i32);
-    fn doom_force_update();
+    // fn doom_force_update();
     fn doom_update();
     // fn doom_get_framebuffer(channels: i32) -> *const u8;
-}
-
-lazy_static! {
-    static ref DOOM_LOG: Mutex<Vec<String>> = Mutex::new(Vec::new());
 }
 
 extern "C" fn doom_malloc(size: i32) -> *mut std::ffi::c_void {
@@ -44,26 +38,14 @@ extern "C" fn doom_print_callback(ptr: *const c_char) {
 
     let s = unsafe { CStr::from_ptr(ptr).to_string_lossy().into_owned() };
 
-    if let Ok(mut buf) = DOOM_LOG.lock() {
-        buf.push(s.clone());
-        if buf.len() > 500 {
-            buf.drain(..100);
-        }
-    }
-
     log!("[puredoom] {}", s);
 }
 
 extern "C" fn doom_exit_override(code: i32) {
     log!("[puredoom] doom requested exit with code: {}", code);
-    if let Ok(mut buf) = DOOM_LOG.lock() {
-        buf.push(format!("[exit] code={}", code));
-    }
 }
 
 extern "C" fn doom_gettime(sec: *mut i32, usec: *mut i32) {
-    // use std::time::{SystemTime, UNIX_EPOCH};
-    // let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
     unsafe {
         *sec = 0_i32;
         *usec = 0_i32;
@@ -85,17 +67,17 @@ fn main() {
     unsafe {
         trace!(doom_set_exit(doom_exit_override), "set exit override");
         trace!(doom_set_print(doom_print_callback), "set print override");
-        trace!(
-            doom_set_malloc(doom_malloc, doom_free),
-            "set malloc override"
-        );
-        trace!(doom_set_gettime(doom_gettime), "set gettime override");
+        // trace!(
+        //     doom_set_malloc(doom_malloc, doom_free),
+        //     "set malloc override"
+        // );
+        // trace!(doom_set_gettime(doom_gettime), "set gettime override");
 
         let arg0 = CString::new("doom.wad").unwrap();
         let arg0_ptr = arg0.into_raw();
         let mut argv: [*mut c_char; 1] = [arg0_ptr];
         trace!(doom_init(1, argv.as_mut_ptr(), 0), "call doom init");
-        trace!(doom_force_update(), "force doom update");
+        // trace!(doom_force_update(), "force doom update");
 
         let _ = CString::from_raw(arg0_ptr);
     }
