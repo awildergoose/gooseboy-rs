@@ -27,44 +27,48 @@ impl Sprite {
     }
 
     pub fn blit(&self, x: usize, y: usize) {
-        let fb_w = get_framebuffer_width();
-        let fb_h = get_framebuffer_height();
+        blit_ex(x, y, self.width, self.height, &self.rgba, self.blend);
+    }
+}
 
-        for row in 0..self.height {
-            let fb_y = y + row;
-            if fb_y >= fb_h {
+pub fn blit_ex(x: usize, y: usize, width: usize, height: usize, rgba: &[u8], blend: bool) {
+    let fb_w = get_framebuffer_width();
+    let fb_h = get_framebuffer_height();
+
+    for row in 0..height {
+        let fb_y = y + row;
+        if fb_y >= fb_h {
+            break;
+        }
+
+        let fb_index = fb_y * fb_w * 4 + x * 4;
+        if fb_index >= fb_w * fb_h * 4 {
+            break;
+        }
+
+        let row_start = row * width * 4;
+
+        for col in 0..width {
+            let fb_x = x + col;
+            if fb_x >= fb_w {
                 break;
             }
 
-            let fb_index = fb_y * fb_w * 4 + x * 4;
-            if fb_index >= fb_w * fb_h * 4 {
-                break;
-            }
+            let sprite_index = row_start + col * 4;
+            let dest_index = fb_y * fb_w * 4 + fb_x * 4;
 
-            let row_start = row * self.width * 4;
+            unsafe {
+                let dst = &mut FRAMEBUFFER[dest_index..dest_index + 4];
+                let src = &rgba[sprite_index..sprite_index + 4];
 
-            for col in 0..self.width {
-                let fb_x = x + col;
-                if fb_x >= fb_w {
-                    break;
-                }
-
-                let sprite_index = row_start + col * 4;
-                let dest_index = fb_y * fb_w * 4 + fb_x * 4;
-
-                unsafe {
-                    let dst = &mut FRAMEBUFFER[dest_index..dest_index + 4];
-                    let src = &self.rgba[sprite_index..sprite_index + 4];
-
-                    if self.blend && src[3] < 255 {
-                        let a = src[3] as f32 / 255.0;
-                        for i in 0..3 {
-                            dst[i] = ((dst[i] as f32 * (1.0 - a)) + (src[i] as f32 * a)) as u8;
-                        }
-                        dst[3] = 255;
-                    } else {
-                        dst.copy_from_slice(src);
+                if blend && src[3] < 255 {
+                    let a = src[3] as f32 / 255.0;
+                    for i in 0..3 {
+                        dst[i] = ((dst[i] as f32 * (1.0 - a)) + (src[i] as f32 * a)) as u8;
                     }
+                    dst[3] = 255;
+                } else {
+                    dst.copy_from_slice(src);
                 }
             }
         }

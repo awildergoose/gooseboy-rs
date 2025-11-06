@@ -1,0 +1,14 @@
+[package]
+name = "axolotl"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+glam = { version = "0.30.9", default-features = false, features = ["libm"] }
+gooseboy = { path = "../../gooseboy" }
+
+[build-dependencies]
+gooseboy_buildscript = { path = "../../buildscript" }

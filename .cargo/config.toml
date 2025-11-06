@@ -1,5 +1,6 @@
 [alias]
 btests = "run -p xtask -- tests"
+baxolotl = "run -p xtask -- axolotl"
 bgeneric = "run -p xtask -- generic"
 bapple = "run -p xtask -- badapple"
 bch8 = "run -p xtask -- chip8"

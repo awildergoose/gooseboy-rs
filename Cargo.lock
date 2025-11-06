@@ -9,6 +9,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
+name = "axolotl"
+version = "0.1.0"
+dependencies = [
+ "glam",
+ "gooseboy",
+ "gooseboy_buildscript",
+]
+
+[[package]]
 name = "badapple"
 version = "0.1.0"
 dependencies = [
@@ -80,6 +89,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "glam"
+version = "0.30.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd47b05dddf0005d850e5644cae7f2b14ac3df487979dbfff3b56f20b1a6ae46"
+dependencies = [
+ "libm",
+]
+
+[[package]]
 name = "gooseboy"
 version = "0.1.0"
 dependencies = [
@@ -101,6 +119,12 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "libm"
+version = "0.2.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9fbbcab51052fe104eb5e5d351cf728d30a5be1fe14d9be8a3b097481fb97de"
 
 [[package]]
 name = "miniz_oxide"

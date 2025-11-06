@@ -9,5 +9,6 @@ members = [
     "examples/badapple",
     "examples/chip8",
     "examples/doom",
+    "examples/axolotl",
 ]
 resolver = "3"
