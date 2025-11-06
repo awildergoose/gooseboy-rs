@@ -72,7 +72,7 @@ fn main() {
 
     unsafe {
         trace!(doom_set_exit(doom_exit_override), "set exit override");
-        trace!(doom_set_print(doom_print_override), "set print override");
+        // trace!(doom_set_print(doom_print_override), "set print override");
         // trace!(
         //     doom_set_malloc(doom_malloc, doom_free),
         //     "set malloc override"
