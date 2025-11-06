@@ -58,20 +58,20 @@ extern "C" fn doom_exit_override(code: i32) {
 //     }
 // }
 
-macro_rules! trace {
-    ($expr:expr, $name:expr) => {
-        log!("start {}", $name);
-        $expr;
-        log!("end {}", $name);
-    };
-}
+// macro_rules! trace {
+//     ($expr:expr, $name:expr) => {
+//         log!("start {}", $name);
+//         $expr;
+//         log!("end {}", $name);
+//     };
+// }
 
 #[gooseboy::main]
 fn main() {
     init_fb();
 
     unsafe {
-        trace!(doom_set_exit(doom_exit_override), "set exit override");
+        doom_set_exit(doom_exit_override);
         // trace!(doom_set_print(doom_print_override), "set print override");
         // trace!(
         //     doom_set_malloc(doom_malloc, doom_free),
