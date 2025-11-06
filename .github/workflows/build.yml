@@ -26,6 +26,9 @@ jobs:
             - name: Add wasm target
               run: rustup target add wasm32-unknown-unknown
 
+            - name: Install FFmpeg
+              run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
             - name: Cache dependencies
               uses: actions/cache@v4
               with:
