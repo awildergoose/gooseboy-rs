@@ -14,7 +14,7 @@ static mut VIDEO_ENDED: bool = false;
 static mut VIDEO_START_NANO: i64 = 0;
 static mut VIDEO_STREAM: Option<ZlibDecoder<Cursor<&[u8]>>> = None;
 
-const VIDEO_FPS: f64 = 60.0;
+const VIDEO_FPS: f64 = 30.0;
 
 #[gooseboy::main]
 fn main() {

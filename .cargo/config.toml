@@ -5,6 +5,7 @@ bapple = "run -p xtask -- badapple"
 bch8 = "run -p xtask -- chip8"
 bdoom = "run -p xtask -- doom"
 bci = "run -p xtask -- all --release --no-copy"
+ball = "run -p xtask -- all"
 
 [profile.release]
 opt-level = 3
