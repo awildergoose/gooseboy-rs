@@ -16,7 +16,7 @@ unsafe extern "C" {
     fn doom_set_exit(cb: DoomExitFn);
     // fn doom_set_malloc(cb: DoomMallocFn, cb2: DoomFreeFn);
     // fn doom_set_gettime(cb: DoomGetTimeFn);
-    // fn doom_init(argc: i32, argv: *mut *mut c_char, flags: i32);
+    fn doom_init(argc: i32, argv: *mut *mut c_char, flags: i32);
     // fn doom_force_update();
     // fn doom_update();
     // fn doom_get_framebuffer(channels: i32) -> *const u8;
@@ -71,13 +71,13 @@ fn main() {
         // );
         // trace!(doom_set_gettime(doom_gettime), "set gettime override");
 
-        // let arg0 = CString::new("doom.wad").unwrap();
-        // let arg0_ptr = arg0.into_raw();
-        // let mut argv: [*mut c_char; 1] = [arg0_ptr];
-        // trace!(doom_init(1, argv.as_mut_ptr(), 0), "call doom init");
-        // trace!(doom_force_update(), "force doom update");
+        let arg0 = CString::new("doom.wad").unwrap();
+        let arg0_ptr = arg0.into_raw();
+        let mut argv: [*mut c_char; 1] = [arg0_ptr];
+        doom_init(1, argv.as_mut_ptr(), 0);
+        // doom_force_update();
 
-        // let _ = CString::from_raw(arg0_ptr);
+        let _ = CString::from_raw(arg0_ptr);
     }
 }
 
