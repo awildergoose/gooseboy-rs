@@ -16,22 +16,22 @@ unsafe extern "C" {
     fn doom_set_exit(cb: DoomExitFn);
     // fn doom_set_malloc(cb: DoomMallocFn, cb2: DoomFreeFn);
     // fn doom_set_gettime(cb: DoomGetTimeFn);
-    fn doom_init(argc: i32, argv: *mut *mut c_char, flags: i32);
+    // fn doom_init(argc: i32, argv: *mut *mut c_char, flags: i32);
     // fn doom_force_update();
-    fn doom_update();
+    // fn doom_update();
     // fn doom_get_framebuffer(channels: i32) -> *const u8;
 }
 
-extern "C" fn doom_malloc(size: i32) -> *mut std::ffi::c_void {
-    let ptr = mem::alloc_bytes(size as usize);
-    ptr as *mut std::ffi::c_void
-}
+// extern "C" fn doom_malloc(size: i32) -> *mut std::ffi::c_void {
+//     let ptr = mem::alloc_bytes(size as usize);
+//     ptr as *mut std::ffi::c_void
+// }
 
-extern "C" fn doom_free(_ptr: *mut std::ffi::c_void) {
-    // for now, keep this as a stub
-}
+// extern "C" fn doom_free(_ptr: *mut std::ffi::c_void) {
+//     // for now, keep this as a stub
+// }
 
-extern "C" fn doom_print_callback(ptr: *const c_char) {
+extern "C" fn doom_print_override(ptr: *const c_char) {
     if ptr.is_null() {
         return;
     }
@@ -45,12 +45,12 @@ extern "C" fn doom_exit_override(code: i32) {
     log!("[puredoom] doom requested exit with code: {}", code);
 }
 
-extern "C" fn doom_gettime(sec: *mut i32, usec: *mut i32) {
-    unsafe {
-        *sec = 0_i32;
-        *usec = 0_i32;
-    }
-}
+// extern "C" fn doom_gettime(sec: *mut i32, usec: *mut i32) {
+//     unsafe {
+//         *sec = 0_i32;
+//         *usec = 0_i32;
+//     }
+// }
 
 macro_rules! trace {
     ($expr:expr, $name:expr) => {
@@ -66,26 +66,26 @@ fn main() {
 
     unsafe {
         trace!(doom_set_exit(doom_exit_override), "set exit override");
-        trace!(doom_set_print(doom_print_callback), "set print override");
+        trace!(doom_set_print(doom_print_override), "set print override");
         // trace!(
         //     doom_set_malloc(doom_malloc, doom_free),
         //     "set malloc override"
         // );
         // trace!(doom_set_gettime(doom_gettime), "set gettime override");
 
-        let arg0 = CString::new("doom.wad").unwrap();
-        let arg0_ptr = arg0.into_raw();
-        let mut argv: [*mut c_char; 1] = [arg0_ptr];
-        trace!(doom_init(1, argv.as_mut_ptr(), 0), "call doom init");
+        // let arg0 = CString::new("doom.wad").unwrap();
+        // let arg0_ptr = arg0.into_raw();
+        // let mut argv: [*mut c_char; 1] = [arg0_ptr];
+        // trace!(doom_init(1, argv.as_mut_ptr(), 0), "call doom init");
         // trace!(doom_force_update(), "force doom update");
 
-        let _ = CString::from_raw(arg0_ptr);
+        // let _ = CString::from_raw(arg0_ptr);
     }
 }
 
 #[gooseboy::update]
 fn update(_nano_time: i64) {
-    unsafe {
-        doom_update();
-    }
+    // unsafe {
+    //     doom_update();
+    // }
 }
