@@ -26,11 +26,6 @@ jobs:
             - name: Add wasm target
               run: rustup target add wasm32-unknown-unknown
 
-            - name: Install LLVM
-              run: |
-                  sudo apt update
-                  sudo apt install -y llvm clang lld
-
             - name: Cache dependencies
               uses: actions/cache@v4
               with:

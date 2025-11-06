@@ -1,3 +1,3 @@
 [workspace]
-members = ["gooseboy", "example", "macros", "xtask", "tests", "doom"]
+members = ["gooseboy", "macros", "xtask", "tests", "example", "example2"]
 resolver = "3"

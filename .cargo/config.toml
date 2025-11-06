@@ -1,9 +1,9 @@
 [alias]
-bdebug = "run -p xtask"
+bdebug = "run -p xtask -- example"
 brelease = "run -p xtask -- example --release"
 btests = "run -p xtask -- tests"
-bdoom = "run -p xtask -- doom"
-bci = "run -p xtask -- doom --release --no-copy"
+bci = "run -p xtask -- example2 --release --no-copy"
+bdebug2 = "run -p xtask -- example2"
 
 [profile.release]
 opt-level = 3
