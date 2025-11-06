@@ -1,7 +1,8 @@
 [alias]
-bgeneric = "run -p xtask -- generic"
 btests = "run -p xtask -- tests"
+bgeneric = "run -p xtask -- generic"
 bapple = "run -p xtask -- badapple"
+bch8 = "run -p xtask -- chip8"
 bci = "run -p xtask -- all --release --no-copy"
 
 [profile.release]

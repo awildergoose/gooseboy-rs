@@ -4,7 +4,9 @@ members = [
     "macros",
     "xtask",
     "tests",
+    "buildscript",
     "examples/generic",
     "examples/badapple",
+    "examples/chip8",
 ]
 resolver = "3"

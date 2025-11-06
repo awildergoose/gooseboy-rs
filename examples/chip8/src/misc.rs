@@ -1,0 +1,58 @@
+#![allow(clippy::upper_case_acronyms)]
+pub type N = u8;
+pub type NN = u8;
+pub type NNN = u16;
+pub type V = u8;
+pub type I = u16;
+
+pub const FONT: [u8; 80] = [
+    0xF0, 0x90, 0x90, 0x90, 0xF0, 0x20, 0x60, 0x20, 0x20, 0x70, 0xF0, 0x10, 0xF0, 0x80, 0xF0, 0xF0,
+    0x10, 0xF0, 0x10, 0xF0, 0x90, 0x90, 0xF0, 0x10, 0x10, 0xF0, 0x80, 0xF0, 0x10, 0xF0, 0xF0, 0x80,
+    0xF0, 0x90, 0xF0, 0xF0, 0x10, 0x20, 0x40, 0x40, 0xF0, 0x90, 0xF0, 0x90, 0xF0, 0xF0, 0x90, 0xF0,
+    0x10, 0xF0, 0xF0, 0x90, 0xF0, 0x90, 0x90, 0xE0, 0x90, 0xE0, 0x90, 0xE0, 0xF0, 0x80, 0x80, 0x80,
+    0xF0, 0xE0, 0x90, 0x90, 0x90, 0xE0, 0xF0, 0x80, 0xF0, 0x80, 0xF0, 0xF0, 0x80, 0xF0, 0x80, 0x80,
+];
+
+#[derive(Debug)]
+pub enum Instruction {
+    CLEAR,
+    RETURN,
+    JUMP { addr: NNN },
+    CALL { addr: NNN },
+
+    SKIPEQ { vx: V, byte: NN },
+    SKIPNE { vx: V, byte: NN },
+    SKIPEQREG { vx: V, vy: V },
+    SKIPNEREG { vx: V, vy: V },
+
+    SET { vx: V, byte: NN },
+    ADD { vx: V, byte: NN },
+
+    MOV { vx: V, vy: V },
+    OR { vx: V, vy: V },
+    AND { vx: V, vy: V },
+    XOR { vx: V, vy: V },
+    ADDREG { vx: V, vy: V },
+    SUB { vx: V, vy: V },
+    SUBREVERSE { vx: V, vy: V },
+    SHR { vx: V },
+    SHL { vx: V },
+
+    SETI { addr: NNN },
+    JUMPV0 { addr: NNN },
+    RAND { vx: V, mask: NN },
+    DRAW { vx: V, vy: V, n: N },
+
+    KEYDOWN { vx: V },
+    KEYUP { vx: V },
+
+    GETDELAY { vx: V },
+    WAITKEY { vx: V },
+    SETDELAY { vx: V },
+    SETSOUND { vx: V },
+    ADDI { vx: V },
+    FONT { vx: V },
+    BCD { vx: V },
+    STORE { vx: V },
+    LOAD { vx: V },
+}

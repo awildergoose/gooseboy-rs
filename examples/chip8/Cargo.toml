@@ -1,5 +1,5 @@
 [package]
-name = "generic"
+name = "chip8"
 version = "0.1.0"
 edition = "2024"
 
@@ -8,6 +8,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 gooseboy = { path = "../../gooseboy" }
-
-[build-dependencies]
-gooseboy_buildscript = { path = "../../buildscript" }
+rand = { version = "0.9.2", default-features = false, features = ["small_rng"] }
