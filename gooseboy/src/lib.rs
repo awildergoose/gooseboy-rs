@@ -3,7 +3,6 @@ pub mod bindings;
 pub mod color;
 pub mod font;
 pub mod framebuffer;
-pub mod game;
 pub mod input;
 pub mod keys;
 pub mod mem;
@@ -11,6 +10,7 @@ pub mod panic;
 pub mod runtime;
 pub mod sprite;
 pub mod storage;
+pub mod system;
 pub mod text;
 pub mod timer;
 

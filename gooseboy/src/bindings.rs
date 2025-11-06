@@ -48,9 +48,7 @@ unsafe extern "C" {
     pub(crate) fn storage_clear();
 }
 
-#[link(wasm_import_module = "game")]
+#[link(wasm_import_module = "system")]
 unsafe extern "C" {
-    pub(crate) fn get_minecraft_width() -> i32;
-    pub(crate) fn get_minecraft_height() -> i32;
     pub(crate) fn get_time_nanos() -> i64;
 }
