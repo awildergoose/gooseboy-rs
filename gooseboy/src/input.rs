@@ -38,6 +38,18 @@ pub fn get_mouse_y() -> i32 {
     unsafe { bindings::get_mouse_y() }
 }
 
+pub fn get_mouse_accumulated_dx() -> f64 {
+    unsafe { bindings::get_mouse_accumulated_dx() }
+}
+
+pub fn get_mouse_accumulated_dy() -> f64 {
+    unsafe { bindings::get_mouse_accumulated_dy() }
+}
+
+pub fn is_mouse_grabbed() -> bool {
+    unsafe { bindings::is_mouse_grabbed() }
+}
+
 pub fn grab_mouse() {
     unsafe { bindings::grab_mouse() }
 }

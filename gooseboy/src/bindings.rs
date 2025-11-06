@@ -23,6 +23,9 @@ unsafe extern "C" {
     pub(crate) fn get_mouse_button(btn: i32) -> bool;
     pub(crate) fn get_mouse_x() -> i32;
     pub(crate) fn get_mouse_y() -> i32;
+    pub(crate) fn get_mouse_accumulated_dx() -> f64;
+    pub(crate) fn get_mouse_accumulated_dy() -> f64;
+    pub(crate) fn is_mouse_grabbed() -> bool;
     pub(crate) fn grab_mouse();
     pub(crate) fn release_mouse();
 }
