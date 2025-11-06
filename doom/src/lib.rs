@@ -5,14 +5,14 @@ use std::ffi::{CStr, CString, c_char};
 use gooseboy::framebuffer::init_fb;
 use gooseboy::{log, mem};
 
-type DoomPrintFn = extern "C" fn(*const c_char);
 type DoomExitFn = extern "C" fn(i32);
-type DoomMallocFn = extern "C" fn(i32) -> *mut std::ffi::c_void;
-type DoomFreeFn = extern "C" fn(*mut std::ffi::c_void);
-type DoomGetTimeFn = extern "C" fn(*mut i32, *mut i32);
+// type DoomPrintFn = extern "C" fn(*const c_char);
+// type DoomMallocFn = extern "C" fn(i32) -> *mut std::ffi::c_void;
+// type DoomFreeFn = extern "C" fn(*mut std::ffi::c_void);
+// type DoomGetTimeFn = extern "C" fn(*mut i32, *mut i32);
 
 unsafe extern "C" {
-    fn doom_set_print(cb: DoomPrintFn);
+    // fn doom_set_print(cb: DoomPrintFn);
     fn doom_set_exit(cb: DoomExitFn);
     // fn doom_set_malloc(cb: DoomMallocFn, cb2: DoomFreeFn);
     // fn doom_set_gettime(cb: DoomGetTimeFn);
@@ -31,21 +31,21 @@ unsafe extern "C" {
 //     // for now, keep this as a stub
 // }
 
-extern "C" fn doom_print_override(ptr: *const c_char) {
-    if ptr.is_null() {
-        return;
-    }
+// extern "C" fn doom_print_override(ptr: *const c_char) {
+//     if ptr.is_null() {
+//         return;
+//     }
 
-    log!("[puredoom] about to start printing a string");
+//     log!("[puredoom] about to start printing a string");
 
-    let s = unsafe {
-        let slice = std::slice::from_raw_parts(ptr as *const u8, 1024);
-        let len = slice.iter().position(|&b| b == 0).unwrap_or(1024);
-        str::from_utf8(&slice[..len]).unwrap_or("[invalid utf8]")
-    };
+//     let s = unsafe {
+//         let slice = std::slice::from_raw_parts(ptr as *const u8, 1024);
+//         let len = slice.iter().position(|&b| b == 0).unwrap_or(1024);
+//         str::from_utf8(&slice[..len]).unwrap_or("[invalid utf8]")
+//     };
 
-    log!("[puredoom] {}", s);
-}
+//     log!("[puredoom] {}", s);
+// }
 
 extern "C" fn doom_exit_override(code: i32) {
     log!("[puredoom] doom requested exit with code: {}", code);
