@@ -51,4 +51,5 @@ unsafe extern "C" {
 #[link(wasm_import_module = "system")]
 unsafe extern "C" {
     pub(crate) fn get_time_nanos() -> i64;
+    pub(crate) fn has_permission(permission: i32) -> bool;
 }

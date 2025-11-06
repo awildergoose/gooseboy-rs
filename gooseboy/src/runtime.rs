@@ -1,4 +1,4 @@
-/// Requires CONSOLE permission
+/// Requires Console permission
 #[macro_export]
 macro_rules! log {
     ($($arg:tt)*) => {{

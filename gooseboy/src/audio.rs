@@ -2,7 +2,7 @@ use crate::bindings::{
     self, is_audio_playing, play_audio, set_audio_pitch, set_audio_volume, stop_audio,
 };
 
-/// Requires AUDIO permission
+/// Requires Audio permission
 pub struct Audio {
     data: Vec<u8>,
 }
@@ -77,7 +77,7 @@ macro_rules! import_audio {
     };
 }
 
-/// Requires AUDIO permission
+/// Requires Audio permission
 #[macro_export]
 macro_rules! make_audio {
     ($name:ident) => {

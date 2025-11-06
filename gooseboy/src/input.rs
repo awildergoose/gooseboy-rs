@@ -10,12 +10,12 @@ static PREV_KEYS: LazyLock<Mutex<HashMap<Key, bool>>> =
 static PREV_MOUSE: LazyLock<Mutex<HashMap<i32, bool>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
-/// Requires INPUT_KEYBOARD permission
+/// Requires InputKeyboard permission
 pub fn is_any_key_down() -> bool {
     unsafe { bindings::get_key_code() != -1 }
 }
 
-/// Requires INPUT_KEYBOARD permission
+/// Requires InputKeyboard permission
 pub fn get_key() -> Option<i32> {
     let key = unsafe { bindings::get_key_code() };
     if key == -1 {
@@ -24,52 +24,52 @@ pub fn get_key() -> Option<i32> {
     Some(key)
 }
 
-/// Requires INPUT_KEYBOARD permission
+/// Requires InputKeyboard permission
 pub fn is_key_down(key: Key) -> bool {
     unsafe { bindings::get_key(key) }
 }
 
-/// Requires INPUT_MOUSE permission
+/// Requires InputMouse permission
 pub fn is_mouse_button_down(button: i32) -> bool {
     unsafe { bindings::get_mouse_button(button) }
 }
 
-/// Requires INPUT_MOUSE_POS permission
+/// Requires InputMousePos permission
 pub fn get_mouse_x() -> i32 {
     unsafe { bindings::get_mouse_x() }
 }
 
-/// Requires INPUT_MOUSE_POS permission
+/// Requires InputMousePos permission
 pub fn get_mouse_y() -> i32 {
     unsafe { bindings::get_mouse_y() }
 }
 
-/// Requires INPUT_MOUSE_POS permission
+/// Requires InputMousePos permission
 pub fn get_mouse_accumulated_dx() -> f64 {
     unsafe { bindings::get_mouse_accumulated_dx() }
 }
 
-/// Requires INPUT_MOUSE_POS permission
+/// Requires InputMousePos permission
 pub fn get_mouse_accumulated_dy() -> f64 {
     unsafe { bindings::get_mouse_accumulated_dy() }
 }
 
-/// Requires INPUT_GRAB_MOUSE permission
+/// Requires InputGrabMouse permission
 pub fn is_mouse_grabbed() -> bool {
     unsafe { bindings::is_mouse_grabbed() }
 }
 
-/// Requires INPUT_GRAB_MOUSE permission
+/// Requires InputGrabMouse permission
 pub fn grab_mouse() {
     unsafe { bindings::grab_mouse() }
 }
 
-/// Requires INPUT_GRAB_MOUSE permission
+/// Requires InputGrabMouse permission
 pub fn release_mouse() {
     unsafe { bindings::release_mouse() }
 }
 
-/// Requires INPUT_KEYBOARD permission
+/// Requires InputKeyboard permission
 pub fn is_key_just_pressed(key: Key) -> bool {
     let currently_pressed = is_key_down(key);
     let mut prev_keys = PREV_KEYS.lock().unwrap();
@@ -80,7 +80,7 @@ pub fn is_key_just_pressed(key: Key) -> bool {
     currently_pressed && !was_pressed
 }
 
-/// Requires INPUT_MOUSE permission
+/// Requires InputMouse permission
 pub fn is_mouse_button_just_pressed(button: i32) -> bool {
     let currently_pressed = is_mouse_button_down(button);
     let mut prev_mouse = PREV_MOUSE.lock().unwrap();
