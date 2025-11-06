@@ -2,7 +2,7 @@ name: Build DOOM
 
 on:
     push:
-        branches: [main]
+        branches: [master]
     workflow_dispatch:
     pull_request:
 
