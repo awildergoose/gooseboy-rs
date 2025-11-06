@@ -1,6 +1,6 @@
 #![no_main]
 
-use std::ffi::c_char;
+use std::ffi::{CStr, c_char};
 
 use gooseboy::framebuffer::init_fb;
 use gooseboy::log;
@@ -14,7 +14,7 @@ unsafe extern "C" {
     fn doom_update();
     fn doom_get_framebuffer(channels: i32) -> *const u8;
     fn doom_set_exit(cb: DoomExitFn);
-    fn doom_set_print(print_fn: DoomPrintFn);
+    fn doom_set_print(cb: DoomPrintFn);
 }
 
 extern "C" fn doom_exit_override(code: i32) {
@@ -23,8 +23,13 @@ extern "C" fn doom_exit_override(code: i32) {
 
 extern "C" fn doom_print_override(str: *const c_char) {
     unsafe {
-        let c_str = std::ffi::CStr::from_ptr(str);
-        log!("[DOOM] {}", c_str.to_string_lossy());
+        if !str.is_null() {
+            if let Ok(rust_str) = CStr::from_ptr(str).to_str() {
+                log!("[DOOM] {}", rust_str);
+            } else {
+                log!("[DOOM] (invalid utf8 string)");
+            }
+        }
     }
 }
 
