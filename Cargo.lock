@@ -46,6 +46,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "doom"
+version = "0.1.0"
+dependencies = [
+ "gooseboy",
+]
+
+[[package]]
 name = "fdeflate"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
