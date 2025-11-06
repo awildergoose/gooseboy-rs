@@ -36,7 +36,13 @@ extern "C" fn doom_print_override(ptr: *const c_char) {
         return;
     }
 
-    let s = unsafe { CStr::from_ptr(ptr).to_string_lossy().into_owned() };
+    log!("[puredoom] about to start printing a string");
+
+    let s = unsafe {
+        let slice = std::slice::from_raw_parts(ptr as *const u8, 1024);
+        let len = slice.iter().position(|&b| b == 0).unwrap_or(1024);
+        str::from_utf8(&slice[..len]).unwrap_or("[invalid utf8]")
+    };
 
     log!("[puredoom] {}", s);
 }
