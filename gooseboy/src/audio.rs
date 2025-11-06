@@ -1,5 +1,5 @@
 use crate::bindings::{
-    is_audio_playing, play_audio, set_audio_pitch, set_audio_volume, stop_audio,
+    self, is_audio_playing, play_audio, set_audio_pitch, set_audio_volume, stop_audio,
 };
 
 pub struct Audio {
@@ -85,4 +85,10 @@ macro_rules! make_audio {
             ))
         })
     };
+}
+
+pub fn stop_all_audio() {
+    unsafe {
+        bindings::stop_all_audio();
+    }
 }

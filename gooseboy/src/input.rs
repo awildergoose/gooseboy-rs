@@ -38,6 +38,14 @@ pub fn get_mouse_y() -> i32 {
     unsafe { bindings::get_mouse_y() }
 }
 
+pub fn grab_mouse() {
+    unsafe { bindings::grab_mouse() }
+}
+
+pub fn release_mouse() {
+    unsafe { bindings::release_mouse() }
+}
+
 pub fn is_key_just_pressed(key: Key) -> bool {
     let currently_pressed = is_key_down(key);
     let mut prev_keys = PREV_KEYS.lock().unwrap();

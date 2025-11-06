@@ -23,12 +23,15 @@ unsafe extern "C" {
     pub(crate) fn get_mouse_button(btn: i32) -> bool;
     pub(crate) fn get_mouse_x() -> i32;
     pub(crate) fn get_mouse_y() -> i32;
+    pub(crate) fn grab_mouse();
+    pub(crate) fn release_mouse();
 }
 
 #[link(wasm_import_module = "audio")]
 unsafe extern "C" {
     pub(crate) fn play_audio(ptr: i32, len: i32) -> i64;
     pub(crate) fn stop_audio(id: i64);
+    pub(crate) fn stop_all_audio();
     pub(crate) fn set_audio_volume(id: i64, volume: f32);
     pub(crate) fn set_audio_pitch(id: i64, volume: f32);
     pub(crate) fn is_audio_playing(id: i64) -> bool;
@@ -40,4 +43,11 @@ unsafe extern "C" {
     pub(crate) fn storage_write(offset: i32, ptr: i32, len: i32) -> i32;
     pub(crate) fn storage_size() -> u32;
     pub(crate) fn storage_clear();
+}
+
+#[link(wasm_import_module = "game")]
+unsafe extern "C" {
+    pub(crate) fn get_minecraft_width() -> i32;
+    pub(crate) fn get_minecraft_height() -> i32;
+    pub(crate) fn get_time_nanos() -> i64;
 }
