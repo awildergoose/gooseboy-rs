@@ -70,22 +70,32 @@ extern "C" fn doom_gettime(sec: *mut i32, usec: *mut i32) {
     }
 }
 
+macro_rules! trace {
+    ($expr:expr, $name:expr) => {
+        log!("start {}", $name);
+        $expr;
+        log!("end {}", $name);
+    };
+}
+
 #[gooseboy::main]
 fn main() {
     init_fb();
 
     unsafe {
-        doom_set_exit(doom_exit_override);
-        doom_set_print(doom_print_callback);
-        doom_set_malloc(doom_malloc, doom_free);
-        doom_set_gettime(doom_gettime);
+        trace!(doom_set_exit(doom_exit_override), "set exit override");
+        trace!(doom_set_print(doom_print_callback), "set print override");
+        trace!(
+            doom_set_malloc(doom_malloc, doom_free),
+            "set malloc override"
+        );
+        trace!(doom_set_gettime(doom_gettime), "set gettime override");
 
         let arg0 = CString::new("doom.wad").unwrap();
         let arg0_ptr = arg0.into_raw();
         let mut argv: [*mut c_char; 1] = [arg0_ptr];
-        doom_init(0, argv.as_mut_ptr(), 0);
-
-        doom_force_update();
+        trace!(doom_init(0, argv.as_mut_ptr(), 0), "call doom init");
+        trace!(doom_force_update(), "force doom update");
 
         let _ = CString::from_raw(arg0_ptr);
     }
