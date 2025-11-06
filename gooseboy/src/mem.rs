@@ -22,6 +22,13 @@ pub fn alloc_bytes(len: usize) -> i32 {
     }
 }
 
+pub fn free_bytes(ptr: i32, len: usize) {
+    let layout = Layout::from_size_align(len, 4).unwrap();
+    unsafe {
+        alloc::dealloc(ptr as *mut u8, layout);
+    }
+}
+
 pub fn write_i32(ptr: i32, value: i32) {
     unsafe {
         let p = ptr as *mut i32;
