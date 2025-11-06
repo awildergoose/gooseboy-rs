@@ -1,4 +1,4 @@
-name: Build DOOM
+name: Build
 
 on:
     push:
@@ -10,7 +10,7 @@ env:
     CARGO_TERM_COLOR: always
 
 jobs:
-    build-wasm:
+    build:
         runs-on: ubuntu-latest
 
         steps:
@@ -40,17 +40,11 @@ jobs:
                       target
                   key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
 
-            - name: Build Gooseboy WASM
+            - name: Build WASM
               run: cargo bci
 
-            - name: Upload WASM artifacts
+            - name: Upload WASM artifact
               uses: actions/upload-artifact@v4
               with:
                   name: doom-wasm
                   path: target/wasm32-unknown-unknown/release/*.wasm
-
-            - name: Upload all WASM files
-              uses: actions/upload-artifact@v4
-              with:
-                  name: wasm-files
-                  path: target/**/*.wasm
