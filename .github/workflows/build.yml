@@ -35,11 +35,11 @@ jobs:
                       target
                   key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
 
-            - name: Build WASM
+            - name: Build all examples
               run: cargo bci
 
             - name: Upload WASM artifact
               uses: actions/upload-artifact@v4
               with:
-                  name: doom-wasm
+                  name: all-examples
                   path: target/wasm32-unknown-unknown/release/*.wasm
