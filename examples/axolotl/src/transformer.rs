@@ -8,25 +8,29 @@ pub enum Resample {
 }
 
 fn premultiply_rgba_inplace(pixels: &mut [u8]) {
-    for px in pixels.chunks_exact_mut(4) {
-        let a = px[3] as u32;
+    let chunks = pixels.chunks_exact_mut(4);
+    for px in chunks {
+        let a = px[3];
         if a == 255 {
             continue;
         }
-        px[0] = ((px[0] as u32 * a) / 255) as u8;
-        px[1] = ((px[1] as u32 * a) / 255) as u8;
-        px[2] = ((px[2] as u32 * a) / 255) as u8;
+
+        let a16 = a as u16;
+        px[0] = ((px[0] as u16 * a16) / 255) as u8;
+        px[1] = ((px[1] as u16 * a16) / 255) as u8;
+        px[2] = ((px[2] as u16 * a16) / 255) as u8;
     }
 }
 
 #[inline]
 fn sample_nearest(input: &[u8], width: usize, height: usize, x: f32, y: f32) -> [u8; 4] {
-    let xi = x.round().max(0.0) as i32;
-    let yi = y.round().max(0.0) as i32;
+    let xi = x.round() as i32;
+    let yi = y.round() as i32;
     let clamp = |v: i32, max: usize| v.max(0).min(max as i32 - 1);
     let xx = clamp(xi, width) as usize;
     let yy = clamp(yi, height) as usize;
     let idx = (yy * width + xx) * 4;
+
     [input[idx], input[idx + 1], input[idx + 2], input[idx + 3]]
 }
 
@@ -38,6 +42,8 @@ fn sample_bilinear_premult(input: &[u8], width: usize, height: usize, x: f32, y:
     let y1 = y0 + 1;
     let fx = x - x0 as f32;
     let fy = y - y0 as f32;
+    let fx_inv = 1.0 - fx;
+    let fy_inv = 1.0 - fy;
 
     let clamp = |v: i32, max: usize| v.max(0).min(max as i32 - 1);
     let x0 = clamp(x0, width);
@@ -45,49 +51,40 @@ fn sample_bilinear_premult(input: &[u8], width: usize, height: usize, x: f32, y:
     let y0 = clamp(y0, height);
     let y1 = clamp(y1, height);
 
-    let idx = |xx: i32, yy: i32| ((yy as usize) * width + (xx as usize)) * 4;
-    let c00 = &input[idx(x0, y0)..idx(x0, y0) + 4];
-    let c10 = &input[idx(x1, y0)..idx(x1, y0) + 4];
-    let c01 = &input[idx(x0, y1)..idx(x0, y1) + 4];
-    let c11 = &input[idx(x1, y1)..idx(x1, y1) + 4];
+    let idx00 = (y0 as usize) * width + (x0 as usize);
+    let idx10 = (y0 as usize) * width + (x1 as usize);
+    let idx01 = (y1 as usize) * width + (x0 as usize);
+    let idx11 = (y1 as usize) * width + (x1 as usize);
 
-    let to_f = |c: &[u8]| {
-        let a = c[3] as f32 / 255.0;
-        [
-            (c[0] as f32 / 255.0) * a,
-            (c[1] as f32 / 255.0) * a,
-            (c[2] as f32 / 255.0) * a,
-            a,
-        ]
-    };
+    let c00 = &input[idx00 * 4..];
+    let c10 = &input[idx10 * 4..];
+    let c01 = &input[idx01 * 4..];
+    let c11 = &input[idx11 * 4..];
 
-    let s00 = to_f(c00);
-    let s10 = to_f(c10);
-    let s01 = to_f(c01);
-    let s11 = to_f(c11);
-
-    let lerp = |a: f32, b: f32, t: f32| a + (b - a) * t;
+    let w00 = fx_inv * fy_inv;
+    let w10 = fx * fy_inv;
+    let w01 = fx_inv * fy;
+    let w11 = fx * fy;
 
     let mut out = [0f32; 4];
     for i in 0..4 {
-        let top = lerp(s00[i], s10[i], fx);
-        let bottom = lerp(s01[i], s11[i], fx);
-        out[i] = lerp(top, bottom, fy);
+        let val =
+            c00[i] as f32 * w00 + c10[i] as f32 * w10 + c01[i] as f32 * w01 + c11[i] as f32 * w11;
+        out[i] = val.clamp(0.0, 255.0);
     }
 
     [
-        (out[0].clamp(0.0, 1.0) * 255.0).round() as u8,
-        (out[1].clamp(0.0, 1.0) * 255.0).round() as u8,
-        (out[2].clamp(0.0, 1.0) * 255.0).round() as u8,
-        (out[3].clamp(0.0, 1.0) * 255.0).round() as u8,
+        out[0].round() as u8,
+        out[1].round() as u8,
+        out[2].round() as u8,
+        out[3].round() as u8,
     ]
 }
 
 pub fn get_output_dimensions(width: usize, height: usize) -> (usize, usize) {
     let diag = ((width * width + height * height) as f32).sqrt();
-    let out_width = diag.ceil() as usize;
-    let out_height = diag.ceil() as usize;
-    (out_width, out_height)
+    let out = diag.ceil() as usize;
+    (out, out)
 }
 
 pub fn transform_rgba(
@@ -125,38 +122,38 @@ pub fn transform_rgba(
         return (0, 0, min_x, min_y, vec![]);
     }
 
-    let working: Vec<u8>;
-    let src = if premultiply_input {
-        working = {
-            let mut v = input.to_vec();
-            premultiply_rgba_inplace(&mut v);
-            v
-        };
-        &working[..]
+    let src: Vec<u8> = if premultiply_input {
+        let mut v = input.to_vec();
+        premultiply_rgba_inplace(&mut v);
+        v
     } else {
-        input
+        input.into()
     };
 
     let inv = transform.inverse();
     let mut output = vec![0u8; out_w * out_h * 4];
 
+    let min_xf = min_x as f32;
+    let min_yf = min_y as f32;
+
     for oy in 0..out_h {
+        let wy = (min_yf + oy as f32) + 0.5;
         for ox in 0..out_w {
-            let wx = (min_x + ox as i32) as f32 + 0.5;
-            let wy = (min_y + oy as i32) as f32 + 0.5;
+            let wx = (min_xf + ox as f32) + 0.5;
             let src_uv = inv * Vec2::new(wx, wy).extend(1.0);
             let sx = src_uv.x;
             let sy = src_uv.y;
 
             if sx >= 0.0 && sx < width as f32 && sy >= 0.0 && sy < height as f32 {
                 let color = match resample {
-                    Resample::Nearest => sample_nearest(src, width, height, sx, sy),
-                    Resample::Bilinear => sample_bilinear_premult(src, width, height, sx, sy),
+                    Resample::Nearest => sample_nearest(&src, width, height, sx, sy),
+                    Resample::Bilinear => sample_bilinear_premult(&src, width, height, sx, sy),
                 };
                 let dst_idx = (oy * out_w + ox) * 4;
-                output[dst_idx..dst_idx + 4].copy_from_slice(&color);
-            } else {
-                // leave transparent
+                output[dst_idx] = color[0];
+                output[dst_idx + 1] = color[1];
+                output[dst_idx + 2] = color[2];
+                output[dst_idx + 3] = color[3];
             }
         }
     }
@@ -170,10 +167,16 @@ pub fn tint_rgba(pixels: &mut [u8], tint: Color) {
         return;
     }
 
-    for px in pixels.chunks_exact_mut(4) {
-        px[0] = ((px[0] as u16 * tint.r as u16) / 255) as u8;
-        px[1] = ((px[1] as u16 * tint.g as u16) / 255) as u8;
-        px[2] = ((px[2] as u16 * tint.b as u16) / 255) as u8;
-        px[3] = ((px[3] as u16 * tint.a as u16) / 255) as u8;
+    let r = tint.r as u16;
+    let g = tint.g as u16;
+    let b = tint.b as u16;
+    let a = tint.a as u16;
+
+    let chunks = pixels.chunks_exact_mut(4);
+    for px in chunks {
+        px[0] = ((px[0] as u16 * r) / 255) as u8;
+        px[1] = ((px[1] as u16 * g) / 255) as u8;
+        px[2] = ((px[2] as u16 * b) / 255) as u8;
+        px[3] = ((px[3] as u16 * a) / 255) as u8;
     }
 }

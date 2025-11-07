@@ -57,6 +57,9 @@ fn update(nano_time: i64) {
         color: Color::BLACK,
     });
 
+    r.command(Command::BeginGroup {
+        label: Some("text, sprite, rect".to_string()),
+    });
     let text = "Hello, world!";
     let text_sz = Vec2::new(get_text_width(text) as f32, get_text_height(text) as f32);
     let tx = make_transform_for_object(unsafe { ANGLE }, Vec2::new(50.0, 50.0), text_sz);
@@ -64,6 +67,7 @@ fn update(nano_time: i64) {
         transform: tx,
         text: text.to_owned(),
         color: Color::RED,
+        max_width: None,
     });
 
     let sprite_sz = Vec2::new(100.0, 100.0);
@@ -72,6 +76,7 @@ fn update(nano_time: i64) {
         transform: sprite_tx,
         id: unsafe { SPRITE_ID },
         color: Color::WHITE,
+        resampling: transformer::Resample::Bilinear,
     });
 
     let rect_sz = Vec2::new(50.0, 50.0);
@@ -81,6 +86,7 @@ fn update(nano_time: i64) {
         size: rect_sz,
         color: Color::BLUE,
     });
+    r.command(Command::EndGroup {});
 
     r.flush();
 }
