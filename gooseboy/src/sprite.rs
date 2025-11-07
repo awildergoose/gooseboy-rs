@@ -1,4 +1,4 @@
-use crate::framebuffer::{FRAMEBUFFER, get_framebuffer_height, get_framebuffer_width};
+use crate::framebuffer::get_framebuffer_surface_mut;
 
 pub struct Sprite {
     pub width: usize,
@@ -32,8 +32,9 @@ impl Sprite {
 }
 
 pub fn blit_ex(x: usize, y: usize, width: usize, height: usize, rgba: &[u8], blend: bool) {
-    let fb_w = get_framebuffer_width();
-    let fb_h = get_framebuffer_height();
+    let fb = get_framebuffer_surface_mut();
+    let fb_w = fb.width;
+    let fb_h = fb.height;
 
     for row in 0..height {
         let fb_y = y + row;
@@ -57,19 +58,17 @@ pub fn blit_ex(x: usize, y: usize, width: usize, height: usize, rgba: &[u8], ble
             let sprite_index = row_start + col * 4;
             let dest_index = fb_y * fb_w * 4 + fb_x * 4;
 
-            unsafe {
-                let dst = &mut FRAMEBUFFER[dest_index..dest_index + 4];
-                let src = &rgba[sprite_index..sprite_index + 4];
+            let dst = &mut fb.rgba[dest_index..dest_index + 4];
+            let src = &rgba[sprite_index..sprite_index + 4];
 
-                if blend && src[3] < 255 {
-                    let a = src[3] as f32 / 255.0;
-                    for i in 0..3 {
-                        dst[i] = ((dst[i] as f32 * (1.0 - a)) + (src[i] as f32 * a)) as u8;
-                    }
-                    dst[3] = 255;
-                } else {
-                    dst.copy_from_slice(src);
+            if blend && src[3] < 255 {
+                let a = src[3] as f32 / 255.0;
+                for i in 0..3 {
+                    dst[i] = ((dst[i] as f32 * (1.0 - a)) + (src[i] as f32 * a)) as u8;
                 }
+                dst[3] = 255;
+            } else {
+                dst.copy_from_slice(src);
             }
         }
     }

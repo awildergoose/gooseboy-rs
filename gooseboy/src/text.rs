@@ -1,21 +1,26 @@
 use crate::{
     color::Color,
     font::FONT,
-    framebuffer::{get_framebuffer_width, set_pixel},
+    framebuffer::{Surface, get_framebuffer_surface_mut, get_framebuffer_width, set_pixel_ex},
 };
 
 pub fn draw_char(x: usize, y: usize, c: u8, color: Color) {
+    draw_char_ex(get_framebuffer_surface_mut(), x, y, c, color);
+}
+
+pub fn draw_char_ex(surface: &mut Surface, x: usize, y: usize, c: u8, color: Color) {
     for row in 0..8 {
         let bits = FONT[c as usize][row];
         for col in 0..8 {
             if bits & (1 << (7 - col)) != 0 {
-                set_pixel(x + col, y + row, color);
+                set_pixel_ex(surface, x + col, y + row, color);
             }
         }
     }
 }
 
 pub fn draw_text_wrapped_ex<S: AsRef<str>>(
+    surface: &mut Surface,
     x: usize,
     mut y: usize,
     text: S,
@@ -39,7 +44,7 @@ pub fn draw_text_wrapped_ex<S: AsRef<str>>(
                     y += 8;
                 }
 
-                draw_char(cx, y, ch, color);
+                draw_char_ex(surface, cx, y, ch, color);
                 cx += 8;
             }
         }
@@ -47,14 +52,28 @@ pub fn draw_text_wrapped_ex<S: AsRef<str>>(
 }
 
 pub fn draw_text<S: AsRef<str>>(x: usize, y: usize, text: S, color: Color) {
-    draw_text_wrapped_ex(x, y, text.as_ref(), color, None);
+    draw_text_wrapped_ex(
+        get_framebuffer_surface_mut(),
+        x,
+        y,
+        text.as_ref(),
+        color,
+        None,
+    );
 }
 
 pub fn draw_text_wrapped<S: AsRef<str>>(x: usize, y: usize, text: S, color: Color) {
-    draw_text_wrapped_ex(x, y, text.as_ref(), color, Some(get_framebuffer_width()))
+    draw_text_wrapped_ex(
+        get_framebuffer_surface_mut(),
+        x,
+        y,
+        text.as_ref(),
+        color,
+        Some(get_framebuffer_width()),
+    )
 }
 
-fn color_from_name(name: &str) -> Option<Color> {
+pub fn color_from_name(name: &str) -> Option<Color> {
     match name.to_ascii_lowercase().as_str() {
         "black" => Some(Color::BLACK),
         "white" => Some(Color::WHITE),
@@ -76,7 +95,14 @@ fn color_from_name(name: &str) -> Option<Color> {
 }
 
 pub fn draw_text_formatted<S: AsRef<str>>(x: usize, y: usize, text: S, default_color: Color) {
-    draw_text_formatted_ex(x, y, text.as_ref(), default_color, None);
+    draw_text_formatted_ex(
+        get_framebuffer_surface_mut(),
+        x,
+        y,
+        text.as_ref(),
+        default_color,
+        None,
+    );
 }
 
 pub fn draw_text_formatted_wrapped<S: AsRef<str>>(
@@ -86,10 +112,18 @@ pub fn draw_text_formatted_wrapped<S: AsRef<str>>(
     default_color: Color,
 ) {
     let max = get_framebuffer_width();
-    draw_text_formatted_ex(x, y, text.as_ref(), default_color, Some(max));
+    draw_text_formatted_ex(
+        get_framebuffer_surface_mut(),
+        x,
+        y,
+        text.as_ref(),
+        default_color,
+        Some(max),
+    );
 }
 
-fn draw_text_formatted_ex(
+pub fn draw_text_formatted_ex(
+    surface: &mut Surface,
     x: usize,
     mut y: usize,
     text: &str,
@@ -143,7 +177,7 @@ fn draw_text_formatted_ex(
                     cx = x;
                     y += 8;
                 }
-                draw_char(cx, y, b, color);
+                draw_char_ex(surface, cx, y, b, color);
                 cx += 8;
                 i += 1;
             }

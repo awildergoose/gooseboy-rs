@@ -1,4 +1,5 @@
 use glam::{Mat3, Vec2};
+use gooseboy::color::Color;
 
 #[inline]
 fn sample_bilinear(input: &[u8], width: usize, height: usize, x: f32, y: f32) -> [u8; 4] {
@@ -37,14 +38,22 @@ fn sample_bilinear(input: &[u8], width: usize, height: usize, x: f32, y: f32) ->
     out
 }
 
+pub fn get_output_dimensions(width: usize, height: usize) -> (usize, usize) {
+    let diag = ((width * width + height * height) as f32).sqrt();
+    let out_width = diag.ceil() as usize;
+    let out_height = diag.ceil() as usize;
+
+    (out_width, out_height)
+}
+
 pub fn transform_rgba(
     input: &[u8],
     width: usize,
     height: usize,
     transform: Mat3,
-    out_width: usize,
-    out_height: usize,
-) -> Vec<u8> {
+) -> (usize, usize, Vec<u8>) {
+    let (out_width, out_height) = get_output_dimensions(width, height);
+
     let mut output = vec![0u8; out_width * out_height * 4];
     let inv = transform.inverse();
 
@@ -62,5 +71,14 @@ pub fn transform_rgba(
         }
     }
 
-    output
+    (out_width, out_height, output)
+}
+
+pub fn tint_rgba(pixels: &mut [u8], tint: Color) {
+    for px in pixels.chunks_exact_mut(4) {
+        px[0] = ((px[0] as u16 * tint.r as u16) / 255) as u8;
+        px[1] = ((px[1] as u16 * tint.g as u16) / 255) as u8;
+        px[2] = ((px[2] as u16 * tint.b as u16) / 255) as u8;
+        px[3] = ((px[3] as u16 * tint.a as u16) / 255) as u8;
+    }
 }

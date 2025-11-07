@@ -1,7 +1,9 @@
 #![no_main]
 
 use flate2::read::ZlibDecoder;
-use gooseboy::framebuffer::{FRAMEBUFFER, get_framebuffer_height, get_framebuffer_width, init_fb};
+use gooseboy::framebuffer::{
+    get_framebuffer_height, get_framebuffer_surface_mut, get_framebuffer_width, init_fb,
+};
 use std::io::{Cursor, Read};
 
 const VIDEO: &[u8] = include_bytes!("../video.dat");
@@ -136,22 +138,22 @@ unsafe fn decode_next_frame() -> bool {
                 .unwrap_or(0);
             let fb_idx = pixel_index.checked_mul(4).unwrap_or(0);
 
-            if fb_idx + 3 >= unsafe { FRAMEBUFFER.len() } {
+            let fb_surface = get_framebuffer_surface_mut();
+            let fb = &mut fb_surface.rgba;
+            if fb_idx + 3 >= fb.len() {
                 continue;
             }
 
-            unsafe {
-                if bit == 1 {
-                    FRAMEBUFFER[fb_idx] = 0xFF;
-                    FRAMEBUFFER[fb_idx + 1] = 0xFF;
-                    FRAMEBUFFER[fb_idx + 2] = 0xFF;
-                    FRAMEBUFFER[fb_idx + 3] = 0xFF;
-                } else {
-                    FRAMEBUFFER[fb_idx] = 0x00;
-                    FRAMEBUFFER[fb_idx + 1] = 0x00;
-                    FRAMEBUFFER[fb_idx + 2] = 0x00;
-                    FRAMEBUFFER[fb_idx + 3] = 0xFF;
-                }
+            if bit == 1 {
+                fb[fb_idx] = 0xFF;
+                fb[fb_idx + 1] = 0xFF;
+                fb[fb_idx + 2] = 0xFF;
+                fb[fb_idx + 3] = 0xFF;
+            } else {
+                fb[fb_idx] = 0x00;
+                fb[fb_idx + 1] = 0x00;
+                fb[fb_idx + 2] = 0x00;
+                fb[fb_idx + 3] = 0xFF;
             }
         }
     }

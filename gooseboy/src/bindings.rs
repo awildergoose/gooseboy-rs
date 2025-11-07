@@ -1,3 +1,4 @@
+// TODO refactor some of these types, surely pointers should be a different type?
 #[link(wasm_import_module = "console")]
 unsafe extern "C" {
     pub fn log(ptr: i32, len: i32);
@@ -7,7 +8,7 @@ unsafe extern "C" {
 unsafe extern "C" {
     pub(crate) fn get_framebuffer_width() -> usize;
     pub(crate) fn get_framebuffer_height() -> usize;
-    pub(crate) fn clear_framebuffer(color: i32);
+    pub(crate) fn clear_surface(ptr: i32, size: i32, color: i32);
 }
 
 #[link(wasm_import_module = "memory")]

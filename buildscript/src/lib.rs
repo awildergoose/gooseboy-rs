@@ -69,6 +69,7 @@ pub fn convert_images() {
             let info = reader.next_frame(&mut buf).unwrap();
             let rgba = &buf[..info.buffer_size()];
 
+            writeln!(f, "#[allow(dead_code)]").unwrap();
             writeln!(
                 f,
                 "pub static {}: LazyLock<Sprite> = LazyLock::new(|| Sprite::new_blended({}, {}, &[",

@@ -2,6 +2,7 @@
 use std::sync::LazyLock;
 use gooseboy::sprite::Sprite;
 
+#[allow(dead_code)]
 pub static ICON: LazyLock<Sprite> = LazyLock::new(|| Sprite::new_blended(128, 128, &[
     0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,
@@ -5467,6 +5468,7 @@ pub static ICON: LazyLock<Sprite> = LazyLock::new(|| Sprite::new_blended(128, 12
     0,0,0,0,
 ]));
 
+#[allow(dead_code)]
 pub static ICON_GEAR: LazyLock<Sprite> = LazyLock::new(|| Sprite::new_blended(16, 16, &[
     0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,

@@ -1,4 +1,4 @@
-use crate::framebuffer::FRAMEBUFFER;
+use crate::framebuffer::{Surface, get_framebuffer_surface_mut};
 
 #[derive(Clone, Copy)]
 pub struct Color {
@@ -112,10 +112,16 @@ impl Color {
     /// This directly sets pixels in the framebuffer without checking the index
     pub unsafe fn blit(&self, index: usize) {
         unsafe {
-            FRAMEBUFFER[index] = self.r;
-            FRAMEBUFFER[index + 1] = self.g;
-            FRAMEBUFFER[index + 2] = self.b;
-            FRAMEBUFFER[index + 3] = self.a;
+            self.blit_ex(get_framebuffer_surface_mut(), index);
         }
+    }
+
+    /// # Safety
+    /// This directly sets pixels in the framebuffer without checking the index
+    pub unsafe fn blit_ex(&self, surface: &mut Surface, index: usize) {
+        surface.rgba[index] = self.r;
+        surface.rgba[index + 1] = self.g;
+        surface.rgba[index + 2] = self.b;
+        surface.rgba[index + 3] = self.a;
     }
 }
