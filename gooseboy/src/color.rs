@@ -1,6 +1,6 @@
 use crate::framebuffer::{Surface, get_framebuffer_surface_mut};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Color {
     pub r: u8,
     pub g: u8,
