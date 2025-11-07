@@ -9,7 +9,7 @@ use gooseboy::input::{
 use gooseboy::log;
 use gooseboy::text::draw_text;
 use gooseboy::{color::Color, framebuffer::clear_framebuffer};
-use libfnaf::Game;
+use libfnaf::{AnimKind, Game};
 
 use crate::animated_sprite::AnimatedSprite;
 
@@ -90,6 +90,7 @@ fn main() {
 
 static mut LAST_NANO_TIME: i64 = 0;
 static mut LAST_TICK: i64 = 0;
+static mut JUMPSCARE: Option<AnimKind> = None;
 const TICK_NS: i64 = 1_000_000_000 / libfnaf::FRAMES_PER_SECOND as i64;
 
 fn play_sound(sound: &'static str) {
@@ -135,6 +136,9 @@ fn update_game(nano_time: i64) {
                         }
                         libfnaf::GameEvent::Jumpscare { by } => {
                             log!("jumpscare by {:?}", by);
+                            unsafe {
+                                JUMPSCARE = Some(by);
+                            }
                             sounds::JUMPSCARE.lock().unwrap().play();
                         }
                         unhandled => {
@@ -192,14 +196,14 @@ fn update(nano_time: i64) {
 
     let game = unsafe { FNAF.as_mut().unwrap() };
 
-    if game.bonnie.in_office {
+    if game.foxy.in_office || unsafe { JUMPSCARE.is_some() } {
+        animated_sprites.foxy_jumpscare.update(dt);
+    } else if game.bonnie.in_office {
         sprites::OFFICE_BONNIE.blit(0, 0);
     } else if game.chica.in_office {
         sprites::OFFICE_CHICA.blit(0, 0);
     } else if game.freddy.in_office {
         sprites::JUMPSCARE_FREDDY_0.blit(0, 0);
-    } else if game.foxy.in_office {
-        animated_sprites.foxy_jumpscare.update(dt);
     } else if game.left_light_on && game.right_light_on {
         sprites::OFFICE_NORMAL.blit(0, 0);
     } else if game.power_out {
@@ -271,7 +275,7 @@ fn update(nano_time: i64) {
         0,
         0,
         format!(
-            "Time: {} Power: {}\nFoxy: {:?} Chica: {:?} Freddy: {:?} Bonnie: {:?}",
+            "Time: {} Power: {}\nFoxy: {:?} Chica: {:?}\nFreddy: {:?} Bonnie: {:?}",
             game.time_of_night_seconds,
             game.power_percent.round(),
             game.foxy.pos,
