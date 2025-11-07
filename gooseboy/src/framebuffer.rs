@@ -27,10 +27,11 @@ pub fn get_framebuffer_surface_mut() -> &'static mut Surface {
 
 pub fn init_fb() {
     unsafe {
-        let width = crate::bindings::get_framebuffer_width();
-        let height = crate::bindings::get_framebuffer_height();
         let mut guard = FRAMEBUFFER_SURFACE.lock().unwrap();
-        *guard = Some(Surface::new_empty(width, height));
+        *guard = Some(Surface::new_empty(
+            bindings::get_framebuffer_width(),
+            bindings::get_framebuffer_height(),
+        ));
     }
 }
 

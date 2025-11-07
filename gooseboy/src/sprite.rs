@@ -1,5 +1,6 @@
-use crate::framebuffer::get_framebuffer_surface_mut;
+use crate::framebuffer::{Surface, get_framebuffer_surface_mut};
 
+#[derive(Clone)]
 pub struct Sprite {
     pub width: usize,
     pub height: usize,
@@ -27,38 +28,53 @@ impl Sprite {
     }
 
     pub fn blit(&self, x: usize, y: usize) {
-        blit_ex(x, y, self.width, self.height, &self.rgba, self.blend);
+        blit_ex(
+            get_framebuffer_surface_mut(),
+            x,
+            y,
+            self.width,
+            self.height,
+            &self.rgba,
+            self.blend,
+        );
     }
 }
 
-pub fn blit_ex(x: usize, y: usize, width: usize, height: usize, rgba: &[u8], blend: bool) {
-    let fb = get_framebuffer_surface_mut();
-    let fb_w = fb.width;
-    let fb_h = fb.height;
+pub fn blit_ex(
+    surface: &mut Surface,
+    x: usize,
+    y: usize,
+    width: usize,
+    height: usize,
+    rgba: &[u8],
+    blend: bool,
+) {
+    let surface_w = surface.width;
+    let surface_h = surface.height;
 
     for row in 0..height {
-        let fb_y = y + row;
-        if fb_y >= fb_h {
+        let surface_y = y + row;
+        if surface_y >= surface_h {
             break;
         }
 
-        let fb_index = fb_y * fb_w * 4 + x * 4;
-        if fb_index >= fb_w * fb_h * 4 {
+        let surface_index = surface_y * surface_w * 4 + x * 4;
+        if surface_index >= surface_w * surface_h * 4 {
             break;
         }
 
         let row_start = row * width * 4;
 
         for col in 0..width {
-            let fb_x = x + col;
-            if fb_x >= fb_w {
+            let surface_x = x + col;
+            if surface_x >= surface_w {
                 break;
             }
 
             let sprite_index = row_start + col * 4;
-            let dest_index = fb_y * fb_w * 4 + fb_x * 4;
+            let dest_index = surface_y * surface_w * 4 + surface_x * 4;
 
-            let dst = &mut fb.rgba[dest_index..dest_index + 4];
+            let dst = &mut surface.rgba[dest_index..dest_index + 4];
             let src = &rgba[sprite_index..sprite_index + 4];
 
             if blend && src[3] < 255 {
