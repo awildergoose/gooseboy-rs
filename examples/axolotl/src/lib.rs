@@ -53,42 +53,38 @@ fn update(nano_time: i64) {
 
     let mut binding = RENDERER.lock();
     let r = binding.as_mut().unwrap();
-    r.command(Command::Clear {
-        color: Color::BLACK,
-    });
 
-    r.command(Command::BeginGroup {
-        label: Some("text, sprite, rect".to_string()),
-    });
-    let text = "Hello, world!";
-    let text_sz = Vec2::new(get_text_width(text) as f32, get_text_height(text) as f32);
-    let tx = make_transform_for_object(unsafe { ANGLE }, Vec2::new(50.0, 50.0), text_sz);
-    r.command(Command::Text {
-        transform: tx,
-        text: text.to_owned(),
-        color: Color::RED,
-        max_width: None,
-        resampling: transformer::Resample::Nearest,
-    });
+    r.clear(Color::BLACK);
+    r.group("text sprite rect", |r| {
+        let text = "Hello, world!";
+        let text_sz = Vec2::new(get_text_width(text) as f32, get_text_height(text) as f32);
+        let tx = make_transform_for_object(unsafe { ANGLE }, Vec2::new(50.0, 50.0), text_sz);
+        r.command(Command::Text {
+            transform: tx,
+            text: text.to_owned(),
+            color: Color::RED,
+            max_width: None,
+            resampling: transformer::Resample::Nearest,
+        });
 
-    let sprite_sz = Vec2::new(100.0, 100.0);
-    let sprite_tx = make_transform_for_object(unsafe { ANGLE }, Vec2::new(50.0, 50.0), sprite_sz);
-    r.command(Command::Sprite {
-        transform: sprite_tx,
-        id: unsafe { SPRITE_ID },
-        color: Color::WHITE,
-        resampling: transformer::Resample::Bilinear,
-    });
+        let sprite_sz = Vec2::new(100.0, 100.0);
+        let sprite_tx =
+            make_transform_for_object(unsafe { ANGLE }, Vec2::new(50.0, 50.0), sprite_sz);
+        r.command(Command::Sprite {
+            transform: sprite_tx,
+            id: unsafe { SPRITE_ID },
+            color: Color::WHITE,
+            resampling: transformer::Resample::Bilinear,
+        });
 
-    let rect_sz = Vec2::new(50.0, 50.0);
-    let rect_tx = make_transform_for_object(unsafe { ANGLE }, Vec2::new(50.0, 50.0), rect_sz);
-    r.command(Command::Rect {
-        transform: rect_tx,
-        size: rect_sz,
-        color: Color::BLUE,
-        resampling: transformer::Resample::Nearest,
+        let rect_sz = Vec2::new(50.0, 50.0);
+        let rect_tx = make_transform_for_object(unsafe { ANGLE }, Vec2::new(50.0, 50.0), rect_sz);
+        r.command(Command::Rect {
+            transform: rect_tx,
+            size: rect_sz,
+            color: Color::BLUE,
+            resampling: transformer::Resample::Nearest,
+        });
     });
-    r.command(Command::EndGroup {});
-
     r.flush();
 }

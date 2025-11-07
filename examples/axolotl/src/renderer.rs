@@ -70,6 +70,21 @@ impl Renderer {
         id
     }
 
+    pub fn group<F>(&mut self, label: &str, func: F)
+    where
+        F: FnOnce(&mut Self),
+    {
+        self.command(Command::BeginGroup {
+            label: Some(label.to_owned()),
+        });
+        func(self);
+        self.command(Command::EndGroup {});
+    }
+
+    pub fn clear(&mut self, color: Color) {
+        self.command(Command::Clear { color });
+    }
+
     pub fn command(&mut self, command: Command) {
         self.commands.push(command);
     }
