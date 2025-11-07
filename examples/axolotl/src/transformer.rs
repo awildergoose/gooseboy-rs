@@ -166,7 +166,7 @@ pub fn transform_rgba(
 
 pub fn tint_rgba(pixels: &mut [u8], tint: Color) {
     // micro-optimization
-    if tint.r == 255 && tint.g == 255 && tint.b == 255 {
+    if tint == Color::WHITE {
         return;
     }
 
