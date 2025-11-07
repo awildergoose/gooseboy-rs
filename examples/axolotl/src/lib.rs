@@ -1,4 +1,6 @@
 #![no_main]
+#![allow(unused_imports)]
+#![allow(dead_code)]
 
 use std::sync::{LazyLock, Mutex};
 
@@ -22,6 +24,7 @@ static mut ANGLE: f32 = 0.0;
 static mut LAST_NANO_TIME: i64 = 0;
 static mut SPRITE_ID: usize = 0;
 
+#[cfg(false)]
 #[gooseboy::main]
 fn main() {
     init_fb();
@@ -43,6 +46,7 @@ fn make_transform_for_object(angle: f32, pos: Vec2, size: Vec2) -> Mat3 {
     translation * (t2 * r * t1)
 }
 
+#[cfg(false)]
 #[gooseboy::update]
 fn update(nano_time: i64) {
     unsafe {

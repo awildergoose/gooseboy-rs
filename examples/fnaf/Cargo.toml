@@ -1,14 +1,15 @@
 [package]
-name = "axolotl"
+name = "fnaf"
 version = "0.1.0"
 edition = "2024"
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib"]
 
 [dependencies]
-glam = { version = "0.30.9", default-features = false, features = ["libm"] }
 gooseboy = { path = "../../gooseboy" }
+axolotl = { path = "../axolotl" }
+libfnaf = { git = "https://github.com/awildergoose/libfnaf.git" }
 
 [build-dependencies]
 gooseboy_buildscript = { path = "../../buildscript" }

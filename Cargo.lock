@@ -81,6 +81,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "fnaf"
+version = "0.1.0"
+dependencies = [
+ "axolotl",
+ "gooseboy",
+ "gooseboy_buildscript",
+ "libfnaf",
+]
+
+[[package]]
 name = "generic"
 version = "0.1.0"
 dependencies = [
@@ -119,6 +129,11 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "libfnaf"
+version = "0.1.0"
+source = "git+https://github.com/awildergoose/libfnaf.git#d90d91ee4d6a2defbc11b67b38ded387e109da89"
 
 [[package]]
 name = "libm"
