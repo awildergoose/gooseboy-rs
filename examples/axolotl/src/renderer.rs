@@ -38,6 +38,7 @@ pub enum Command {
     },
     BeginGroup {
         label: Option<String>,
+        layer: usize,
     },
     EndGroup {},
 }
@@ -52,7 +53,7 @@ pub struct Renderer {
     commands: Vec<Command>,
     atlas: Vec<AtlasEntry>,
     next_atlas_id: usize,
-    group_stack: Vec<String>,
+    group_stack: Vec<(String, usize)>,
 }
 
 impl Renderer {
@@ -70,12 +71,13 @@ impl Renderer {
         id
     }
 
-    pub fn group<F>(&mut self, label: &str, func: F)
+    pub fn group<F>(&mut self, label: &str, layer: usize, func: F)
     where
         F: FnOnce(&mut Self),
     {
         self.command(Command::BeginGroup {
             label: Some(label.to_owned()),
+            layer,
         });
         func(self);
         self.command(Command::EndGroup {});
@@ -186,9 +188,11 @@ impl Renderer {
                 );
                 blit_premultiplied_clipped(surface, off_x, off_y, out_w, out_h, &transformed, true);
             }
-            Command::BeginGroup { label } => {
+            Command::BeginGroup { label, layer } => {
                 if let Some(text) = label {
-                    self.group_stack.push(text.to_string());
+                    self.group_stack.push((text.clone(), layer));
+                } else {
+                    self.group_stack.push(("".to_string(), layer));
                 }
             }
             Command::EndGroup {} => {
@@ -199,10 +203,44 @@ impl Renderer {
 
     pub fn process_commands(&mut self) -> Surface {
         let mut surface = Surface::new_empty(get_framebuffer_width(), get_framebuffer_height());
-        let commands = std::mem::take(&mut self.commands);
 
-        for command in commands {
-            self.process_command(command, &mut surface);
+        let mut layered_commands: Vec<(usize, Vec<Command>)> = Vec::new();
+
+        let mut current_layer = 0;
+        let mut layer_commands: Vec<Command> = Vec::new();
+
+        for command in std::mem::take(&mut self.commands) {
+            match &command {
+                Command::BeginGroup { layer, .. } => {
+                    if !layer_commands.is_empty() {
+                        layered_commands.push((current_layer, layer_commands));
+                        layer_commands = Vec::new();
+                    }
+                    current_layer = *layer;
+                }
+                Command::EndGroup {} => {
+                    if !layer_commands.is_empty() {
+                        layered_commands.push((current_layer, layer_commands));
+                        layer_commands = Vec::new();
+                    }
+                    current_layer = self.group_stack.last().map(|(_, l)| *l).unwrap_or(0);
+                }
+                _ => {
+                    layer_commands.push(command);
+                }
+            }
+        }
+
+        if !layer_commands.is_empty() {
+            layered_commands.push((current_layer, layer_commands));
+        }
+
+        layered_commands.sort_by_key(|(layer, _)| *layer);
+
+        for (_, cmds) in layered_commands {
+            for cmd in cmds {
+                self.process_command(cmd, &mut surface);
+            }
         }
 
         surface
