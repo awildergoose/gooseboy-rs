@@ -68,6 +68,7 @@ fn update(nano_time: i64) {
         text: text.to_owned(),
         color: Color::RED,
         max_width: None,
+        resampling: transformer::Resample::Nearest,
     });
 
     let sprite_sz = Vec2::new(100.0, 100.0);
@@ -85,6 +86,7 @@ fn update(nano_time: i64) {
         transform: rect_tx,
         size: rect_sz,
         color: Color::BLUE,
+        resampling: transformer::Resample::Nearest,
     });
     r.command(Command::EndGroup {});
 

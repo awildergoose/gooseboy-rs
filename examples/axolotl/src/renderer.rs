@@ -22,6 +22,7 @@ pub enum Command {
         text: String,
         color: Color,
         max_width: Option<usize>,
+        resampling: Resample,
     },
     Sprite {
         transform: Transform,
@@ -33,6 +34,7 @@ pub enum Command {
         transform: Transform,
         size: Vec2,
         color: Color,
+        resampling: Resample,
     },
     BeginGroup {
         label: Option<String>,
@@ -99,6 +101,7 @@ impl Renderer {
                 text,
                 color,
                 max_width,
+                resampling,
             } => {
                 let width = get_text_width(text.clone());
                 let height = get_text_height(text.clone());
@@ -110,7 +113,7 @@ impl Renderer {
                         width,
                         height,
                         transform,
-                        transformer::Resample::Nearest,
+                        resampling,
                         true,
                     );
                 blit_premultiplied_clipped(
@@ -154,6 +157,7 @@ impl Renderer {
                 transform,
                 size,
                 color,
+                resampling,
             } => {
                 let rect_surface = Surface::new_empty(size.x as usize, size.y as usize);
                 clear_surface(rect_surface.rgba.as_ptr(), rect_surface.rgba.len(), color);
@@ -162,7 +166,7 @@ impl Renderer {
                     rect_surface.width,
                     rect_surface.height,
                     transform,
-                    transformer::Resample::Nearest,
+                    resampling,
                     true,
                 );
                 blit_premultiplied_clipped(surface, off_x, off_y, out_w, out_h, &transformed, true);
