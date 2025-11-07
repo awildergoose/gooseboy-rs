@@ -144,7 +144,7 @@ fn update_game(nano_time: i64) {
                 }
             }
 
-            LAST_TICK += ticks * TICK_NS;
+            LAST_TICK += TICK_NS;
         }
     }
 }
@@ -192,15 +192,7 @@ fn update(nano_time: i64) {
 
     let game = unsafe { FNAF.as_mut().unwrap() };
 
-    if game.left_light_on && game.right_light_on {
-        sprites::OFFICE_NORMAL.blit(0, 0);
-    } else if game.left_light_on {
-        sprites::OFFICE_LIGHT_LEFT.blit(0, 0);
-    } else if game.right_light_on {
-        sprites::OFFICE_LIGHT_RIGHT.blit(0, 0);
-    } else if game.power_out {
-        sprites::OFFICE_POWER_OUT.blit(0, 0);
-    } else if game.bonnie.in_office {
+    if game.bonnie.in_office {
         sprites::OFFICE_BONNIE.blit(0, 0);
     } else if game.chica.in_office {
         sprites::OFFICE_CHICA.blit(0, 0);
@@ -208,6 +200,14 @@ fn update(nano_time: i64) {
         sprites::JUMPSCARE_FREDDY_0.blit(0, 0);
     } else if game.foxy.in_office {
         animated_sprites.foxy_jumpscare.update(dt);
+    } else if game.left_light_on && game.right_light_on {
+        sprites::OFFICE_NORMAL.blit(0, 0);
+    } else if game.power_out {
+        sprites::OFFICE_POWER_OUT.blit(0, 0);
+    } else if game.left_light_on {
+        sprites::OFFICE_LIGHT_LEFT.blit(0, 0);
+    } else if game.right_light_on {
+        sprites::OFFICE_LIGHT_RIGHT.blit(0, 0);
     } else {
         sprites::OFFICE_NORMAL.blit(0, 0);
     }
@@ -271,9 +271,13 @@ fn update(nano_time: i64) {
         0,
         0,
         format!(
-            "Time: {} Power: {}",
+            "Time: {} Power: {}\nFoxy: {:?} Chica: {:?} Freddy: {:?} Bonnie: {:?}",
             game.time_of_night_seconds,
-            game.power_percent.round()
+            game.power_percent.round(),
+            game.foxy.pos,
+            game.chica.pos,
+            game.freddy.pos,
+            game.bonnie.pos
         ),
         Color::RED,
     );
