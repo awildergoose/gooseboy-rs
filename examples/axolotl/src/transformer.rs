@@ -15,23 +15,29 @@ fn premultiply_rgba_inplace(pixels: &mut [u8]) {
             continue;
         }
 
-        let a16 = a as u16;
-        px[0] = ((px[0] as u16 * a16) / 255) as u8;
-        px[1] = ((px[1] as u16 * a16) / 255) as u8;
-        px[2] = ((px[2] as u16 * a16) / 255) as u8;
+        let a32 = a as u32;
+        px[0] = ((px[0] as u32 * a32 + 127) / 255) as u8;
+        px[1] = ((px[1] as u32 * a32 + 127) / 255) as u8;
+        px[2] = ((px[2] as u32 * a32 + 127) / 255) as u8;
     }
 }
 
 #[inline]
 fn sample_nearest(input: &[u8], width: usize, height: usize, x: f32, y: f32) -> [u8; 4] {
-    let xi = x.round() as i32;
-    let yi = y.round() as i32;
-    let clamp = |v: i32, max: usize| v.max(0).min(max as i32 - 1);
-    let xx = clamp(xi, width) as usize;
-    let yy = clamp(yi, height) as usize;
+    let xi = (x + 0.5) as i32;
+    let yi = (y + 0.5) as i32;
+    let xx = xi.max(0).min(width as i32 - 1) as usize;
+    let yy = yi.max(0).min(height as i32 - 1) as usize;
     let idx = (yy * width + xx) * 4;
 
-    [input[idx], input[idx + 1], input[idx + 2], input[idx + 3]]
+    unsafe {
+        [
+            *input.get_unchecked(idx),
+            *input.get_unchecked(idx + 1),
+            *input.get_unchecked(idx + 2),
+            *input.get_unchecked(idx + 3),
+        ]
+    }
 }
 
 #[inline]
@@ -42,43 +48,51 @@ fn sample_bilinear_premult(input: &[u8], width: usize, height: usize, x: f32, y:
     let y1 = y0 + 1;
     let fx = x - x0 as f32;
     let fy = y - y0 as f32;
-    let fx_inv = 1.0 - fx;
-    let fy_inv = 1.0 - fy;
 
-    let clamp = |v: i32, max: usize| v.max(0).min(max as i32 - 1);
-    let x0 = clamp(x0, width);
-    let x1 = clamp(x1, width);
-    let y0 = clamp(y0, height);
-    let y1 = clamp(y1, height);
+    let x0 = x0.max(0).min(width as i32 - 1) as usize;
+    let x1 = x1.max(0).min(width as i32 - 1) as usize;
+    let y0 = y0.max(0).min(height as i32 - 1) as usize;
+    let y1 = y1.max(0).min(height as i32 - 1) as usize;
 
-    let idx00 = (y0 as usize) * width + (x0 as usize);
-    let idx10 = (y0 as usize) * width + (x1 as usize);
-    let idx01 = (y1 as usize) * width + (x0 as usize);
-    let idx11 = (y1 as usize) * width + (x1 as usize);
+    let idx00 = y0 * width + x0;
+    let idx10 = y0 * width + x1;
+    let idx01 = y1 * width + x0;
+    let idx11 = y1 * width + x1;
 
-    let c00 = &input[idx00 * 4..];
-    let c10 = &input[idx10 * 4..];
-    let c01 = &input[idx01 * 4..];
-    let c11 = &input[idx11 * 4..];
+    unsafe {
+        let c00 = input.get_unchecked(idx00 * 4..);
+        let c10 = input.get_unchecked(idx10 * 4..);
+        let c01 = input.get_unchecked(idx01 * 4..);
+        let c11 = input.get_unchecked(idx11 * 4..);
 
-    let w00 = fx_inv * fy_inv;
-    let w10 = fx * fy_inv;
-    let w01 = fx_inv * fy;
-    let w11 = fx * fy;
+        let w00 = (1.0 - fx) * (1.0 - fy);
+        let w10 = fx * (1.0 - fy);
+        let w01 = (1.0 - fx) * fy;
+        let w11 = fx * fy;
 
-    let mut out = [0f32; 4];
-    for i in 0..4 {
-        let val =
-            c00[i] as f32 * w00 + c10[i] as f32 * w10 + c01[i] as f32 * w01 + c11[i] as f32 * w11;
-        out[i] = val.clamp(0.0, 255.0);
+        [
+            (c00[0] as f32 * w00
+                + c10[0] as f32 * w10
+                + c01[0] as f32 * w01
+                + c11[0] as f32 * w11
+                + 0.5) as u8,
+            (c00[1] as f32 * w00
+                + c10[1] as f32 * w10
+                + c01[1] as f32 * w01
+                + c11[1] as f32 * w11
+                + 0.5) as u8,
+            (c00[2] as f32 * w00
+                + c10[2] as f32 * w10
+                + c01[2] as f32 * w01
+                + c11[2] as f32 * w11
+                + 0.5) as u8,
+            (c00[3] as f32 * w00
+                + c10[3] as f32 * w10
+                + c01[3] as f32 * w01
+                + c11[3] as f32 * w11
+                + 0.5) as u8,
+        ]
     }
-
-    [
-        out[0].round() as u8,
-        out[1].round() as u8,
-        out[2].round() as u8,
-        out[3].round() as u8,
-    ]
 }
 
 pub fn get_output_dimensions(width: usize, height: usize) -> (usize, usize) {
@@ -95,6 +109,82 @@ pub fn transform_rgba(
     resample: Resample,
     premultiply_input: bool,
 ) -> (usize, usize, i32, i32, Vec<u8>) {
+    let (min, max) = compute_bounds(width, height, transform);
+
+    let min_x = min.x as i32;
+    let min_y = min.y as i32;
+    let max_x = max.x as i32;
+    let max_y = max.y as i32;
+
+    let out_w = (max_x - min_x).max(0) as usize;
+    let out_h = (max_y - min_y).max(0) as usize;
+
+    if out_w == 0 || out_h == 0 {
+        return (0, 0, min_x, min_y, vec![]);
+    }
+
+    let working = if premultiply_input {
+        let mut v = input.to_vec();
+        premultiply_rgba_inplace(&mut v);
+        Some(v)
+    } else {
+        None
+    };
+    let src = working.as_deref().unwrap_or(input);
+
+    let inv = transform.inverse();
+    let mut output = vec![0u8; out_w * out_h * 4];
+
+    let inv_cols = inv.to_cols_array_2d();
+    let (a, b, c, d, e, f) = (
+        inv_cols[0][0],
+        inv_cols[1][0],
+        inv_cols[2][0],
+        inv_cols[0][1],
+        inv_cols[1][1],
+        inv_cols[2][1],
+    );
+
+    match resample {
+        Resample::Nearest => transform_nearest_fast(
+            src,
+            width,
+            height,
+            &mut output,
+            out_w,
+            out_h,
+            min_x,
+            min_y,
+            a,
+            b,
+            c,
+            d,
+            e,
+            f,
+        ),
+        Resample::Bilinear => transform_bilinear_fast(
+            src,
+            width,
+            height,
+            &mut output,
+            out_w,
+            out_h,
+            min_x,
+            min_y,
+            a,
+            b,
+            c,
+            d,
+            e,
+            f,
+        ),
+    }
+
+    (out_w, out_h, min_x, min_y, output)
+}
+
+#[inline(never)]
+fn compute_bounds(width: usize, height: usize, transform: Mat3) -> (Vec2, Vec2) {
     let corners = [
         Vec2::new(0.0, 0.0),
         Vec2::new(width as f32, 0.0),
@@ -104,79 +194,127 @@ pub fn transform_rgba(
 
     let mut min = Vec2::splat(f32::INFINITY);
     let mut max = Vec2::splat(f32::NEG_INFINITY);
+
     for &c in &corners {
-        let tc = (transform * c.extend(1.0)).truncate();
-        min = min.min(tc);
-        max = max.max(tc);
+        let tc = transform * c.extend(1.0);
+        min = min.min(tc.truncate());
+        max = max.max(tc.truncate());
     }
 
-    let min_x = min.x.floor() as i32;
-    let min_y = min.y.floor() as i32;
-    let max_x = max.x.ceil() as i32;
-    let max_y = max.y.ceil() as i32;
+    (min, max)
+}
 
-    let out_w = (max_x - min_x).max(0) as usize;
-    let out_h = (max_y - min_y).max(0) as usize;
-
-    if out_w == 0 || out_h == 0 {
-        return (0, 0, min_x, min_y, vec![]);
-    }
-
-    let src: Vec<u8> = if premultiply_input {
-        let mut v = input.to_vec();
-        premultiply_rgba_inplace(&mut v);
-        v
-    } else {
-        input.into()
-    };
-
-    let inv = transform.inverse();
-    let mut output = vec![0u8; out_w * out_h * 4];
-
+#[inline(never)]
+#[allow(clippy::too_many_arguments)]
+fn transform_nearest_fast(
+    src: &[u8],
+    width: usize,
+    height: usize,
+    output: &mut [u8],
+    out_w: usize,
+    out_h: usize,
+    min_x: i32,
+    min_y: i32,
+    a: f32,
+    b: f32,
+    c: f32,
+    d: f32,
+    e: f32,
+    f: f32,
+) {
+    let width_f = width as f32;
+    let height_f = height as f32;
     let min_xf = min_x as f32;
     let min_yf = min_y as f32;
 
     for oy in 0..out_h {
-        let wy = (min_yf + oy as f32) + 0.5;
-        for ox in 0..out_w {
-            let wx = (min_xf + ox as f32) + 0.5;
-            let src_uv = inv * Vec2::new(wx, wy).extend(1.0);
-            let sx = src_uv.x;
-            let sy = src_uv.y;
+        let wy = min_yf + oy as f32 + 0.5;
+        let row_start = oy * out_w * 4;
 
-            if sx >= 0.0 && sx < width as f32 && sy >= 0.0 && sy < height as f32 {
-                let color = match resample {
-                    Resample::Nearest => sample_nearest(&src, width, height, sx, sy),
-                    Resample::Bilinear => sample_bilinear_premult(&src, width, height, sx, sy),
-                };
-                let dst_idx = (oy * out_w + ox) * 4;
-                output[dst_idx] = color[0];
-                output[dst_idx + 1] = color[1];
-                output[dst_idx + 2] = color[2];
-                output[dst_idx + 3] = color[3];
+        for ox in 0..out_w {
+            let wx = min_xf + ox as f32 + 0.5;
+
+            let sx = a * wx + b * wy + c;
+            let sy = d * wx + e * wy + f;
+
+            if sx >= 0.0 && sx < width_f && sy >= 0.0 && sy < height_f {
+                let color = sample_nearest(src, width, height, sx, sy);
+                let dst_idx = row_start + ox * 4;
+
+                unsafe {
+                    *output.get_unchecked_mut(dst_idx) = color[0];
+                    *output.get_unchecked_mut(dst_idx + 1) = color[1];
+                    *output.get_unchecked_mut(dst_idx + 2) = color[2];
+                    *output.get_unchecked_mut(dst_idx + 3) = color[3];
+                }
             }
         }
     }
+}
 
-    (out_w, out_h, min_x, min_y, output)
+#[inline(never)]
+#[allow(clippy::too_many_arguments)]
+fn transform_bilinear_fast(
+    src: &[u8],
+    width: usize,
+    height: usize,
+    output: &mut [u8],
+    out_w: usize,
+    out_h: usize,
+    min_x: i32,
+    min_y: i32,
+    a: f32,
+    b: f32,
+    c: f32,
+    d: f32,
+    e: f32,
+    f: f32,
+) {
+    let width_f = width as f32;
+    let height_f = height as f32;
+    let min_xf = min_x as f32;
+    let min_yf = min_y as f32;
+
+    for oy in 0..out_h {
+        let wy = min_yf + oy as f32 + 0.5;
+        let row_start = oy * out_w * 4;
+
+        for ox in 0..out_w {
+            let wx = min_xf + ox as f32 + 0.5;
+
+            let sx = a * wx + b * wy + c;
+            let sy = d * wx + e * wy + f;
+
+            if sx >= 0.0 && sx < width_f && sy >= 0.0 && sy < height_f {
+                let color = sample_bilinear_premult(src, width, height, sx, sy);
+                let dst_idx = row_start + ox * 4;
+
+                unsafe {
+                    *output.get_unchecked_mut(dst_idx) = color[0];
+                    *output.get_unchecked_mut(dst_idx + 1) = color[1];
+                    *output.get_unchecked_mut(dst_idx + 2) = color[2];
+                    *output.get_unchecked_mut(dst_idx + 3) = color[3];
+                }
+            }
+        }
+    }
 }
 
 pub fn tint_rgba(pixels: &mut [u8], tint: Color) {
-    // micro-optimization
     if tint == Color::WHITE {
         return;
     }
 
-    let r = tint.r as u16;
-    let g = tint.g as u16;
-    let b = tint.b as u16;
-    let a = tint.a as u16;
+    let r = tint.r as u32;
+    let g = tint.g as u32;
+    let b = tint.b as u32;
+    let a = tint.a as u32;
 
     let chunks = pixels.chunks_exact_mut(4);
     for px in chunks {
-        px[0] = ((px[0] as u16 * r) / 255) as u8;
-        px[1] = ((px[1] as u16 * g) / 255) as u8;
-        px[2] = ((px[2] as u16 * b) / 255) as u8;
-        px[3] = ((px[3] as u16 * a) / 255) as u8;
+        px[0] = ((px[0] as u32 * r + 127) / 255) as u8;
+        px[1] = ((px[1] as u32 * g + 127) / 255) as u8;
+        px[2] = ((px[2] as u32 * b + 127) / 255) as u8;
+        px[3] = ((px[3] as u32 * a + 127) / 255) as u8;
     }
 }
