@@ -55,9 +55,9 @@ fn update(nano_time: i64) {
     let r = binding.as_mut().unwrap();
 
     r.clear(Color::BLACK);
-    r.group("on top", 100, |r| {
-        let sz = Vec2::new(50.0, 50.0);
-        let tx = make_transform_for_object(0.0, Vec2::new(50.0, 50.0), sz);
+    r.group("on top", -100, |r| {
+        let sz = Vec2::new(100.0, 100.0);
+        let tx = make_transform_for_object(unsafe { ANGLE }, Vec2::new(50.0, 50.0), sz);
         r.command(Command::Rect {
             transform: tx,
             size: sz,

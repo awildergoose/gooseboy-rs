@@ -38,7 +38,7 @@ pub enum Command {
     },
     BeginGroup {
         label: Option<String>,
-        layer: usize,
+        layer: isize,
     },
     EndGroup {},
 }
@@ -53,7 +53,12 @@ pub struct Renderer {
     commands: Vec<Command>,
     atlas: Vec<AtlasEntry>,
     next_atlas_id: usize,
-    group_stack: Vec<(String, usize)>,
+    group_stack: Vec<(String, isize)>,
+}
+
+struct LayeredCommand {
+    layer: isize,
+    command: Command,
 }
 
 impl Renderer {
@@ -71,7 +76,7 @@ impl Renderer {
         id
     }
 
-    pub fn group<F>(&mut self, label: &str, layer: usize, func: F)
+    pub fn group<F>(&mut self, label: &str, layer: isize, func: F)
     where
         F: FnOnce(&mut Self),
     {
@@ -203,44 +208,38 @@ impl Renderer {
 
     pub fn process_commands(&mut self) -> Surface {
         let mut surface = Surface::new_empty(get_framebuffer_width(), get_framebuffer_height());
-
-        let mut layered_commands: Vec<(usize, Vec<Command>)> = Vec::new();
-
+        let mut layered_commands: Vec<LayeredCommand> = Vec::new();
         let mut current_layer = 0;
-        let mut layer_commands: Vec<Command> = Vec::new();
+        let mut first_clear_done = false;
 
         for command in std::mem::take(&mut self.commands) {
             match &command {
                 Command::BeginGroup { layer, .. } => {
-                    if !layer_commands.is_empty() {
-                        layered_commands.push((current_layer, layer_commands));
-                        layer_commands = Vec::new();
-                    }
                     current_layer = *layer;
                 }
                 Command::EndGroup {} => {
-                    if !layer_commands.is_empty() {
-                        layered_commands.push((current_layer, layer_commands));
-                        layer_commands = Vec::new();
-                    }
                     current_layer = self.group_stack.last().map(|(_, l)| *l).unwrap_or(0);
                 }
+                Command::Clear { .. } if !first_clear_done => {
+                    layered_commands.push(LayeredCommand {
+                        layer: isize::MIN,
+                        command,
+                    });
+                    first_clear_done = true;
+                }
                 _ => {
-                    layer_commands.push(command);
+                    layered_commands.push(LayeredCommand {
+                        layer: current_layer,
+                        command,
+                    });
                 }
             }
         }
 
-        if !layer_commands.is_empty() {
-            layered_commands.push((current_layer, layer_commands));
-        }
+        layered_commands.sort_by_key(|lc| lc.layer);
 
-        layered_commands.sort_by_key(|(layer, _)| *layer);
-
-        for (_, cmds) in layered_commands {
-            for cmd in cmds {
-                self.process_command(cmd, &mut surface);
-            }
+        for lc in layered_commands {
+            self.process_command(lc.command, &mut surface);
         }
 
         surface
