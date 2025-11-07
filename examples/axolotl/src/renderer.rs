@@ -5,7 +5,7 @@ use gooseboy::{
         Surface, clear_surface, get_framebuffer_height, get_framebuffer_ptr, get_framebuffer_width,
     },
     mem,
-    sprite::{Sprite, blit_ex},
+    sprite::{Sprite, blit_premultiplied_clipped},
     text::{draw_text_wrapped_ex, get_text_height, get_text_width},
 };
 
@@ -99,15 +99,24 @@ impl Renderer {
                 let height = get_text_height(text);
                 let mut text_surface = Surface::new_empty(width, height);
                 draw_text_wrapped_ex(&mut text_surface, 0, 0, text, *color, None);
-                let (out_width, out_height, transformed) = transformer::transform_rgba(
-                    &text_surface.rgba,
-                    width,
-                    height,
-                    *transform,
-                    transformer::Resample::Nearest,
+                let (out_width, out_height, off_x, off_y, transformed) =
+                    transformer::transform_rgba(
+                        &text_surface.rgba,
+                        width,
+                        height,
+                        *transform,
+                        transformer::Resample::Nearest,
+                        true,
+                    );
+                blit_premultiplied_clipped(
+                    surface,
+                    off_x,
+                    off_y,
+                    out_width,
+                    out_height,
+                    &transformed,
                     true,
                 );
-                blit_ex(surface, 0, 0, out_width, out_height, &transformed, true);
             }
             Command::Sprite {
                 transform,
@@ -115,17 +124,26 @@ impl Renderer {
                 color,
             } => {
                 let entry = self.atlas.iter().find(|p| p.id == *id).unwrap();
-                let (out_width, out_height, mut transformed) = transformer::transform_rgba(
-                    &entry.surface.rgba,
-                    entry.surface.width,
-                    entry.surface.height,
-                    *transform,
-                    transformer::Resample::Bilinear,
-                    true,
-                );
+                let (out_width, out_height, off_x, off_y, mut transformed) =
+                    transformer::transform_rgba(
+                        &entry.surface.rgba,
+                        entry.surface.width,
+                        entry.surface.height,
+                        *transform,
+                        transformer::Resample::Bilinear,
+                        true,
+                    );
                 transformer::tint_rgba(&mut transformed, *color);
                 // TODO self.cached_transforms
-                blit_ex(surface, 0, 0, out_width, out_height, &transformed, true);
+                blit_premultiplied_clipped(
+                    surface,
+                    off_x,
+                    off_y,
+                    out_width,
+                    out_height,
+                    &transformed,
+                    true,
+                );
             }
             Command::Rect {
                 transform,
@@ -134,7 +152,7 @@ impl Renderer {
             } => {
                 let rect_surface = Surface::new_empty(size.x as usize, size.y as usize);
                 clear_surface(rect_surface.rgba.as_ptr(), rect_surface.rgba.len(), *color);
-                let (out_width, out_height, transformed) = transformer::transform_rgba(
+                let (out_w, out_h, off_x, off_y, transformed) = transformer::transform_rgba(
                     &rect_surface.rgba,
                     rect_surface.width,
                     rect_surface.height,
@@ -142,7 +160,7 @@ impl Renderer {
                     transformer::Resample::Nearest,
                     true,
                 );
-                blit_ex(surface, 0, 0, out_width, out_height, &transformed, true);
+                blit_premultiplied_clipped(surface, off_x, off_y, out_w, out_h, &transformed, true);
             }
             Command::BeginGroup { label } => todo!(),
             Command::EndGroup {} => todo!(),

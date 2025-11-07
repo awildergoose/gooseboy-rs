@@ -90,9 +90,6 @@ pub fn get_output_dimensions(width: usize, height: usize) -> (usize, usize) {
     (out_width, out_height)
 }
 
-/// transform_rgba now accepts a Resample option and a premultiply flag.
-/// If premultiply_input = true, it will use a copied premultiplied buffer to avoid mutating the caller.
-/// Output is premultiplied (recommended) — composite with premultiplied blending.
 pub fn transform_rgba(
     input: &[u8],
     width: usize,
@@ -100,12 +97,34 @@ pub fn transform_rgba(
     transform: Mat3,
     resample: Resample,
     premultiply_input: bool,
-) -> (usize, usize, Vec<u8>) {
-    let (out_width, out_height) = get_output_dimensions(width, height);
-    let mut output = vec![0u8; out_width * out_height * 4];
-    let inv = transform.inverse();
+) -> (usize, usize, i32, i32, Vec<u8>) {
+    let corners = [
+        Vec2::new(0.0, 0.0),
+        Vec2::new(width as f32, 0.0),
+        Vec2::new(0.0, height as f32),
+        Vec2::new(width as f32, height as f32),
+    ];
 
-    // optionally create a premultiplied working copy so we don't mutate original buffer
+    let mut min = Vec2::splat(f32::INFINITY);
+    let mut max = Vec2::splat(f32::NEG_INFINITY);
+    for &c in &corners {
+        let tc = (transform * c.extend(1.0)).truncate();
+        min = min.min(tc);
+        max = max.max(tc);
+    }
+
+    let min_x = min.x.floor() as i32;
+    let min_y = min.y.floor() as i32;
+    let max_x = max.x.ceil() as i32;
+    let max_y = max.y.ceil() as i32;
+
+    let out_w = (max_x - min_x).max(0) as usize;
+    let out_h = (max_y - min_y).max(0) as usize;
+
+    if out_w == 0 || out_h == 0 {
+        return (0, 0, min_x, min_y, vec![]);
+    }
+
     let working: Vec<u8>;
     let src = if premultiply_input {
         working = {
@@ -118,27 +137,39 @@ pub fn transform_rgba(
         input
     };
 
-    for y in 0..out_height {
-        for x in 0..out_width {
-            let uv = inv * Vec2::new(x as f32 + 0.5, y as f32 + 0.5).extend(1.0);
-            let sx = uv.x;
-            let sy = uv.y;
+    let inv = transform.inverse();
+    let mut output = vec![0u8; out_w * out_h * 4];
+
+    for oy in 0..out_h {
+        for ox in 0..out_w {
+            let wx = (min_x + ox as i32) as f32 + 0.5;
+            let wy = (min_y + oy as i32) as f32 + 0.5;
+            let src_uv = inv * Vec2::new(wx, wy).extend(1.0);
+            let sx = src_uv.x;
+            let sy = src_uv.y;
 
             if sx >= 0.0 && sx < width as f32 && sy >= 0.0 && sy < height as f32 {
                 let color = match resample {
                     Resample::Nearest => sample_nearest(src, width, height, sx, sy),
                     Resample::Bilinear => sample_bilinear_premult(src, width, height, sx, sy),
                 };
-                let dst_idx = (y * out_width + x) * 4;
+                let dst_idx = (oy * out_w + ox) * 4;
                 output[dst_idx..dst_idx + 4].copy_from_slice(&color);
+            } else {
+                // leave transparent
             }
         }
     }
 
-    (out_width, out_height, output)
+    (out_w, out_h, min_x, min_y, output)
 }
 
 pub fn tint_rgba(pixels: &mut [u8], tint: Color) {
+    // micro-optimization
+    if tint.r == 255 && tint.g == 255 && tint.b == 255 {
+        return;
+    }
+
     for px in pixels.chunks_exact_mut(4) {
         px[0] = ((px[0] as u16 * tint.r as u16) / 255) as u8;
         px[1] = ((px[1] as u16 * tint.g as u16) / 255) as u8;

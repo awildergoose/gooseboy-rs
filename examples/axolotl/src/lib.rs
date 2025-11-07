@@ -7,6 +7,8 @@ use gooseboy::color::Color;
 use gooseboy::framebuffer::init_fb;
 use gooseboy::text::{get_text_height, get_text_width};
 
+use crate::renderer::Command;
+
 pub mod renderer;
 pub mod transformer;
 
@@ -32,46 +34,51 @@ fn main() {
     }
 }
 
+fn make_transform_for_object(angle: f32, pos: Vec2, size: Vec2) -> Mat3 {
+    let center = Vec2::new(size.x / 2.0, size.y / 2.0);
+    let t1 = Mat3::from_translation(-center);
+    let r = Mat3::from_angle(angle);
+    let t2 = Mat3::from_translation(center);
+    let translation = Mat3::from_translation(pos);
+    translation * (t2 * r * t1)
+}
+
 #[gooseboy::update]
 fn update(nano_time: i64) {
     unsafe {
         let dt = (nano_time - LAST_NANO_TIME) as f32 / 1_000_000_000.0; // convert to seconds
-        ANGLE += dt; // now ANGLE accumulates properly in radians per second
+        ANGLE += dt;
         LAST_NANO_TIME = nano_time;
     }
 
     let mut binding = RENDERER.lock();
     let r = binding.as_mut().unwrap();
-    r.command(renderer::Command::Clear {
+    r.command(Command::Clear {
         color: Color::BLACK,
     });
 
     let text = "Hello, world!";
-    let width = get_text_width(text) as f32;
-    let height = get_text_height(text) as f32;
-    let center = Vec2::new(width / 2.0, height / 2.0);
-    let t1 = Mat3::from_translation(-center);
-    let rr = Mat3::from_angle(unsafe { ANGLE });
-    let t2 = Mat3::from_translation(center);
-    let rotation = t2 * rr * t1;
-    let translation = Mat3::from_translation(Vec2::new(50.0, 50.0));
-    let final_transform = translation * rotation;
-
-    r.command(renderer::Command::Text {
-        transform: final_transform,
+    let text_sz = Vec2::new(get_text_width(text) as f32, get_text_height(text) as f32);
+    let tx = make_transform_for_object(unsafe { ANGLE }, Vec2::new(50.0, 50.0), text_sz);
+    r.command(Command::Text {
+        transform: tx,
         text: text.to_owned(),
         color: Color::RED,
     });
 
-    r.command(renderer::Command::Sprite {
-        transform: final_transform,
+    let sprite_sz = Vec2::new(100.0, 100.0);
+    let sprite_tx = make_transform_for_object(unsafe { ANGLE }, Vec2::new(50.0, 50.0), sprite_sz);
+    r.command(Command::Sprite {
+        transform: sprite_tx,
         id: unsafe { SPRITE_ID },
         color: Color::WHITE,
     });
 
-    r.command(renderer::Command::Rect {
-        transform: final_transform,
-        size: Vec2::new(50.0, 50.0),
+    let rect_sz = Vec2::new(50.0, 50.0);
+    let rect_tx = make_transform_for_object(unsafe { ANGLE }, Vec2::new(50.0, 50.0), rect_sz);
+    r.command(Command::Rect {
+        transform: rect_tx,
+        size: rect_sz,
         color: Color::BLUE,
     });
 
