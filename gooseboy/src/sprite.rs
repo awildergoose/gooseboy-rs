@@ -1,6 +1,6 @@
 use crate::framebuffer::{Surface, get_framebuffer_surface_mut};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Sprite {
     pub width: usize,
     pub height: usize,
