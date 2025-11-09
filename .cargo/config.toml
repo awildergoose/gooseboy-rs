@@ -5,7 +5,6 @@ bgeneric = "run -p xtask -- generic"
 bapple = "run -p xtask -- badapple"
 bch8 = "run -p xtask -- chip8"
 bdoom = "run -p xtask -- doom"
-bfnaf = "run -p xtask -- fnaf"
 bci = "run -p xtask -- all --release --no-copy"
 ball = "run -p xtask -- all"
 
