@@ -1,0 +1,11 @@
+[package]
+name = "physics"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+gooseboy = { path = "../../gooseboy" }
+rapier2d = "0.30.1"

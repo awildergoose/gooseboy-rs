@@ -95,17 +95,6 @@ pub fn blit_ex(
     }
 }
 
-// rust extern:
-// dest_ptr: *const u8
-// dest_x: i32
-// dest_y: i32
-// src_w: usize
-// src_h: usize
-// src_ptr: *const u8
-// blend: bool
-
-// in java:
-// void blit_premultiplied_clipped(int dest_ptr, int dest_x, int dest_y, int src_w, int src_h, int src_ptr, int blend);
 pub fn blit_premultiplied_clipped(
     dest: &mut Surface,
     dest_x: i32,

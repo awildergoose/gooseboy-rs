@@ -8,6 +8,42 @@ pub struct Color {
     pub a: u8,
 }
 
+#[inline(always)]
+pub fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
+    let mut h = h - h.floor();
+    h *= 6.0;
+
+    let i = h.floor() as i32;
+    let f = h - i as f32;
+
+    let p = v * (1.0 - s);
+    let q = v * (1.0 - s * f);
+    let t = v * (1.0 - s * (1.0 - f));
+
+    let (r, g, b) = match i {
+        0 => (v, t, p),
+        1 => (q, v, p),
+        2 => (p, v, t),
+        3 => (p, q, v),
+        4 => (t, p, v),
+        _ => (v, p, q),
+    };
+
+    #[inline(always)]
+    fn to_byte(x: f32) -> u8 {
+        let y = x * 255.0 + 0.5;
+        if y <= 0.0 {
+            0
+        } else if y >= 255.0 {
+            255
+        } else {
+            y as u8
+        }
+    }
+
+    (to_byte(r), to_byte(g), to_byte(b))
+}
+
 impl Color {
     pub const BLACK: Self = Self {
         r: 0,
