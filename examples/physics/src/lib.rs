@@ -144,7 +144,7 @@ fn update(nano_time: i64) {
     let state = unsafe { PHYSICS.as_mut().expect("physics not initialized") };
     state.integration_parameters.dt = dt as f32;
 
-    if is_mouse_button_just_pressed(0) {
+    if is_mouse_button_down(0) {
         let mx = get_mouse_x();
         let my = get_mouse_y();
         let (wx, wy) = screen_to_world(mx, my);
