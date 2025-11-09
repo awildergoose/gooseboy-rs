@@ -4,7 +4,7 @@ macro_rules! log {
     ($($arg:tt)*) => {{
         let s = format!($($arg)*);
         unsafe {
-            $crate::bindings::log(s.as_ptr() as i32, s.len() as i32);
+            $crate::bindings::log(s.as_ptr(), s.len() as i32);
         }
     }};
 }

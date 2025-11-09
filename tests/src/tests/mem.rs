@@ -2,8 +2,8 @@ use crate::test;
 use gooseboy::mem::{alloc_bytes, read_i32, write_i32};
 
 pub fn test_mem() {
-    let ptr = alloc_bytes(16);
-    test!("mem:alloc_nonzero", ptr != 0);
+    let ptr: *mut i32 = alloc_bytes(16);
+    test!("mem:alloc_nonzero", !ptr.is_null());
 
     write_i32(ptr, 0x12345678);
     let val = read_i32(ptr);

@@ -100,8 +100,8 @@ impl Renderer {
         let result = self.process_commands();
         unsafe {
             mem::copy(
-                get_framebuffer_ptr() as i32,
-                result.rgba.as_ptr() as i32,
+                get_framebuffer_ptr(),
+                result.rgba.as_ptr(),
                 result.rgba.len() as i32,
             )
         };
@@ -116,7 +116,7 @@ impl Renderer {
     pub fn process_command(&mut self, command: Command, surface: &mut Surface) {
         match command {
             Command::Clear { color } => {
-                clear_surface(surface.rgba.as_ptr(), surface.rgba.len(), color);
+                surface.clear(color);
             }
             Command::Text {
                 transform,
@@ -181,8 +181,8 @@ impl Renderer {
                 color,
                 resampling,
             } => {
-                let rect_surface = Surface::new_empty(size.x as usize, size.y as usize);
-                clear_surface(rect_surface.rgba.as_ptr(), rect_surface.rgba.len(), color);
+                let mut rect_surface = Surface::new_empty(size.x as usize, size.y as usize);
+                rect_surface.clear(color);
                 let (out_w, out_h, off_x, off_y, transformed) = transformer::transform_rgba(
                     &rect_surface.rgba,
                     rect_surface.width,

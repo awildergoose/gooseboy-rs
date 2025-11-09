@@ -1,20 +1,31 @@
 // TODO refactor some of these types, surely pointers should be a different type?
 #[link(wasm_import_module = "console")]
 unsafe extern "C" {
-    pub fn log(ptr: i32, len: i32);
+    pub fn log(ptr: *const u8, len: i32);
 }
 
 #[link(wasm_import_module = "framebuffer")]
 unsafe extern "C" {
     pub(crate) fn get_framebuffer_width() -> usize;
     pub(crate) fn get_framebuffer_height() -> usize;
-    pub(crate) fn clear_surface(ptr: i32, size: i32, color: i32);
+    pub(crate) fn clear_surface(ptr: *const u8, size: i32, color: i32);
+    pub(crate) fn blit_premultiplied_clipped(
+        dest_ptr: *const u8,
+        dest_w: usize,
+        dest_h: usize,
+        dest_x: i32,
+        dest_y: i32,
+        src_w: usize,
+        src_h: usize,
+        src_ptr: *const u8,
+        blend: bool,
+    );
 }
 
 #[link(wasm_import_module = "memory")]
 unsafe extern "C" {
-    pub(crate) fn mem_fill(addr: i32, len: i32, value: i32);
-    pub(crate) fn mem_copy(dst: i32, src: i32, len: i32);
+    pub(crate) fn mem_fill(addr: *const u8, len: i32, value: i32);
+    pub(crate) fn mem_copy(dst: *const u8, src: *const u8, len: i32);
 }
 
 #[link(wasm_import_module = "input")]
@@ -33,7 +44,7 @@ unsafe extern "C" {
 
 #[link(wasm_import_module = "audio")]
 unsafe extern "C" {
-    pub(crate) fn play_audio(ptr: i32, len: i32) -> i64;
+    pub(crate) fn play_audio(ptr: *const u8, len: i32) -> i64;
     pub(crate) fn stop_audio(id: i64);
     pub(crate) fn stop_all_audio();
     pub(crate) fn set_audio_volume(id: i64, volume: f32);
@@ -43,8 +54,8 @@ unsafe extern "C" {
 
 #[link(wasm_import_module = "storage")]
 unsafe extern "C" {
-    pub(crate) fn storage_read(offset: i32, ptr: i32, len: i32) -> i32;
-    pub(crate) fn storage_write(offset: i32, ptr: i32, len: i32) -> i32;
+    pub(crate) fn storage_read(offset: i32, ptr: *const u8, len: i32) -> i32;
+    pub(crate) fn storage_write(offset: i32, ptr: *const u8, len: i32) -> i32;
     pub(crate) fn storage_size() -> u32;
     pub(crate) fn storage_clear();
 }

@@ -13,7 +13,7 @@ impl Audio {
     }
 
     pub fn play(&mut self) -> Option<AudioInstance> {
-        let id = unsafe { play_audio(self.data.as_ptr() as i32, self.data.len() as i32) };
+        let id = unsafe { play_audio(self.data.as_ptr(), self.data.len() as i32) };
         if id == -1 {
             return None;
         }

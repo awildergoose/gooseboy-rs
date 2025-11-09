@@ -4,41 +4,40 @@ use crate::bindings;
 
 /// # Safety
 /// This fills a memory region with no region or value checks
-pub unsafe fn fill(addr: i32, len: i32, value: i32) {
+pub unsafe fn fill(addr: *const u8, len: i32, value: i32) {
     unsafe { bindings::mem_fill(addr, len, value) }
 }
 
 /// # Safety
 /// This copies a memory region with no region or value checks
-pub unsafe fn copy(dst: i32, src: i32, len: i32) {
+pub unsafe fn copy(dst: *const u8, src: *const u8, len: i32) {
     unsafe { bindings::mem_copy(dst, src, len) }
 }
 
-pub fn alloc_bytes(len: usize) -> i32 {
+pub fn alloc_bytes<T>(len: usize) -> *mut T {
+    let layout = Layout::from_size_align(len, 4).unwrap();
+    unsafe { alloc::alloc(layout) as *mut T }
+}
+
+/// # Safety
+/// This frees a pointer, length is specified by an arg, self-explainable
+pub unsafe fn free_bytes(ptr: *mut u8, len: usize) {
     let layout = Layout::from_size_align(len, 4).unwrap();
     unsafe {
-        let ptr = alloc::alloc(layout);
-        ptr as i32
+        alloc::dealloc(ptr, layout);
     }
 }
 
-pub fn free_bytes(ptr: i32, len: usize) {
-    let layout = Layout::from_size_align(len, 4).unwrap();
+pub fn write_i32(ptr: *mut i32, value: i32) {
     unsafe {
-        alloc::dealloc(ptr as *mut u8, layout);
-    }
-}
-
-pub fn write_i32(ptr: i32, value: i32) {
-    unsafe {
-        let p = ptr as *mut i32;
+        let p = ptr;
         *p = value;
     }
 }
 
-pub fn read_i32(ptr: i32) -> i32 {
+pub fn read_i32(ptr: *const i32) -> i32 {
     unsafe {
-        let p = ptr as *const i32;
+        let p = ptr;
         *p
     }
 }

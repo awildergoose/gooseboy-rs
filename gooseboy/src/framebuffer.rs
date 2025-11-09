@@ -76,16 +76,18 @@ pub fn get_framebuffer_size() -> usize {
 }
 
 pub fn clear_framebuffer(color: Color) {
-    clear_surface(get_framebuffer_ptr(), get_framebuffer_size(), color);
+    unsafe { clear_surface(get_framebuffer_ptr(), get_framebuffer_size(), color) };
 }
 
-pub fn clear_surface(ptr: *const u8, size: usize, color: Color) {
+/// # Safety
+/// This expects ptr to be a pointer to an RGBA buffer (check Surface's rgba)
+pub unsafe fn clear_surface(ptr: *const u8, size: usize, color: Color) {
     let color_val = ((color.a as u32) << 24)
         | ((color.b as u32) << 16)
         | ((color.g as u32) << 8)
         | (color.r as u32);
 
-    unsafe { bindings::clear_surface(ptr as i32, size as i32, color_val as i32) };
+    unsafe { bindings::clear_surface(ptr, size as i32, color_val as i32) };
 }
 
 #[derive(Clone)]
@@ -110,5 +112,9 @@ impl Surface {
             height,
             rgba: vec![0; width * height * 4],
         }
+    }
+
+    pub fn clear(&mut self, color: Color) {
+        unsafe { clear_surface(self.rgba.as_mut_ptr(), self.width * self.height * 4, color) };
     }
 }
