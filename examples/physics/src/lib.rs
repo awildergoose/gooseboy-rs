@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use gooseboy::color::{Color, hsv_to_rgb};
 use gooseboy::framebuffer::{
-    Surface, clear_framebuffer, get_framebuffer_height, get_framebuffer_width, init_fb,
+    Surface, clear_framebuffer, draw_rect, get_framebuffer_height, get_framebuffer_width, init_fb,
 };
 use gooseboy::input::{
     get_mouse_x, get_mouse_y, is_mouse_button_down, is_mouse_button_just_pressed,
@@ -118,12 +118,6 @@ fn world_to_screen(x_m: f32, y_m: f32) -> (i32, i32) {
     let xp = (x_m * M_TO_PX).round() as i32;
     let yp = h - (y_m * M_TO_PX).round() as i32;
     (xp, yp)
-}
-
-fn draw_rect_ex(surface: &mut Surface, x: i32, y: i32, w: usize, h: usize, col: Color) {
-    let mut surf = Surface::new_empty(w, h);
-    surf.clear(col);
-    gooseboy::sprite::blit_premultiplied_clipped(surface, x, y, w, h, &surf.rgba, false);
 }
 
 #[gooseboy::main]
@@ -261,7 +255,7 @@ fn update(nano_time: i64) {
                         *colors_ref.get(&body_handle.0).unwrap_or(&Color::ORANGE)
                     };
 
-                    draw_rect_ex(surface, x_px, y_px, w_px, h_px, render_col);
+                    draw_rect(surface, x_px, y_px, w_px, h_px, render_col, false);
                     drawn = true;
                 }
 
@@ -270,7 +264,7 @@ fn update(nano_time: i64) {
         }
 
         if !drawn {
-            draw_rect_ex(surface, sx - 6, sy - 6, 12, 12, Color::GREEN);
+            draw_rect(surface, sx - 6, sy - 6, 12, 12, Color::GREEN, false);
         }
     }
 

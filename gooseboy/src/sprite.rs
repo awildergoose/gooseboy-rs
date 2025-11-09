@@ -1,7 +1,4 @@
-use crate::{
-    bindings,
-    framebuffer::{Surface, get_framebuffer_surface_mut},
-};
+use crate::framebuffer::{Surface, get_framebuffer_surface_mut};
 
 #[derive(Clone, Debug)]
 pub struct Sprite {
@@ -92,29 +89,5 @@ pub fn blit_ex(
                 dst.copy_from_slice(src);
             }
         }
-    }
-}
-
-pub fn blit_premultiplied_clipped(
-    dest: &mut Surface,
-    dest_x: i32,
-    dest_y: i32,
-    src_w: usize,
-    src_h: usize,
-    src_rgba: &[u8],
-    blend: bool,
-) {
-    unsafe {
-        bindings::blit_premultiplied_clipped(
-            dest.rgba.as_ptr(),
-            dest.width,
-            dest.height,
-            dest_x,
-            dest_y,
-            src_w,
-            src_h,
-            src_rgba.as_ptr(),
-            blend,
-        );
     }
 }

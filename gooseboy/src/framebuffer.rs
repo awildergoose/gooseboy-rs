@@ -118,3 +118,41 @@ impl Surface {
         unsafe { clear_surface(self.rgba.as_mut_ptr(), self.width * self.height * 4, color) };
     }
 }
+
+pub fn draw_rect(
+    surface: &mut Surface,
+    x: i32,
+    y: i32,
+    width: usize,
+    height: usize,
+    color: Color,
+    blend: bool,
+) {
+    let mut surf = Surface::new_empty(width, height);
+    surf.clear(color);
+    blit_premultiplied_clipped(surface, x, y, width, height, &surf.rgba, blend);
+}
+
+pub fn blit_premultiplied_clipped(
+    dest: &mut Surface,
+    dest_x: i32,
+    dest_y: i32,
+    src_w: usize,
+    src_h: usize,
+    src_rgba: &[u8],
+    blend: bool,
+) {
+    unsafe {
+        bindings::blit_premultiplied_clipped(
+            dest.rgba.as_ptr(),
+            dest.width,
+            dest.height,
+            dest_x,
+            dest_y,
+            src_w,
+            src_h,
+            src_rgba.as_ptr(),
+            blend,
+        );
+    }
+}

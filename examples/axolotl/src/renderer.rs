@@ -2,10 +2,11 @@ use glam::{Mat3, Vec2};
 use gooseboy::{
     color::Color,
     framebuffer::{
-        Surface, clear_surface, get_framebuffer_height, get_framebuffer_ptr, get_framebuffer_width,
+        Surface, blit_premultiplied_clipped, clear_surface, get_framebuffer_height,
+        get_framebuffer_ptr, get_framebuffer_width,
     },
     log, mem,
-    sprite::{Sprite, blit_premultiplied_clipped},
+    sprite::Sprite,
     text::{draw_text_wrapped_ex, get_text_height, get_text_width},
 };
 
