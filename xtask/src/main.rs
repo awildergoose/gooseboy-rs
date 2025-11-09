@@ -51,12 +51,6 @@ fn build_all() {
             continue;
         }
 
-        if name == "fnaf" {
-            // Skip FNAF due to the assets containing copyrighted material
-            // that I can't publish onto GH
-            continue;
-        }
-
         do_project(&name);
     }
 
