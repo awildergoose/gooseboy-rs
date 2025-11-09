@@ -7,6 +7,7 @@ pub mod input;
 pub mod keys;
 pub mod mem;
 pub mod panic;
+pub mod rand;
 pub mod runtime;
 pub mod sprite;
 pub mod storage;
