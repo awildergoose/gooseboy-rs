@@ -1,0 +1,7 @@
+{
+	"version": 1,
+	"name": "Generic",
+	"description": "Generic test",
+	"entrypoint": "app.wasm",
+	"permissions": []
+}

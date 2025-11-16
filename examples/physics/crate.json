@@ -1,0 +1,7 @@
+{
+	"version": 1,
+	"name": "Physics",
+	"description": "Physics demo using Rapier2D",
+	"entrypoint": "app.wasm",
+	"permissions": ["INPUT_MOUSE", "INPUT_MOUSE_POS"]
+}

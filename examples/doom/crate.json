@@ -1,0 +1,7 @@
+{
+	"version": 1,
+	"name": "Doom",
+	"description": "A 3D raycaster with textures",
+	"entrypoint": "app.wasm",
+	"permissions": ["INPUT_KEYBOARD", "INPUT_MOUSE", "INPUT_MOUSE_POS", "INPUT_GRAB_MOUSE"]
+}

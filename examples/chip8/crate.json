@@ -1,0 +1,7 @@
+{
+	"version": 1,
+	"name": "Chip-8",
+	"description": "A Chip-8 emulator",
+	"entrypoint": "app.wasm",
+	"permissions": ["INPUT_KEYBOARD"]
+}

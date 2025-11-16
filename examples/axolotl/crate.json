@@ -1,0 +1,7 @@
+{
+	"version": 1,
+	"name": "Axolotl",
+	"description": "Abstract 2D rendering framework",
+	"entrypoint": "app.wasm",
+	"permissions": []
+}

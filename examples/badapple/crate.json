@@ -1,0 +1,7 @@
+{
+	"version": 1,
+	"name": "Bad Apple",
+	"description": "the bad apple video",
+	"entrypoint": "app.wasm",
+	"permissions": []
+}
