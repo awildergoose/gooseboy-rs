@@ -29,6 +29,9 @@ jobs:
             - name: Install FFmpeg
               run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
+            - name: Install cargo-gooseboy
+              run: cargo install --git https://github.com/awildergoose/cargo-gooseboy.git
+
             - name: Cache dependencies
               uses: actions/cache@v4
               with:

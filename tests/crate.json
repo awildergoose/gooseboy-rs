@@ -1,0 +1,7 @@
+{
+	"version": 1,
+	"name": "Tests",
+	"description": "Gooseboy unit(ish) tests",
+	"entrypoint": "app.wasm",
+	"permissions": ["CONSOLE", "STORAGE"]
+}

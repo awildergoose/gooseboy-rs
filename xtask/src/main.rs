@@ -1,10 +1,4 @@
-use std::{
-    fs,
-    path::Path,
-    process::{Command, exit},
-};
-
-const TARGET: &str = "wasm32-unknown-unknown";
+use std::{fs, process::Command};
 
 fn main() {
     let mut args = std::env::args();
@@ -58,48 +52,38 @@ fn build_all() {
 }
 
 fn do_project(project: &str) {
-    build(project);
-    if !std::env::args().any(|a| a == "--no-copy") {
-        copy(&format!("{}.wasm", project).to_owned());
-    }
-}
-
-fn get_profile() -> String {
     let is_release = std::env::args().any(|a| a == "--release");
-    (if is_release { "release" } else { "debug" }).to_string()
-}
+    let should_copy = !std::env::args().any(|a| a == "--no-copy");
+    let mut cmd = Command::new("cargo-gooseboy");
+    cmd.current_dir(std::env::current_dir().expect("failed to get current directory"));
+    cmd.args(["pack", project]);
 
-fn build(project: &str) {
-    let profile = get_profile();
-    let mut cmd = Command::new("cargo");
+    if !should_copy {
+        cmd.arg("--no-copy");
+    }
 
-    cmd.args(["build", "-p", project, "--target", TARGET]);
-
-    if profile == "release" {
+    if is_release {
         cmd.arg("--release");
     }
 
-    let status = cmd.status().expect("failed to run cargo build");
+    let status = cmd
+        .status()
+        .map_err(|e| {
+            panic!(
+                "failed to run command `{:?}: {}` at {:?}",
+                cmd,
+                e,
+                cmd.get_current_dir()
+            )
+        })
+        .expect("failed to get status");
 
     if !status.success() {
-        eprintln!("build failed");
-        std::process::exit(1);
+        panic!(
+            "failed to run command `{:?}: {:?}` at {:?}",
+            cmd,
+            status.code(),
+            cmd.get_current_dir()
+        )
     }
-}
-
-fn copy(filename: &str) {
-    let profile = get_profile();
-    let src_str = format!("target/{}/{}/{}", TARGET, profile, filename);
-    let src = Path::new(&src_str);
-    let dst = Path::new(&std::env::var("GOOSEBOY_CRATES_FOLDER").expect(
-        "the GOOSEBOY_CRATES_FOLDER environment variable is missing! (ex: C:\\Users\\MyUser\\AppData\\Roaming\\.minecraft\\gooseboy\\crates)"
-    )).join(filename);
-
-    if !src.exists() {
-        eprintln!("error: {} not found", src.display());
-        exit(1);
-    }
-
-    fs::create_dir_all(dst.parent().unwrap()).unwrap();
-    fs::copy(src, dst).unwrap();
 }
