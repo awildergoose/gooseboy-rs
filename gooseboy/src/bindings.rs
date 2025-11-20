@@ -1,7 +1,6 @@
-// TODO refactor some of these types, surely pointers should be a different type?
 #[link(wasm_import_module = "console")]
 unsafe extern "C" {
-    pub fn log(ptr: *const u8, len: i32);
+    pub(crate) fn log(ptr: *const u8, len: i32);
 }
 
 #[link(wasm_import_module = "framebuffer")]
