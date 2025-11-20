@@ -1,6 +1,6 @@
 #[link(wasm_import_module = "console")]
 unsafe extern "C" {
-    pub(crate) fn log(ptr: *const u8, len: i32);
+    pub fn log(ptr: *const u8, len: i32);
 }
 
 #[link(wasm_import_module = "framebuffer")]
