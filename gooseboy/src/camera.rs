@@ -137,3 +137,58 @@ pub fn get_camera_right_vector() -> Vec3<f32> {
 
     forward.cross(up).normalized()
 }
+
+pub fn update_debug_camera() {
+    use crate::Vec3;
+    use crate::camera::{
+        get_camera_forward_vector, get_camera_pitch, get_camera_position, get_camera_right_vector,
+        get_camera_yaw, set_camera_pitch, set_camera_position, set_camera_yaw,
+    };
+    use crate::input::{
+        get_mouse_accumulated_dx, get_mouse_accumulated_dy, grab_mouse, is_key_down,
+        is_key_just_pressed, release_mouse,
+    };
+    use crate::keys::{KEY_A, KEY_D, KEY_G, KEY_LEFT_SHIFT, KEY_R, KEY_S, KEY_SPACE, KEY_W};
+    use std::ops::{Add, Mul};
+
+    if is_key_just_pressed(KEY_G) {
+        grab_mouse();
+    }
+    if is_key_just_pressed(KEY_R) {
+        release_mouse();
+    }
+
+    let sens = 0.008;
+    let speed = 0.5;
+
+    set_camera_yaw(((get_camera_yaw() as f64) - (get_mouse_accumulated_dx() * sens)) as f32);
+    set_camera_pitch(((get_camera_pitch() as f64) - (get_mouse_accumulated_dy() * sens)) as f32);
+
+    let mut position = get_camera_position();
+    let forward = get_camera_forward_vector();
+    let right = get_camera_right_vector();
+    let up = Vec3::new(0.0, 1.0, 0.0);
+
+    if is_key_down(KEY_W) {
+        position = position.add(forward.mul(speed));
+    }
+    if is_key_down(KEY_S) {
+        position = position.add(forward.mul(-speed));
+    }
+
+    if is_key_down(KEY_A) {
+        position = position.add(right.mul(-speed));
+    }
+    if is_key_down(KEY_D) {
+        position = position.add(right.mul(speed));
+    }
+
+    if is_key_down(KEY_SPACE) {
+        position = position.add(up.mul(speed));
+    }
+    if is_key_down(KEY_LEFT_SHIFT) {
+        position = position.add(up.mul(-speed));
+    }
+
+    set_camera_position(position);
+}
