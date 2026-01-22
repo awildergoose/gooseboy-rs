@@ -1,12 +1,49 @@
 #![no_main]
 
 use gooseboy::framebuffer::init_fb;
-use gooseboy::gpu::{GpuCommandBuffer, Vertex};
+use gooseboy::gpu::{GpuCommand, GpuCommandBuffer, Vertex};
+use gooseboy::log;
 use gooseboy::text::draw_text;
 use gooseboy::{color::Color, framebuffer::clear_framebuffer};
 
 mod sprites {
     include!("generated/sprites.rs");
+}
+
+const TEAPOT_OBJ: &str = include_str!("../teapot.obj");
+
+fn load_obj(obj_data: &str) -> Vec<Vertex> {
+    let mut vertices = Vec::new();
+    let mut positions = Vec::new();
+
+    for line in obj_data.lines() {
+        let line = line.trim();
+
+        if let Some(parts) = line.strip_prefix("v ") {
+            let mut parts = parts.split_whitespace();
+            let x: f32 = parts.next().unwrap().parse().unwrap();
+            let y: f32 = parts.next().unwrap().parse().unwrap();
+            let z: f32 = parts.next().unwrap().parse().unwrap();
+            positions.push([x, y, z]);
+        } else if let Some(indices) = line.strip_prefix("f ") {
+            let indices: Vec<usize> = indices
+                .split_whitespace()
+                .map(|s| s.split('/').next().unwrap().parse::<usize>().unwrap() - 1)
+                .collect();
+
+            if indices.len() >= 3 {
+                let first = indices[0];
+                for i in 1..indices.len() - 1 {
+                    for &idx in &[first, indices[i], indices[i + 1]] {
+                        let p = positions[idx];
+                        vertices.push(Vertex::new(p[0], p[1], p[2], 0.0, 0.0));
+                    }
+                }
+            }
+        }
+    }
+
+    vertices
 }
 
 #[gooseboy::main]
@@ -16,94 +53,20 @@ fn main() {
 
 #[gooseboy::gpu_main]
 fn gpu_main() {
-    let x0 = -8.0;
-    let y0 = -8.0;
-    let z0 = -8.0;
-    let x1 = 8.0;
-    let y1 = 8.0;
-    let z1 = 8.0;
-
+    let obj_vertices = load_obj(TEAPOT_OBJ);
     let mut buffer = GpuCommandBuffer::new();
-    buffer.insert(gooseboy::gpu::GpuCommand::PushRecord);
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x0, y0, z1, 0.0, 0.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x0, y1, z1, 0.0, 1.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x1, y1, z1, 1.0, 1.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x1, y0, z1, 1.0, 0.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x1, y0, z0, 0.0, 0.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x1, y1, z0, 0.0, 1.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x0, y1, z0, 1.0, 1.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x0, y0, z0, 1.0, 0.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x0, y0, z0, 0.0, 0.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x0, y1, z0, 0.0, 1.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x0, y1, z1, 1.0, 1.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x0, y0, z1, 1.0, 0.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x1, y0, z1, 0.0, 0.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x1, y1, z1, 0.0, 1.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x1, y1, z0, 1.0, 1.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x1, y0, z0, 1.0, 0.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x0, y1, z1, 0.0, 0.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x0, y1, z0, 0.0, 1.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x1, y1, z0, 1.0, 1.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x1, y1, z1, 1.0, 0.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x0, y0, z0, 0.0, 0.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x0, y0, z1, 0.0, 1.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x1, y0, z1, 1.0, 1.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::EmitVertex(Vertex::new(
-        x1, y0, z0, 1.0, 0.0,
-    )));
-    buffer.insert(gooseboy::gpu::GpuCommand::PopRecord);
+    buffer.insert(GpuCommand::PushRecord);
 
-    let spr = &sprites::ICON;
-    buffer.insert(gooseboy::gpu::GpuCommand::RegisterTexture {
-        rgba: &spr.rgba,
-        w: spr.width as u32,
-        h: spr.height as u32,
+    log!("pushing {} vertices", obj_vertices.len());
+    for vertex in obj_vertices {
+        buffer.insert(GpuCommand::EmitVertex(vertex));
+    }
+    buffer.insert(GpuCommand::PopRecord);
+
+    buffer.insert(GpuCommand::RegisterTexture {
+        rgba: &[0xFF, 0x00, 0x00, 0xFF], //spr.rgba,
+        w: 1,                            //spr.width as u32,
+        h: 1,                            //spr.height as u32,
     });
 
     buffer.upload();
@@ -117,7 +80,7 @@ fn update(_nano_time: i64) {
     sprites::ICON.blit(0, 0);
 
     let mut buffer = GpuCommandBuffer::new();
-    buffer.insert(gooseboy::gpu::GpuCommand::BindTexture(0));
-    buffer.insert(gooseboy::gpu::GpuCommand::DrawRecorded(0));
+    buffer.insert(GpuCommand::BindTexture(0));
+    buffer.insert(GpuCommand::DrawRecorded(0));
     buffer.upload();
 }

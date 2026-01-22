@@ -1,5 +1,7 @@
 use crate::bindings::submit_gpu_commands;
 
+#[repr(C)]
+#[derive(Clone, Copy)]
 pub struct Vertex {
     pub x: f32,
     pub y: f32,
