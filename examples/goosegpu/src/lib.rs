@@ -42,7 +42,7 @@ fn gpu_main() {
 }
 
 #[gooseboy::update]
-fn update(_nano_time: i64) {
+fn update(nano_time: i64) {
     gooseboy::camera::update_debug_camera();
 
     clear_framebuffer(Color::TRANSPARENT);
@@ -57,10 +57,19 @@ fn update(_nano_time: i64) {
         Color::RED,
     );
 
-    sprites::ICON.blit(0, 0);
-
+    let time_sec = (nano_time as f64 / 1_000_000_000.0) as f32;
+    let angle = time_sec;
     let mut buffer = GpuCommandBuffer::new();
+
+    buffer.insert(GpuCommand::Push);
+    buffer.insert(GpuCommand::RotateAxis {
+        x: 0.0,
+        y: 1.0,
+        z: 0.0,
+        angle,
+    });
     buffer.insert(GpuCommand::BindTexture(0));
     buffer.insert(GpuCommand::DrawRecorded(0));
+    buffer.insert(GpuCommand::Pop);
     buffer.upload();
 }

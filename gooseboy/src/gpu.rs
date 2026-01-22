@@ -39,6 +39,13 @@ pub enum GpuCommand<'a> {
     EmitVertex(Vertex),
     BindTexture(u32),
     RegisterTexture { w: u32, h: u32, rgba: &'a [u8] },
+    Translate { x: f32, y: f32, z: f32 },
+    RotateAxis { x: f32, y: f32, z: f32, angle: f32 },
+    RotateEuler { yaw: f32, pitch: f32, roll: f32 },
+    Scale { x: f32, y: f32, z: f32 },
+    LoadMatrix([f32; 16]),
+    MulMatrix([f32; 16]),
+    Identity,
 }
 
 impl GpuCommand<'_> {
@@ -52,6 +59,13 @@ impl GpuCommand<'_> {
             GpuCommand::EmitVertex(_) => 0x05,
             GpuCommand::BindTexture(_) => 0x06,
             GpuCommand::RegisterTexture { .. } => 0x07,
+            GpuCommand::Translate { .. } => 0x08,
+            GpuCommand::RotateAxis { .. } => 0x09,
+            GpuCommand::RotateEuler { .. } => 0x0A,
+            GpuCommand::Scale { .. } => 0x0B,
+            GpuCommand::LoadMatrix(_) => 0x0C,
+            GpuCommand::MulMatrix(_) => 0x0D,
+            GpuCommand::Identity => 0x0E,
         }
     }
 
@@ -65,6 +79,32 @@ impl GpuCommand<'_> {
                 buf.extend_from_slice(&w.to_le_bytes());
                 buf.extend_from_slice(&h.to_le_bytes());
                 buf.extend_from_slice(rgba);
+            }
+            GpuCommand::Translate { x, y, z } => {
+                buf.extend_from_slice(&x.to_le_bytes());
+                buf.extend_from_slice(&y.to_le_bytes());
+                buf.extend_from_slice(&z.to_le_bytes());
+            }
+            GpuCommand::RotateAxis { x, y, z, angle } => {
+                buf.extend_from_slice(&x.to_le_bytes());
+                buf.extend_from_slice(&y.to_le_bytes());
+                buf.extend_from_slice(&z.to_le_bytes());
+                buf.extend_from_slice(&angle.to_le_bytes());
+            }
+            GpuCommand::RotateEuler { yaw, pitch, roll } => {
+                buf.extend_from_slice(&yaw.to_le_bytes());
+                buf.extend_from_slice(&pitch.to_le_bytes());
+                buf.extend_from_slice(&roll.to_le_bytes());
+            }
+            GpuCommand::Scale { x, y, z } => {
+                buf.extend_from_slice(&x.to_le_bytes());
+                buf.extend_from_slice(&y.to_le_bytes());
+                buf.extend_from_slice(&z.to_le_bytes());
+            }
+            GpuCommand::LoadMatrix(mat) | GpuCommand::MulMatrix(mat) => {
+                for f in mat.iter() {
+                    buf.extend_from_slice(&f.to_le_bytes());
+                }
             }
             _ => {}
         }
