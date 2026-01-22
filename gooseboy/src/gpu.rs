@@ -1,4 +1,7 @@
-use crate::bindings::submit_gpu_commands;
+use crate::{
+    bindings::{gpu_read, submit_gpu_commands},
+    mem::alloc_bytes,
+};
 
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -94,5 +97,13 @@ impl GpuCommandBuffer {
 impl Default for GpuCommandBuffer {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+pub fn gpu_read_value<T: Copy>(offset: i32) -> T {
+    let ptr = alloc_bytes(size_of::<T>());
+    unsafe {
+        gpu_read(offset, ptr, size_of::<T>() as i32);
+        *(ptr as *const T)
     }
 }

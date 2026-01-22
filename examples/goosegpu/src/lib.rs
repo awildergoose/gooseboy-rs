@@ -1,9 +1,9 @@
 #![no_main]
 
 use gooseboy::framebuffer::init_fb;
-use gooseboy::gpu::{GpuCommand, GpuCommandBuffer, Vertex};
+use gooseboy::gpu::{GpuCommand, GpuCommandBuffer, Vertex, gpu_read_value};
 use gooseboy::log;
-use gooseboy::text::draw_text;
+use gooseboy::text::draw_text_formatted;
 use gooseboy::{color::Color, framebuffer::clear_framebuffer};
 
 mod sprites {
@@ -11,6 +11,7 @@ mod sprites {
 }
 
 const TEAPOT_OBJ: &str = include_str!("../teapot.obj");
+const CUBE_OBJ: &str = include_str!("../cube.obj");
 
 fn load_obj(obj_data: &str) -> Vec<Vertex> {
     let mut vertices = Vec::new();
@@ -54,11 +55,19 @@ fn main() {
 #[gooseboy::gpu_main]
 fn gpu_main() {
     let obj_vertices = load_obj(TEAPOT_OBJ);
+    let obj2_vertices = load_obj(CUBE_OBJ);
     let mut buffer = GpuCommandBuffer::new();
-    buffer.insert(GpuCommand::PushRecord);
 
+    buffer.insert(GpuCommand::PushRecord);
     log!("pushing {} vertices", obj_vertices.len());
     for vertex in obj_vertices {
+        buffer.insert(GpuCommand::EmitVertex(vertex));
+    }
+    buffer.insert(GpuCommand::PopRecord);
+
+    buffer.insert(GpuCommand::PushRecord);
+    log!("push2 {} vertices", obj2_vertices.len());
+    for vertex in obj2_vertices {
         buffer.insert(GpuCommand::EmitVertex(vertex));
     }
     buffer.insert(GpuCommand::PopRecord);
@@ -75,7 +84,16 @@ fn gpu_main() {
 #[gooseboy::update]
 fn update(_nano_time: i64) {
     clear_framebuffer(Color::TRANSPARENT);
-    draw_text(0, 0, "Hello, world!", Color::RED);
+    draw_text_formatted(
+        0,
+        0,
+        format!(
+            "GPU 0: {:#?}\nGPU 1: {:#?}",
+            gpu_read_value::<u32>(0),
+            gpu_read_value::<u32>(4)
+        ),
+        Color::RED,
+    );
 
     sprites::ICON.blit(0, 0);
 
