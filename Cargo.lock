@@ -293,6 +293,7 @@ name = "goosegpu"
 version = "0.1.0"
 dependencies = [
  "gooseboy",
+ "gooseboy_buildscript",
 ]
 
 [[package]]

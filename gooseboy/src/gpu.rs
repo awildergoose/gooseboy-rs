@@ -33,7 +33,7 @@ pub enum GpuCommand {
     DrawRecorded(u32),
     EmitVertex(Vertex),
     BindTexture(u32),
-    RegisterTexture { ptr: u32, w: u8, h: u8 },
+    RegisterTexture { ptr: *const u8, w: u32, h: u32 },
 }
 
 impl GpuCommand {
@@ -57,9 +57,10 @@ impl GpuCommand {
             GpuCommand::EmitVertex(v) => buf.extend_from_slice(&v.as_bytes()),
             GpuCommand::BindTexture(id) => buf.extend_from_slice(&id.to_le_bytes()),
             GpuCommand::RegisterTexture { ptr, w, h } => {
-                buf.extend_from_slice(&ptr.to_le_bytes());
-                buf.push(*w);
-                buf.push(*h);
+                let ptr_val = *ptr as usize;
+                buf.extend_from_slice(&ptr_val.to_le_bytes());
+                buf.extend_from_slice(&w.to_le_bytes());
+                buf.extend_from_slice(&h.to_le_bytes());
             }
             _ => {}
         }

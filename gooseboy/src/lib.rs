@@ -16,6 +16,7 @@ pub mod system;
 pub mod text;
 pub mod timer;
 
+pub use gooseboy_macros::gpu_main;
 pub use gooseboy_macros::main;
 pub use gooseboy_macros::update;
 
@@ -24,6 +25,7 @@ pub fn __internal_main() {
 }
 
 pub fn __internal_update(_nano_time: i64) {}
+pub fn __internal_gpu_main() {}
 
 pub fn __internal_caught_unwind<R>(res: Result<R, Box<dyn std::any::Any + Send>>) {
     if let Err(payload) = res {

@@ -8,3 +8,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 gooseboy = { path = "../../gooseboy" }
+
+[build-dependencies]
+gooseboy_buildscript = { path = "../../buildscript" }

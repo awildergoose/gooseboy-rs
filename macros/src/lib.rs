@@ -10,7 +10,7 @@ fn make_wrapper(item: TokenStream, export_name: &str) -> TokenStream {
 
     if !input_fn.sig.generics.params.is_empty() || input_fn.sig.asyncness.is_some() {
         return TokenStream::from(quote! {
-            compile_error!("#[main]/#[update] does not support generics or async functions");
+            compile_error!("export does not support generics or async functions");
         });
     }
     if input_fn
@@ -20,7 +20,7 @@ fn make_wrapper(item: TokenStream, export_name: &str) -> TokenStream {
         .any(|arg| matches!(arg, FnArg::Receiver(_)))
     {
         return TokenStream::from(quote! {
-            compile_error!("#[main]/#[update] does not support methods with `self`");
+            compile_error!("export does not support methods with `self`");
         });
     }
 
@@ -87,4 +87,9 @@ pub fn main(_attr: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn update(_attr: TokenStream, item: TokenStream) -> TokenStream {
     make_wrapper(item, "update")
+}
+
+#[proc_macro_attribute]
+pub fn gpu_main(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    make_wrapper(item, "gpu_main")
 }
