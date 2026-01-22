@@ -25,7 +25,7 @@ impl Vertex {
 }
 
 #[repr(u8)]
-pub enum GpuCommand {
+pub enum GpuCommand<'a> {
     Push,
     Pop,
     PushRecord,
@@ -33,10 +33,10 @@ pub enum GpuCommand {
     DrawRecorded(u32),
     EmitVertex(Vertex),
     BindTexture(u32),
-    RegisterTexture { ptr: *const u8, w: u32, h: u32 },
+    RegisterTexture { w: u32, h: u32, rgba: &'a [u8] },
 }
 
-impl GpuCommand {
+impl GpuCommand<'_> {
     pub fn repr(&self) -> u8 {
         match self {
             GpuCommand::Push => 0x00,
@@ -56,11 +56,10 @@ impl GpuCommand {
             GpuCommand::DrawRecorded(id) => buf.extend_from_slice(&id.to_le_bytes()),
             GpuCommand::EmitVertex(v) => buf.extend_from_slice(&v.as_bytes()),
             GpuCommand::BindTexture(id) => buf.extend_from_slice(&id.to_le_bytes()),
-            GpuCommand::RegisterTexture { ptr, w, h } => {
-                let ptr_val = *ptr as usize;
-                buf.extend_from_slice(&ptr_val.to_le_bytes());
+            GpuCommand::RegisterTexture { rgba, w, h } => {
                 buf.extend_from_slice(&w.to_le_bytes());
                 buf.extend_from_slice(&h.to_le_bytes());
+                buf.extend_from_slice(rgba);
             }
             _ => {}
         }

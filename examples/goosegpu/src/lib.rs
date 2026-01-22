@@ -101,7 +101,7 @@ fn gpu_main() {
 
     let spr = &sprites::ICON;
     buffer.insert(gooseboy::gpu::GpuCommand::RegisterTexture {
-        ptr: spr.rgba.as_ptr(),
+        rgba: &spr.rgba,
         w: spr.width as u32,
         h: spr.height as u32,
     });
@@ -113,6 +113,8 @@ fn gpu_main() {
 fn update(_nano_time: i64) {
     clear_framebuffer(Color::TRANSPARENT);
     draw_text(0, 0, "Hello, world!", Color::RED);
+
+    sprites::ICON.blit(0, 0);
 
     let mut buffer = GpuCommandBuffer::new();
     buffer.insert(gooseboy::gpu::GpuCommand::BindTexture(0));
