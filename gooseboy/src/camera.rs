@@ -138,7 +138,7 @@ pub fn get_camera_right_vector() -> Vec3<f32> {
     forward.cross(up).normalized()
 }
 
-pub fn update_debug_camera() {
+pub fn update_debug_camera(sens: f64, speed: f32) {
     use crate::Vec3;
     use crate::camera::{
         get_camera_forward_vector, get_camera_pitch, get_camera_position, get_camera_right_vector,
@@ -157,9 +157,6 @@ pub fn update_debug_camera() {
     if is_key_just_pressed(KEY_R) {
         release_mouse();
     }
-
-    let sens = 0.008;
-    let speed = 0.5;
 
     set_camera_yaw(((get_camera_yaw() as f64) - (get_mouse_accumulated_dx() * sens)) as f32);
     set_camera_pitch(((get_camera_pitch() as f64) - (get_mouse_accumulated_dy() * sens)) as f32);

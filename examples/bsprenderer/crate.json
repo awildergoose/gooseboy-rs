@@ -1,0 +1,7 @@
+{
+	"version": 1,
+	"name": "BSP Renderer",
+	"description": "GooseGPU rendering a BSP",
+	"entrypoint": "app.wasm",
+	"permissions": []
+}
