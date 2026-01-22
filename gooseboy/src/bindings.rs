@@ -67,6 +67,8 @@ unsafe extern "C" {
 
 #[link(wasm_import_module = "gpu")]
 unsafe extern "C" {
+    pub(crate) fn get_camera_transform(ptr: *const u8);
+    pub(crate) fn set_camera_transform(x: f32, y: f32, z: f32, yaw: f32, pitch: f32);
     pub(crate) fn submit_gpu_commands(ptr: *const u8, count: i32);
     pub(crate) fn gpu_read(offset: i32, ptr: *const u8, len: i32) -> i32;
 }

@@ -1,5 +1,6 @@
 pub mod audio;
 pub mod bindings;
+pub mod camera;
 pub mod color;
 pub mod font;
 pub mod framebuffer;
@@ -19,6 +20,7 @@ pub mod timer;
 pub use gooseboy_macros::gpu_main;
 pub use gooseboy_macros::main;
 pub use gooseboy_macros::update;
+pub use vek::vec::{Vec2, Vec3};
 
 pub fn __internal_main() {
     panic::set_panic_handler();

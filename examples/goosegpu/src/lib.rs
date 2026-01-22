@@ -1,16 +1,26 @@
 #![no_main]
 
+use gooseboy::camera::{
+    get_camera_forward_vector, get_camera_pitch, get_camera_position, get_camera_right_vector,
+    get_camera_yaw, set_camera_pitch, set_camera_position, set_camera_yaw,
+};
 use gooseboy::framebuffer::init_fb;
 use gooseboy::gpu::{GpuCommand, GpuCommandBuffer, Vertex, gpu_read_value};
-use gooseboy::log;
+use gooseboy::input::{
+    get_mouse_accumulated_dx, get_mouse_accumulated_dy, grab_mouse, is_key_down,
+    is_key_just_pressed, release_mouse,
+};
+use gooseboy::keys::{KEY_A, KEY_D, KEY_G, KEY_LEFT_SHIFT, KEY_R, KEY_S, KEY_SPACE, KEY_W};
 use gooseboy::text::draw_text_formatted;
+use gooseboy::{Vec3, log};
 use gooseboy::{color::Color, framebuffer::clear_framebuffer};
+use std::ops::{Add, Mul};
 
 mod sprites {
     include!("generated/sprites.rs");
 }
 
-const MODEL_OBJ: &str = include_str!("../cat.obj");
+const MODEL_OBJ: &str = include_str!("../teapot.obj");
 
 fn load_obj(obj_data: &str, flip_v: bool) -> Vec<Vertex> {
     let mut vertices: Vec<Vertex> = Vec::new();
@@ -126,6 +136,7 @@ fn load_obj(obj_data: &str, flip_v: bool) -> Vec<Vertex> {
 #[gooseboy::main]
 fn main() {
     init_fb();
+    grab_mouse();
 }
 
 #[gooseboy::gpu_main]
@@ -134,7 +145,6 @@ fn gpu_main() {
     let mut buffer = GpuCommandBuffer::new();
 
     buffer.insert(GpuCommand::PushRecord);
-    log!("pushing {} vertices", obj_vertices.len());
     for vertex in obj_vertices {
         buffer.insert(GpuCommand::EmitVertex(vertex));
     }
@@ -151,8 +161,54 @@ fn gpu_main() {
     buffer.upload();
 }
 
+fn update_camera() {
+    if is_key_just_pressed(KEY_G) {
+        grab_mouse();
+    }
+    if is_key_just_pressed(KEY_R) {
+        release_mouse();
+    }
+
+    let sens = 0.008;
+    let speed = 0.5;
+
+    set_camera_yaw(((get_camera_yaw() as f64) - (get_mouse_accumulated_dx() * sens)) as f32);
+    set_camera_pitch(((get_camera_pitch() as f64) - (get_mouse_accumulated_dy() * sens)) as f32);
+
+    let mut position = get_camera_position();
+    let forward = get_camera_forward_vector();
+    let right = get_camera_right_vector();
+    let up = Vec3::new(0.0, 1.0, 0.0);
+
+    if is_key_down(KEY_W) {
+        position = position.add(forward.mul(speed));
+    }
+    if is_key_down(KEY_S) {
+        position = position.add(forward.mul(-speed));
+    }
+
+    if is_key_down(KEY_A) {
+        position = position.add(right.mul(-speed));
+    }
+    if is_key_down(KEY_D) {
+        position = position.add(right.mul(speed));
+    }
+
+    if is_key_down(KEY_SPACE) {
+        position = position.add(up.mul(speed));
+    }
+    if is_key_down(KEY_LEFT_SHIFT) {
+        position = position.add(up.mul(-speed));
+    }
+
+    set_camera_position(position);
+    log!("position: {:#?}", position);
+}
+
 #[gooseboy::update]
 fn update(_nano_time: i64) {
+    update_camera();
+
     clear_framebuffer(Color::TRANSPARENT);
     draw_text_formatted(
         0,
