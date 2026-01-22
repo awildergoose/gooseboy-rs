@@ -64,3 +64,8 @@ unsafe extern "C" {
     pub(crate) fn get_time_nanos() -> i64;
     pub(crate) fn has_permission(permission: i32) -> bool;
 }
+
+#[link(wasm_import_module = "gpu")]
+unsafe extern "C" {
+    pub(crate) fn submit_gpu_commands(ptr: *const u8, count: i32);
+}

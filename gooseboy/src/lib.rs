@@ -3,6 +3,7 @@ pub mod bindings;
 pub mod color;
 pub mod font;
 pub mod framebuffer;
+pub mod gpu;
 pub mod input;
 pub mod keys;
 pub mod mem;
