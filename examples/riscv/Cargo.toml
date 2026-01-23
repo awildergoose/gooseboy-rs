@@ -1,0 +1,11 @@
+[package]
+name = "riscv"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+gooseboy = { path = "../../gooseboy" }
+rv64emu = { path = "./rv64emu-rs" }
