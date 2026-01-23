@@ -3,5 +3,6 @@
 	"name": "GooseGPU",
 	"description": "GooseGPU test",
 	"entrypoint": "app.wasm",
-	"permissions": []
+	"permissions": [],
+	"allowsMovement": true
 }
