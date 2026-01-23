@@ -1,3 +1,4 @@
+// run this with 640000 initial memory and 1280000 maximum memory
 #![allow(static_mut_refs)]
 #![no_main]
 
@@ -10,6 +11,7 @@ use gooseboy::{
         KEY_A, KEY_BACKSPACE, KEY_DELETE, KEY_DOWN, KEY_END, KEY_ENTER, KEY_ESCAPE, KEY_HOME,
         KEY_INSERT, KEY_LEFT, KEY_PAGE_DOWN, KEY_PAGE_UP, KEY_RIGHT, KEY_TAB, KEY_UP, KEY_Z,
     },
+    log,
     text::draw_text_wrapped_ex,
 };
 
@@ -49,7 +51,7 @@ fn main() {
     let config = Rc::new(config);
 
     let bus = rc_refcell_new(Bus::new());
-    let mem = DeviceMemory::new(16 * 1024 * 1024);
+    let mem = DeviceMemory::new(64 * 1024 * 1024);
     bus.borrow_mut().add_device(DeviceType {
         start: MEM_BASE,
         len: mem.size() as u64,
@@ -132,6 +134,12 @@ fn update(_nano_time: i64) {
         while let Some(b) = uart.pop() {
             let last_line = CONSOLE_LINES.last_mut();
             if b == b'\n' {
+                if let Some(line) = last_line
+                    && !line.is_empty()
+                {
+                    log!("{}", line);
+                }
+
                 CONSOLE_LINES.push(String::new());
                 CUR_Y += 8;
             } else if let Some(line) = last_line {
@@ -142,22 +150,28 @@ fn update(_nano_time: i64) {
         }
 
         let fb_height = get_framebuffer_height();
-        let max_lines = fb_height / 8;
-        if CONSOLE_LINES.len() > max_lines {
-            let excess = CONSOLE_LINES.len() - max_lines;
-            CONSOLE_LINES.drain(0..excess);
-            CUR_Y = max_lines * 8 - 8;
+        let max_visual_lines = fb_height / 8;
+        let fb_width = get_framebuffer_width();
+
+        let mut total_visual_lines: usize = CONSOLE_LINES
+            .iter()
+            .map(|l| wrapped_line_count(l, fb_width))
+            .sum();
+
+        while total_visual_lines > max_visual_lines && !CONSOLE_LINES.is_empty() {
+            let removed = CONSOLE_LINES.remove(0);
+            total_visual_lines =
+                total_visual_lines.saturating_sub(wrapped_line_count(&removed, fb_width));
         }
 
-        for (line_index, line) in CONSOLE_LINES.iter().enumerate() {
-            draw_text_wrapped_ex(
-                gooseboy::framebuffer::get_framebuffer_surface_mut(),
-                0,
-                line_index * 8,
-                line,
-                Color::WHITE,
-                Some(get_framebuffer_width()),
-            );
+        let mut y_px = 0usize;
+        let surface = gooseboy::framebuffer::get_framebuffer_surface_mut();
+        for line in CONSOLE_LINES.iter() {
+            if y_px >= fb_height {
+                break;
+            }
+            draw_text_wrapped_ex(surface, 0, y_px, line, Color::WHITE, Some(fb_width));
+            y_px += wrapped_line_count(line, fb_width) * 8;
         }
     }
 }
@@ -190,4 +204,29 @@ fn keycode_to_bytes(key: i32) -> Vec<u8> {
 
         _ => Vec::new(),
     }
+}
+
+fn wrapped_line_count(text: &str, max_width: usize) -> usize {
+    if text.is_empty() {
+        return 1;
+    }
+
+    let bytes = text.as_bytes();
+    let mut cx = 0usize;
+    let mut lines = 1usize;
+    for &b in bytes {
+        if b == b'\n' {
+            lines += 1;
+            cx = 0;
+            continue;
+        }
+
+        if cx + 8 > max_width {
+            lines += 1;
+            cx = 8;
+        } else {
+            cx += 8;
+        }
+    }
+    lines
 }
