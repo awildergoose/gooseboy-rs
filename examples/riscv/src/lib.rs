@@ -51,7 +51,7 @@ fn main() {
     let config = Rc::new(config);
 
     let bus = rc_refcell_new(Bus::new());
-    let mem = DeviceMemory::new(64 * 1024 * 1024);
+    let mem = DeviceMemory::new(128 * 1024 * 1024);
     bus.borrow_mut().add_device(DeviceType {
         start: MEM_BASE,
         len: mem.size() as u64,

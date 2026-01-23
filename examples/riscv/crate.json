@@ -4,5 +4,5 @@
 	"description": "RiscV test",
 	"entrypoint": "app.wasm",
 	"permissions": [],
-	"allowsMovement": true
+	"allowsMovement": false
 }
