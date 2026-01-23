@@ -9,3 +9,4 @@ crate-type = ["cdylib"]
 [dependencies]
 gooseboy = { path = "../../gooseboy" }
 rv64emu = { path = "./rv64emu-rs" }
+crossbeam-queue = "0.3.12"

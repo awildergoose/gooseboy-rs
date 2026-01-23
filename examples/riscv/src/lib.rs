@@ -1,33 +1,40 @@
 #![allow(static_mut_refs)]
 #![no_main]
 
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use gooseboy::{
     color::Color,
-    framebuffer::{get_framebuffer_width, init_fb},
+    framebuffer::{clear_framebuffer, get_framebuffer_height, get_framebuffer_width, init_fb},
+    keys::{
+        KEY_A, KEY_BACKSPACE, KEY_DELETE, KEY_DOWN, KEY_END, KEY_ENTER, KEY_ESCAPE, KEY_HOME,
+        KEY_INSERT, KEY_LEFT, KEY_PAGE_DOWN, KEY_PAGE_UP, KEY_RIGHT, KEY_TAB, KEY_UP, KEY_Z,
+    },
     text::draw_text_wrapped_ex,
 };
+
 use rv64emu::{
     config::Config,
     device::{
-        device_am_uart::DeviceUart,
-        device_memory::DeviceMemory,
-        device_trait::{MEM_BASE, SERIAL_PORT},
+        device_16550a::Device16550aUART, device_memory::DeviceMemory,
+        device_sifive_plic::SIFIVE_UART_IRQ, device_sifive_uart::DeviceSifiveUart,
+        device_trait::MEM_BASE,
     },
     rv64core::{
         bus::{Bus, DeviceType},
         cpu_core::CpuCoreBuild,
     },
     rvsim::RVsim,
-    tools::{FifoUnbounded, fifo_unbounded_new, rc_refcell_new},
+    tools::{FifoUnbounded, rc_refcell_new},
 };
 
-const HELLO_BIN: &[u8] = include_bytes!("../hello.bin");
+use crossbeam_queue::SegQueue;
+
+const HELLO_BIN: &[u8] = include_bytes!("../linux.elf");
 
 static mut SIM: Option<RVsim> = None;
 static mut UART_TX: Option<FifoUnbounded<u8>> = None;
+static mut UART_RX: Option<FifoUnbounded<u8>> = None;
 static mut CONSOLE_LINES: Vec<String> = Vec::new();
 static mut CUR_Y: usize = 0;
 
@@ -36,20 +43,13 @@ fn main() {
     init_fb();
 
     let mut config = Config::new();
-    config.set_mmu_type("bare");
-    config.set_isa("rv64im");
+    config.set_mmu_type("sv39");
+    config.set_isa("rv64imac");
+    config.set_s_mode();
     let config = Rc::new(config);
 
     let bus = rc_refcell_new(Bus::new());
-    let hart0 = Rc::new(RefCell::new(
-        CpuCoreBuild::new(bus.clone(), config.clone())
-            .with_boot_pc(0x8000_0000)
-            .with_hart_id(0)
-            .with_smode(false)
-            .build(),
-    ));
-
-    let mem = DeviceMemory::new(8 * 1024 * 1024);
+    let mem = DeviceMemory::new(16 * 1024 * 1024);
     bus.borrow_mut().add_device(DeviceType {
         start: MEM_BASE,
         len: mem.size() as u64,
@@ -57,14 +57,37 @@ fn main() {
         name: "RAM",
     });
 
-    let uart_tx_fifo = fifo_unbounded_new::<u8>();
-    let uart = DeviceUart::new(uart_tx_fifo.clone());
+    let uart_tx_fifo = FifoUnbounded::new(SegQueue::<u8>::new());
+    let uart_rx_fifo = FifoUnbounded::new(SegQueue::<u8>::new());
+
+    let device_16550 = Device16550aUART::new(uart_tx_fifo.clone(), uart_rx_fifo.clone());
     bus.borrow_mut().add_device(DeviceType {
-        start: SERIAL_PORT,
-        len: 1,
-        instance: Box::new(uart),
-        name: "UART",
+        start: 0x1000_0000,
+        len: 0x1000,
+        instance: Box::new(device_16550),
+        name: "16550a_uart",
     });
+
+    let device_sifive = DeviceSifiveUart::new(uart_tx_fifo.clone(), uart_rx_fifo.clone());
+    bus.borrow_mut()
+        .plic
+        .instance
+        .register_irq_source(SIFIVE_UART_IRQ, Rc::clone(&device_sifive.irq_pending));
+
+    bus.borrow_mut().add_device(DeviceType {
+        start: 0xc0000000,
+        len: 0x1000,
+        instance: Box::new(device_sifive),
+        name: "Sifive_Uart",
+    });
+
+    let hart0 = Rc::new(RefCell::new(
+        CpuCoreBuild::new(bus.clone(), config.clone())
+            .with_boot_pc(0x8000_0000)
+            .with_hart_id(0)
+            .with_smode(true)
+            .build(),
+    ));
 
     let mut sim = RVsim::new(vec![hart0.clone()], 0);
     sim.load_image_from_slice(HELLO_BIN);
@@ -73,6 +96,7 @@ fn main() {
     unsafe {
         SIM = Some(sim);
         UART_TX = Some(uart_tx_fifo);
+        UART_RX = Some(uart_rx_fifo);
         CONSOLE_LINES = Vec::new();
         CUR_Y = 0;
     }
@@ -80,6 +104,19 @@ fn main() {
 
 #[gooseboy::update]
 fn update(_nano_time: i64) {
+    clear_framebuffer(Color::BLACK);
+
+    unsafe {
+        if let Some(rx_fifo) = UART_RX.as_mut() {
+            while let Some(keycode) = gooseboy::input::get_key() {
+                let bytes = keycode_to_bytes(keycode);
+                for b in bytes {
+                    rx_fifo.push(b);
+                }
+            }
+        }
+    }
+
     unsafe {
         let sim = match SIM.as_mut() {
             Some(s) => s,
@@ -90,7 +127,7 @@ fn update(_nano_time: i64) {
             None => return,
         };
 
-        sim.run_once(5000);
+        sim.run_once(5_000);
 
         while let Some(b) = uart.pop() {
             let last_line = CONSOLE_LINES.last_mut();
@@ -104,7 +141,7 @@ fn update(_nano_time: i64) {
             }
         }
 
-        let fb_height = 200;
+        let fb_height = get_framebuffer_height();
         let max_lines = fb_height / 8;
         if CONSOLE_LINES.len() > max_lines {
             let excess = CONSOLE_LINES.len() - max_lines;
@@ -122,5 +159,35 @@ fn update(_nano_time: i64) {
                 Some(get_framebuffer_width()),
             );
         }
+    }
+}
+
+fn keycode_to_bytes(key: i32) -> Vec<u8> {
+    match key {
+        KEY_A..=KEY_Z => {
+            let offset = (key - KEY_A) as u8;
+            vec![b'a' + offset]
+        }
+
+        32..=126 => vec![key as u8],
+
+        KEY_ENTER => vec![b'\n'],
+        KEY_TAB => vec![b'\t'],
+        KEY_BACKSPACE => vec![0x7f],
+        KEY_ESCAPE => vec![0x1B],
+
+        KEY_UP => vec![0x1B, b'[', b'A'],
+        KEY_DOWN => vec![0x1B, b'[', b'B'],
+        KEY_RIGHT => vec![0x1B, b'[', b'C'],
+        KEY_LEFT => vec![0x1B, b'[', b'D'],
+
+        KEY_HOME => vec![0x1B, b'[', b'H'],
+        KEY_END => vec![0x1B, b'[', b'F'],
+        KEY_PAGE_UP => vec![0x1B, b'[', b'5', b'~'],
+        KEY_PAGE_DOWN => vec![0x1B, b'[', b'6', b'~'],
+        KEY_INSERT => vec![0x1B, b'[', b'2', b'~'],
+        KEY_DELETE => vec![0x1B, b'[', b'3', b'~'],
+
+        _ => Vec::new(),
     }
 }
