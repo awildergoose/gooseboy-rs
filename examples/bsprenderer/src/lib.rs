@@ -3,7 +3,7 @@
 use std::sync::LazyLock;
 
 use gooseboy::framebuffer::init_fb;
-use gooseboy::gpu::{GpuCommandBuffer, gpu_read_value};
+use gooseboy::gpu::{GpuCommandBuffer, PrimitiveType, gpu_read_value};
 use gooseboy::input::grab_mouse;
 use gooseboy::text::draw_text_formatted;
 use gooseboy::{color::Color, framebuffer::clear_framebuffer};
@@ -142,7 +142,7 @@ fn gpu_main() {
         tris
     }
 
-    buffer.insert(GpuCommand::PushRecord);
+    buffer.insert(GpuCommand::PushRecord(PrimitiveType::Triangles));
 
     for face in bsp.faces.iter() {
         let verts: Vec<qbsp::glam::Vec3> = face.vertices(&bsp).collect();

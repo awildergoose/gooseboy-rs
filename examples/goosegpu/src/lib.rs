@@ -1,7 +1,7 @@
 #![no_main]
 
 use gooseboy::framebuffer::init_fb;
-use gooseboy::gpu::{GpuCommand, GpuCommandBuffer, gpu_read_value, load_obj};
+use gooseboy::gpu::{GpuCommand, GpuCommandBuffer, PrimitiveType, Vertex, gpu_read_value};
 use gooseboy::input::grab_mouse;
 use gooseboy::text::draw_text_formatted;
 use gooseboy::{color::Color, framebuffer::clear_framebuffer};
@@ -9,8 +9,6 @@ use gooseboy::{color::Color, framebuffer::clear_framebuffer};
 mod sprites {
     include!("generated/sprites.rs");
 }
-
-const MODEL_OBJ: &str = include_str!("../teapot.obj");
 
 #[gooseboy::main]
 fn main() {
@@ -21,22 +19,19 @@ fn main() {
 fn gpu_main() {
     grab_mouse();
 
-    let obj_vertices = load_obj(MODEL_OBJ, false);
+    let quad_vertices = vec![
+        Vertex::new(-0.5, -0.5, 0.0, 0.0, 0.0),
+        Vertex::new(0.5, -0.5, 0.0, 1.0, 0.0),
+        Vertex::new(0.5, 0.5, 0.0, 1.0, 1.0),
+        Vertex::new(-0.5, 0.5, 0.0, 0.0, 1.0),
+    ];
     let mut buffer = GpuCommandBuffer::new();
 
-    buffer.insert(GpuCommand::PushRecord);
-    for vertex in obj_vertices {
-        buffer.insert(GpuCommand::EmitVertex(vertex));
+    buffer.insert(GpuCommand::PushRecord(PrimitiveType::Quads));
+    for v in quad_vertices {
+        buffer.insert(GpuCommand::EmitVertex(v));
     }
     buffer.insert(GpuCommand::PopRecord);
-
-    let spr = &sprites::CAT;
-
-    buffer.insert(GpuCommand::RegisterTexture {
-        rgba: &spr.rgba,
-        w: spr.width as u32,
-        h: spr.height as u32,
-    });
 
     buffer.upload();
 }
@@ -53,9 +48,10 @@ fn update(nano_time: i64) {
         0,
         0,
         format!(
-            "GPU 0: {:#?}\nGPU 1: {:#?}",
-            gpu_read_value::<i32>(0),
-            gpu_read_value::<i32>(4)
+            "status: {:#?}\nlast record: {:#?}\nlast texture: {:#?}",
+            gpu_read_value::<u32>(gooseboy::gpu::GB_GPU_STATUS),
+            gpu_read_value::<u32>(gooseboy::gpu::GB_GPU_RECORD_ID),
+            gpu_read_value::<u32>(gooseboy::gpu::GB_GPU_TEXTURE_ID)
         ),
         Color::RED,
     );

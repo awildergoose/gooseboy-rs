@@ -3,6 +3,16 @@ use crate::{
     mem::alloc_bytes,
 };
 
+pub const GB_GPU_STATUS: u32 = 0;
+pub const GB_GPU_RECORD_ID: u32 = 4;
+pub const GB_GPU_TEXTURE_ID: u32 = 8;
+pub const GB_GPU_MATRIX_DEPTH: u32 = 12;
+pub const GB_STATUS_OK: u32 = 0;
+pub const GB_STATUS_BAD_TEXTURE_SIZE: u32 = 1;
+pub const GB_STATUS_BAD_TEXTURE: u32 = 2;
+pub const GB_STATUS_MATRIX_TOO_SMALL: u32 = 3;
+pub const GB_STATUS_MATRIX_TOO_BIG: u32 = 4;
+
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct Vertex {
@@ -30,10 +40,25 @@ impl Vertex {
 }
 
 #[repr(u8)]
+pub enum PrimitiveType {
+    Triangles,
+    Quads,
+}
+
+impl PrimitiveType {
+    pub fn repr(&self) -> u8 {
+        match self {
+            PrimitiveType::Triangles => 0,
+            PrimitiveType::Quads => 1,
+        }
+    }
+}
+
+#[repr(u8)]
 pub enum GpuCommand<'a> {
     Push,
     Pop,
-    PushRecord,
+    PushRecord(PrimitiveType),
     PopRecord,
     DrawRecorded(u32),
     EmitVertex(Vertex),
@@ -53,7 +78,7 @@ impl GpuCommand<'_> {
         match self {
             GpuCommand::Push => 0x00,
             GpuCommand::Pop => 0x01,
-            GpuCommand::PushRecord => 0x02,
+            GpuCommand::PushRecord(_) => 0x02,
             GpuCommand::PopRecord => 0x03,
             GpuCommand::DrawRecorded(_) => 0x04,
             GpuCommand::EmitVertex(_) => 0x05,
@@ -72,6 +97,7 @@ impl GpuCommand<'_> {
     pub fn serialize(&self, buf: &mut Vec<u8>) {
         buf.push(self.repr());
         match self {
+            GpuCommand::PushRecord(p) => buf.extend_from_slice(&p.repr().to_le_bytes()),
             GpuCommand::DrawRecorded(id) => buf.extend_from_slice(&id.to_le_bytes()),
             GpuCommand::EmitVertex(v) => buf.extend_from_slice(&v.as_bytes()),
             GpuCommand::BindTexture(id) => buf.extend_from_slice(&id.to_le_bytes()),
@@ -140,10 +166,10 @@ impl Default for GpuCommandBuffer {
     }
 }
 
-pub fn gpu_read_value<T: Copy>(offset: i32) -> T {
+pub fn gpu_read_value<T: Copy>(offset: u32) -> T {
     let ptr = alloc_bytes(size_of::<T>());
     unsafe {
-        gpu_read(offset, ptr, size_of::<T>() as i32);
+        gpu_read(offset as i32, ptr, size_of::<T>() as i32);
         *(ptr as *const T)
     }
 }
