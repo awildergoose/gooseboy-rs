@@ -268,14 +268,16 @@ fn update(nano_time: i64) {
         }
     }
 
+    let mx = get_mouse_x();
+    let my = get_mouse_y();
     draw_text(
-        2,
-        2,
+        mx as usize,
+        my as usize,
         format!(
             "left-click: spawn\nright-click: drag\nmiddle-click: explode\nbodies: {}",
             state.bodies.len()
         ),
-        Color::WHITE,
+        Color::RED,
     );
 }
 

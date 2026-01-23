@@ -3,5 +3,6 @@
 	"name": "Tests",
 	"description": "Gooseboy unit(ish) tests",
 	"entrypoint": "app.wasm",
-	"permissions": ["CONSOLE", "STORAGE_READ", "STORAGE_WRITE"]
+	"permissions": ["CONSOLE", "STORAGE_READ", "STORAGE_WRITE"],
+	"allowsMovement": true
 }
