@@ -133,7 +133,7 @@ fn update(_nano_time: i64) {
 
         while let Some(b) = uart.pop() {
             let last_line = CONSOLE_LINES.last_mut();
-            if b == b'\n' {
+            if b == b'\n' || b == b'\r' {
                 if let Some(line) = last_line
                     && !line.is_empty()
                 {
@@ -143,7 +143,9 @@ fn update(_nano_time: i64) {
                 CONSOLE_LINES.push(String::new());
                 CUR_Y += 8;
             } else if let Some(line) = last_line {
-                line.push(b as char);
+                if b >= 32 || b == b'\t' {
+                    line.push(b as char);
+                }
             } else {
                 CONSOLE_LINES.push((b as char).to_string());
             }
@@ -185,7 +187,7 @@ fn keycode_to_bytes(key: i32) -> Vec<u8> {
 
         32..=126 => vec![key as u8],
 
-        KEY_ENTER => vec![b'\n'],
+        KEY_ENTER => vec![b'\r'],
         KEY_TAB => vec![b'\t'],
         KEY_BACKSPACE => vec![0x7f],
         KEY_ESCAPE => vec![0x1B],
