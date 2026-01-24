@@ -1,4 +1,5 @@
-// run this with 640000 initial memory and 1280000 maximum memory
+// run this with 640000 initial memory and 1280000 maximum memory and
+// with the -Xmx4G java flag
 #![allow(static_mut_refs)]
 #![no_main]
 
@@ -30,15 +31,30 @@ use rv64emu::{
     tools::{FifoUnbounded, rc_refcell_new},
 };
 
+use crate::ansi::{AnsiCode, AnsiParser, AnsiState};
 use crossbeam_queue::SegQueue;
 
+mod ansi;
+
 const HELLO_BIN: &[u8] = include_bytes!("../linux.elf");
+
+#[derive(Clone, Copy)]
+struct ConsoleCell {
+    ch: char,
+    color: Color,
+}
 
 static mut SIM: Option<RVsim> = None;
 static mut UART_TX: Option<FifoUnbounded<u8>> = None;
 static mut UART_RX: Option<FifoUnbounded<u8>> = None;
-static mut CONSOLE_LINES: Vec<String> = Vec::new();
+static mut CONSOLE_LINES: Vec<Vec<ConsoleCell>> = Vec::new();
 static mut CUR_Y: usize = 0;
+static mut ANSI_PARSER: AnsiParser = AnsiParser {
+    state: AnsiState::Normal,
+    buffer: Vec::new(),
+};
+static mut CURRENT_COLOR: Color = Color::WHITE;
+static mut CURRENT_BOLD: bool = false;
 
 #[gooseboy::main]
 fn main() {
@@ -101,6 +117,9 @@ fn main() {
         UART_RX = Some(uart_rx_fifo);
         CONSOLE_LINES = Vec::new();
         CUR_Y = 0;
+        ANSI_PARSER = AnsiParser::new();
+        CURRENT_COLOR = Color::WHITE;
+        CURRENT_BOLD = false;
     }
 }
 
@@ -129,25 +148,68 @@ fn update(_nano_time: i64) {
             None => return,
         };
 
-        sim.run_once(5_000);
+        sim.run_once(5_000 * 5);
+
+        if CONSOLE_LINES.is_empty() {
+            CONSOLE_LINES.push(Vec::new());
+        }
 
         while let Some(b) = uart.pop() {
+            if let Some(codes) = ANSI_PARSER.process_byte(b) {
+                for code in codes {
+                    match code {
+                        AnsiCode::Reset => {
+                            CURRENT_COLOR = Color::WHITE;
+                            CURRENT_BOLD = false;
+                        }
+                        AnsiCode::Bold => {
+                            CURRENT_BOLD = true;
+                        }
+                        AnsiCode::FgColor(n) => {
+                            CURRENT_COLOR = ansi_to_color(n, CURRENT_BOLD);
+                        }
+                        AnsiCode::ClearScreen => {
+                            CONSOLE_LINES.clear();
+                            CONSOLE_LINES.push(Vec::new());
+                            CUR_Y = 0;
+                        }
+                        AnsiCode::ClearLine => {
+                            if let Some(line) = CONSOLE_LINES.last_mut() {
+                                line.clear();
+                            }
+                        }
+                        AnsiCode::Unknown => {}
+                    }
+                }
+                
+                
+                continue;
+            }
+
             let last_line = CONSOLE_LINES.last_mut();
+
             if b == b'\n' || b == b'\r' {
                 if let Some(line) = last_line
                     && !line.is_empty()
                 {
-                    log!("{}", line);
+                    let s = line.iter().map(|c| c.ch).collect::<String>();
+                    log!("{}", s);
                 }
-
-                CONSOLE_LINES.push(String::new());
+                CONSOLE_LINES.push(Vec::new());
                 CUR_Y += 8;
             } else if let Some(line) = last_line {
                 if b >= 32 || b == b'\t' {
-                    line.push(b as char);
+                    let ch = b as char;
+                    line.push(ConsoleCell {
+                        ch,
+                        color: CURRENT_COLOR,
+                    });
                 }
             } else {
-                CONSOLE_LINES.push((b as char).to_string());
+                CONSOLE_LINES.push(vec![ConsoleCell {
+                    ch: b as char,
+                    color: CURRENT_COLOR,
+                }]);
             }
         }
 
@@ -157,13 +219,13 @@ fn update(_nano_time: i64) {
 
         let mut total_visual_lines: usize = CONSOLE_LINES
             .iter()
-            .map(|l| wrapped_line_count(l, fb_width))
+            .map(|l| wrapped_line_count_cells(l, fb_width))
             .sum();
 
         while total_visual_lines > max_visual_lines && !CONSOLE_LINES.is_empty() {
             let removed = CONSOLE_LINES.remove(0);
             total_visual_lines =
-                total_visual_lines.saturating_sub(wrapped_line_count(&removed, fb_width));
+                total_visual_lines.saturating_sub(wrapped_line_count_cells(&removed, fb_width));
         }
 
         let mut y_px = 0usize;
@@ -172,8 +234,29 @@ fn update(_nano_time: i64) {
             if y_px >= fb_height {
                 break;
             }
-            draw_text_wrapped_ex(surface, 0, y_px, line, Color::WHITE, Some(fb_width));
-            y_px += wrapped_line_count(line, fb_width) * 8;
+
+            let mut x_px = 0usize;
+            for cell in line.iter() {
+                if x_px + 8 > fb_width {
+                    y_px += 8;
+                    x_px = 0;
+                    if y_px >= fb_height {
+                        break;
+                    }
+                }
+
+                let s = &cell.ch.to_string();
+                draw_text_wrapped_ex(
+                    surface,
+                    (x_px as i32).try_into().unwrap(),
+                    (y_px as i32).try_into().unwrap(),
+                    s,
+                    cell.color,
+                    None,
+                );
+                x_px += 8;
+            }
+            y_px += 8;
         }
     }
 }
@@ -187,9 +270,9 @@ fn keycode_to_bytes(key: i32) -> Vec<u8> {
 
         32..=126 => vec![key as u8],
 
-        KEY_ENTER => vec![b'\r'],
+        KEY_ENTER => vec![b'\r', b'\n'],
         KEY_TAB => vec![b'\t'],
-        KEY_BACKSPACE => vec![0x7f],
+        KEY_BACKSPACE => vec![0x08],
         KEY_ESCAPE => vec![0x1B],
 
         KEY_UP => vec![0x1B, b'[', b'A'],
@@ -208,21 +291,13 @@ fn keycode_to_bytes(key: i32) -> Vec<u8> {
     }
 }
 
-fn wrapped_line_count(text: &str, max_width: usize) -> usize {
-    if text.is_empty() {
+fn wrapped_line_count_cells(line: &[ConsoleCell], max_width: usize) -> usize {
+    if line.is_empty() {
         return 1;
     }
-
-    let bytes = text.as_bytes();
     let mut cx = 0usize;
     let mut lines = 1usize;
-    for &b in bytes {
-        if b == b'\n' {
-            lines += 1;
-            cx = 0;
-            continue;
-        }
-
+    for _cell in line.iter() {
         if cx + 8 > max_width {
             lines += 1;
             cx = 8;
@@ -231,4 +306,30 @@ fn wrapped_line_count(text: &str, max_width: usize) -> usize {
         }
     }
     lines
+}
+
+fn brighten(color: Color) -> Color {
+    let factor = 1.5;
+
+    Color {
+        r: (color.r as f32 * factor).min(255.0) as u8,
+        g: (color.g as f32 * factor).min(255.0) as u8,
+        b: (color.b as f32 * factor).min(255.0) as u8,
+        a: color.a,
+    }
+}
+
+fn ansi_to_color(n: u8, bold: bool) -> Color {
+    let base = match n {
+        0 => Color::BLACK,
+        1 => Color::RED,
+        2 => Color::GREEN,
+        3 => Color::YELLOW,
+        4 => Color::BLUE,
+        5 => Color::MAGENTA,
+        6 => Color::CYAN,
+        7 => Color::WHITE,
+        _ => Color::WHITE,
+    };
+    if bold { brighten(base) } else { base }
 }
