@@ -1,4 +1,5 @@
 pub type Pointer = *const u8;
+pub type PointerMut = *mut u8;
 
 #[link(wasm_import_module = "console")]
 unsafe extern "C" {
@@ -25,8 +26,8 @@ unsafe extern "C" {
 
 #[link(wasm_import_module = "memory")]
 unsafe extern "C" {
-    pub(crate) fn mem_fill(addr: Pointer, len: i32, value: i32);
-    pub(crate) fn mem_copy(dst: Pointer, src: Pointer, len: i32);
+    pub(crate) fn mem_fill(addr: PointerMut, len: i32, value: i32);
+    pub(crate) fn mem_copy(dst: PointerMut, src: Pointer, len: i32);
 }
 
 #[link(wasm_import_module = "input")]
@@ -55,7 +56,7 @@ unsafe extern "C" {
 
 #[link(wasm_import_module = "storage")]
 unsafe extern "C" {
-    pub(crate) fn storage_read(offset: i32, ptr: Pointer, len: i32) -> i32;
+    pub(crate) fn storage_read(offset: i32, ptr: PointerMut, len: i32) -> i32;
     pub(crate) fn storage_write(offset: i32, ptr: Pointer, len: i32) -> i32;
     pub(crate) fn storage_size() -> u32;
     pub(crate) fn storage_clear();
@@ -69,7 +70,7 @@ unsafe extern "C" {
 
 #[link(wasm_import_module = "gpu")]
 unsafe extern "C" {
-    pub(crate) fn get_camera_transform(ptr: Pointer);
+    pub(crate) fn get_camera_transform(ptr: PointerMut);
     pub(crate) fn set_camera_transform(x: f32, y: f32, z: f32, yaw: f32, pitch: f32);
     pub(crate) fn submit_gpu_commands(ptr: Pointer, count: i32);
     pub(crate) fn gpu_read(offset: i32, ptr: Pointer, len: i32) -> i32;

@@ -3,44 +3,53 @@
 
 use crate::bindings::Pointer;
 
+/// Converts a *const T pointer into a raw pointer.
+///
+/// # Safety
+///
+/// The caller must ensure that the pointer is the right type.
 #[inline]
 #[must_use]
-pub const unsafe fn as_const_pointer<T>(val: *const T) -> Pointer {
-    val as Pointer
+pub const unsafe fn as_const_pointer<T>(value: *const T) -> Pointer {
+    value as Pointer
 }
 
+/// Converts a usize into an i32.
+///
+/// # Safety
+///
+/// The caller must ensure that the value can fit inside an i32.
+/// This shouldn't be an issue if you're dealing with bindings though,
+/// as we only use 32-bit.
 #[inline]
 #[must_use]
-pub const unsafe fn usize_as_i32(val: usize) -> i32 {
-    val as i32
+pub const unsafe fn usize_as_i32(value: usize) -> i32 {
+    value as i32
 }
 
+/// Converts a u32 into an i32.
+///
+/// # Safety
+///
+/// The caller must ensure that the value can fit inside an i32.
 #[inline]
 #[must_use]
-pub const unsafe fn u32_as_i32(val: u32) -> i32 {
-    val as i32
+pub const unsafe fn u32_as_i32(value: u32) -> i32 {
+    value as i32
 }
 
+/// Returns the array length as an i32.
+/// Useful for bindings.
 #[inline]
 #[must_use]
-pub unsafe fn as_pointer<T>(val: &T) -> i32 {
-    std::ptr::from_ref::<T>(val) as usize as i32
-}
-
-#[inline]
-#[must_use]
-pub unsafe fn as_pointer_mut<T>(val: &mut T) -> i32 {
-    std::ptr::from_mut::<T>(val) as usize as i32
-}
-
-#[inline]
-#[must_use]
-pub const unsafe fn arr_len<T>(arr: &[T]) -> i32 {
+pub const fn arr_len<T>(arr: &[T]) -> i32 {
     arr.len() as i32
 }
 
+/// Returns the string length as an i32.
+/// Useful for bindings.
 #[inline]
 #[must_use]
-pub unsafe fn str_len(str: impl AsRef<str>) -> i32 {
+pub fn str_len(str: impl AsRef<str>) -> i32 {
     str.as_ref().len() as i32
 }

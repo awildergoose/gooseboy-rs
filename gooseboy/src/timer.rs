@@ -17,7 +17,8 @@ impl Timer {
 
     /// Returns true if the timer should trigger at this `elapsed` time
     pub fn tick(&mut self, elapsed: Duration) -> bool {
-        if elapsed.checked_sub(self.last_trigger).unwrap() >= self.interval {
+        #[allow(clippy::unchecked_time_subtraction)]
+        if elapsed - self.last_trigger >= self.interval {
             self.last_trigger = elapsed;
             true
         } else {

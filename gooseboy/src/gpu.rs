@@ -173,9 +173,8 @@ impl Default for GpuCommandBuffer {
 
 #[must_use]
 pub fn gpu_read_value<T: Copy>(offset: u32) -> T {
-    let ptr = alloc_bytes(size_of::<T>());
-
     unsafe {
+        let ptr = alloc_bytes(size_of::<T>());
         gpu_read(
             unsafe_casts::u32_as_i32(offset),
             ptr,

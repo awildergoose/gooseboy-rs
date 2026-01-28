@@ -18,8 +18,8 @@ pub fn storage_write_value<T: Copy>(offset: i32, value: T) {
 /// Requires `StorageRead` permission
 #[must_use]
 pub fn storage_read_value<T: Copy>(offset: i32) -> T {
-    let ptr = alloc_bytes(size_of::<T>());
     unsafe {
+        let ptr = alloc_bytes(size_of::<T>());
         storage_read(offset, ptr, unsafe_casts::usize_as_i32(size_of::<T>()));
         *(ptr as *const T)
     }
