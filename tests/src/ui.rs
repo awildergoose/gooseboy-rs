@@ -14,7 +14,7 @@ pub fn render() {
 
     let ok_count = results.iter().filter(|f| f.status).count();
     let fail_count = results.iter().filter(|f| !f.status).count();
-    let summary = format!("{} [green]OK[white] {} [red]FAIL", ok_count, fail_count);
+    let summary = format!("{ok_count} [green]OK[white] {fail_count} [red]FAIL");
 
     let fbw = get_framebuffer_width();
     draw_text_formatted(

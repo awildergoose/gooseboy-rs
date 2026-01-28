@@ -1,3 +1,5 @@
+#![allow(clippy::unreadable_literal)]
+
 // unscii-8
 pub static FONT: [[u8; 8]; 256] = [
     [

@@ -9,6 +9,7 @@ pub struct Sprite {
 }
 
 impl Sprite {
+    #[must_use] 
     pub fn new(width: usize, height: usize, rgba: &[u8]) -> Self {
         Self {
             width,
@@ -18,6 +19,7 @@ impl Sprite {
         }
     }
 
+    #[must_use] 
     pub fn new_blended(width: usize, height: usize, rgba: &[u8]) -> Self {
         Self {
             width,
@@ -40,7 +42,7 @@ impl Sprite {
     }
 }
 
-/// TODO remove this and replace it with blit_premultiplied_clipped or
+/// TODO remove this and replace it with `blit_premultiplied_clipped` or
 /// make an entirely new java function for it
 pub fn blit_ex(
     surface: &mut Surface,
@@ -80,9 +82,9 @@ pub fn blit_ex(
             let src = &rgba[sprite_index..sprite_index + 4];
 
             if blend && src[3] < 255 {
-                let a = src[3] as f32 / 255.0;
+                let a = f32::from(src[3]) / 255.0;
                 for i in 0..3 {
-                    dst[i] = ((dst[i] as f32 * (1.0 - a)) + (src[i] as f32 * a)) as u8;
+                    dst[i] = f32::from(dst[i]).mul_add(1.0 - a, f32::from(src[i]) * a) as u8;
                 }
                 dst[3] = 255;
             } else {

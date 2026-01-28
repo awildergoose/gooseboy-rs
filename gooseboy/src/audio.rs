@@ -8,7 +8,8 @@ pub struct Audio {
 }
 
 impl Audio {
-    pub fn new(data: Vec<u8>) -> Self {
+    #[must_use]
+    pub const fn new(data: Vec<u8>) -> Self {
         Self { data }
     }
 
@@ -28,7 +29,8 @@ pub struct AudioInstance {
 }
 
 impl AudioInstance {
-    fn new(id: i64) -> Self {
+    #[must_use]
+    pub const fn new(id: i64) -> Self {
         Self {
             id,
             volume: 1.0,
@@ -57,15 +59,18 @@ impl AudioInstance {
         self.pitch = new;
     }
 
+    #[must_use]
     pub fn is_playing(&self) -> bool {
         unsafe { is_audio_playing(self.id) }
     }
 
-    pub fn get_volume(&self) -> f32 {
+    #[must_use]
+    pub const fn get_volume(&self) -> f32 {
         self.volume
     }
 
-    pub fn get_pitch(&self) -> f32 {
+    #[must_use]
+    pub const fn get_pitch(&self) -> f32 {
         self.pitch
     }
 }

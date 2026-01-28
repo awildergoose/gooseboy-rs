@@ -15,10 +15,10 @@ fn premultiply_rgba_inplace(pixels: &mut [u8]) {
             continue;
         }
 
-        let a32 = a as u32;
-        px[0] = ((px[0] as u32 * a32 + 127) / 255) as u8;
-        px[1] = ((px[1] as u32 * a32 + 127) / 255) as u8;
-        px[2] = ((px[2] as u32 * a32 + 127) / 255) as u8;
+        let a32 = u32::from(a);
+        px[0] = ((u32::from(px[0]) * a32 + 127) / 255) as u8;
+        px[1] = ((u32::from(px[1]) * a32 + 127) / 255) as u8;
+        px[2] = ((u32::from(px[2]) * a32 + 127) / 255) as u8;
     }
 }
 
@@ -71,36 +71,26 @@ fn sample_bilinear_premult(input: &[u8], width: usize, height: usize, x: f32, y:
         let w11 = fx * fy;
 
         [
-            (c00[0] as f32 * w00
-                + c10[0] as f32 * w10
-                + c01[0] as f32 * w01
-                + c11[0] as f32 * w11
+            (f32::from(c11[0]).mul_add(w11, f32::from(c01[0]).mul_add(w01, f32::from(c00[0]).mul_add(w00, f32::from(c10[0]) * w10)))
                 + 0.5) as u8,
-            (c00[1] as f32 * w00
-                + c10[1] as f32 * w10
-                + c01[1] as f32 * w01
-                + c11[1] as f32 * w11
+            (f32::from(c11[1]).mul_add(w11, f32::from(c01[1]).mul_add(w01, f32::from(c00[1]).mul_add(w00, f32::from(c10[1]) * w10)))
                 + 0.5) as u8,
-            (c00[2] as f32 * w00
-                + c10[2] as f32 * w10
-                + c01[2] as f32 * w01
-                + c11[2] as f32 * w11
+            (f32::from(c11[2]).mul_add(w11, f32::from(c01[2]).mul_add(w01, f32::from(c00[2]).mul_add(w00, f32::from(c10[2]) * w10)))
                 + 0.5) as u8,
-            (c00[3] as f32 * w00
-                + c10[3] as f32 * w10
-                + c01[3] as f32 * w01
-                + c11[3] as f32 * w11
+            (f32::from(c11[3]).mul_add(w11, f32::from(c01[3]).mul_add(w01, f32::from(c00[3]).mul_add(w00, f32::from(c10[3]) * w10)))
                 + 0.5) as u8,
         ]
     }
 }
 
+#[must_use] 
 pub fn get_output_dimensions(width: usize, height: usize) -> (usize, usize) {
     let diag = ((width * width + height * height) as f32).sqrt();
     let out = diag.ceil() as usize;
     (out, out)
 }
 
+#[must_use] 
 pub fn transform_rgba(
     input: &[u8],
     width: usize,
@@ -234,8 +224,8 @@ fn transform_nearest_fast(
         for ox in 0..out_w {
             let wx = min_xf + ox as f32 + 0.5;
 
-            let sx = a * wx + b * wy + c;
-            let sy = d * wx + e * wy + f;
+            let sx = a.mul_add(wx, b * wy) + c;
+            let sy = d.mul_add(wx, e * wy) + f;
 
             if sx >= 0.0 && sx < width_f && sy >= 0.0 && sy < height_f {
                 let color = sample_nearest(src, width, height, sx, sy);
@@ -282,8 +272,8 @@ fn transform_bilinear_fast(
         for ox in 0..out_w {
             let wx = min_xf + ox as f32 + 0.5;
 
-            let sx = a * wx + b * wy + c;
-            let sy = d * wx + e * wy + f;
+            let sx = a.mul_add(wx, b * wy) + c;
+            let sy = d.mul_add(wx, e * wy) + f;
 
             if sx >= 0.0 && sx < width_f && sy >= 0.0 && sy < height_f {
                 let color = sample_bilinear_premult(src, width, height, sx, sy);
@@ -305,16 +295,16 @@ pub fn tint_rgba(pixels: &mut [u8], tint: Color) {
         return;
     }
 
-    let r = tint.r as u32;
-    let g = tint.g as u32;
-    let b = tint.b as u32;
-    let a = tint.a as u32;
+    let r = u32::from(tint.r);
+    let g = u32::from(tint.g);
+    let b = u32::from(tint.b);
+    let a = u32::from(tint.a);
 
     let chunks = pixels.chunks_exact_mut(4);
     for px in chunks {
-        px[0] = ((px[0] as u32 * r + 127) / 255) as u8;
-        px[1] = ((px[1] as u32 * g + 127) / 255) as u8;
-        px[2] = ((px[2] as u32 * b + 127) / 255) as u8;
-        px[3] = ((px[3] as u32 * a + 127) / 255) as u8;
+        px[0] = ((u32::from(px[0]) * r + 127) / 255) as u8;
+        px[1] = ((u32::from(px[1]) * g + 127) / 255) as u8;
+        px[2] = ((u32::from(px[2]) * b + 127) / 255) as u8;
+        px[3] = ((u32::from(px[3]) * a + 127) / 255) as u8;
     }
 }

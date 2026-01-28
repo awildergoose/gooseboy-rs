@@ -19,28 +19,33 @@ pub enum JtagState {
 }
 
 impl JtagState {
-    pub fn is_update_ir(&self) -> bool {
-        use JtagState::*;
+    #[must_use] 
+    pub const fn is_update_ir(&self) -> bool {
+        use JtagState::UpdateIr;
         matches!(self, UpdateIr)
     }
 
-    pub fn is_update_dr(&self) -> bool {
-        use JtagState::*;
+    #[must_use] 
+    pub const fn is_update_dr(&self) -> bool {
+        use JtagState::UpdateDr;
         matches!(self, UpdateDr)
     }
 
-    pub fn is_capture_ir(&self) -> bool {
-        use JtagState::*;
+    #[must_use] 
+    pub const fn is_capture_ir(&self) -> bool {
+        use JtagState::CaptureIr;
         matches!(self, CaptureIr)
     }
 
-    pub fn is_capture_dr(&self) -> bool {
-        use JtagState::*;
+    #[must_use] 
+    pub const fn is_capture_dr(&self) -> bool {
+        use JtagState::CaptureDr;
         matches!(self, CaptureDr)
     }
 
-    pub fn next_state(&self, tms: bool) -> JtagState {
-        use JtagState::*;
+    #[must_use] 
+    pub const fn next_state(&self, tms: bool) -> Self {
+        use JtagState::{TestLogicReset, RunTestIdle, SelectDrScan, SelectIrScan, CaptureDr, Exit1Dr, ShiftDr, UpdateDr, PauseDr, Exit2Dr, CaptureIr, Exit1Ir, ShiftIr, UpdateIr, PauseIr, Exit2Ir};
 
         // trace!("tms:{},State transition: {:?} -> {:?}", tms, self, state);
 
@@ -190,7 +195,7 @@ mod jtag_state_tests {
                 state = state.next_state(true);
             }
             assert_eq!(state, JtagState::TestLogicReset);
-            println!("Reset test passed for state: {:?}\n", state);
+            println!("Reset test passed for state: {state:?}\n");
         }
     }
 }

@@ -8,11 +8,12 @@ pub struct RemoteBitBang {
 }
 
 impl RemoteBitBang {
-    pub fn new(_ip: &str, _port: u16) -> RemoteBitBang {
+    #[must_use] 
+    pub const fn new(_ip: &str, _port: u16) -> Self {
         // let socket = std::net::TcpListener::bind((ip, port)).ok();
         // socket.set_nonblocking(true).unwrap();
         // info!("Remote Bitbang listening on {}:{}", ip, port);
-        RemoteBitBang {
+        Self {
             // socket,
             // client: None,
             // rcv_buffer: Box::new([0; 1024]),
@@ -20,7 +21,7 @@ impl RemoteBitBang {
         }
     }
 
-    pub fn tick(&mut self, _jtag_driver: &mut JtagDriver) {
+    pub const fn tick(&mut self, _jtag_driver: &mut JtagDriver) {
         // if self.client.is_none() && self.socket.is_some() {
         //     match self.socket.as_ref().unwrap().accept() {
         //         Ok((stream, _)) => {

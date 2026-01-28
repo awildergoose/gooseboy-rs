@@ -24,7 +24,7 @@ fn build_all() {
         let entry = match entry {
             Ok(e) => e,
             Err(e) => {
-                eprintln!("warning: failed to read an entry: {}", e);
+                eprintln!("warning: failed to read an entry: {e}");
                 continue;
             }
         };
@@ -36,12 +36,9 @@ fn build_all() {
             None
         };
 
-        let name = match maybe_name {
-            Some(n) => n,
-            None => continue,
-        };
+        let Some(name) = maybe_name else { continue };
 
-        if name.starts_with(".") {
+        if name.starts_with('.') {
             continue;
         }
 
@@ -78,12 +75,11 @@ fn do_project(project: &str) {
         })
         .expect("failed to get status");
 
-    if !status.success() {
-        panic!(
-            "failed to run command `{:?}: {:?}` at {:?}",
-            cmd,
-            status.code(),
-            cmd.get_current_dir()
-        )
-    }
+    assert!(
+        status.success(),
+        "failed to run command `{:?}: {:?}` at {:?}",
+        cmd,
+        status.code(),
+        cmd.get_current_dir()
+    );
 }

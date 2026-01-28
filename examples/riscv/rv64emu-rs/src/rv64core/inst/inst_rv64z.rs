@@ -1,7 +1,7 @@
 use log::debug;
 
 use crate::rv64core::{
-    inst::inst_base::*,
+    inst::inst_base::{Instruction, MASK_EBREAK, MATCH_EBREAK, MASK_ECALL, MATCH_ECALL, PrivilegeLevels, MASK_WFI, MATCH_WFI, MASK_MRET, MATCH_MRET, MASK_SRET, MATCH_SRET, MASK_FENCE_I, MATCH_FENCE_I, MASK_SFENCE_VMA, MATCH_SFENCE_VMA, parse_format_r, MASK_FENCE, MATCH_FENCE, MASK_CSRRC, MATCH_CSRRC, parse_format_csr, MASK_CSRRS, MATCH_CSRRS, MASK_CSRRW, MATCH_CSRRW, MASK_CSRRCI, MATCH_CSRRCI, MASK_CSRRSI, MATCH_CSRRSI, MASK_CSRRWI, MATCH_CSRRWI},
     traptype::{DebugCause, TrapType},
 };
 
@@ -158,12 +158,12 @@ pub const INSTRUCTIONS_Z: &[Instruction] = &[
 
             // warn!("SFENCE_VMA:cur_priv:{:?},require_priv:{:?}", cur_priv, require_priv);
 
-            if !require_priv.check_priv(cur_priv) {
-                Err(TrapType::IllegalInstruction(inst.into()))
-            } else {
+            if require_priv.check_priv(cur_priv) {
                 // info!("SFENCE_VMA:rs1_data:{:x},rs2_data:{:x}", rs1_data, rs2_data);
                 cpu.mmu.fence_vma(rs1_data, rs2_data as u16);
                 Ok(())
+            } else {
+                Err(TrapType::IllegalInstruction(inst.into()))
             }
         },
     },
@@ -194,7 +194,7 @@ pub const INSTRUCTIONS_Z: &[Instruction] = &[
             if t != csr_wb_data {
                 let csr_ret = cpu.csr_regs.write(f.csr, csr_wb_data, cpu.cur_priv.get());
                 csr_ret?;
-            };
+            }
             cpu.gpr.write(f.rd, t);
 
             Ok(())
@@ -368,14 +368,14 @@ pub fn handle_ebreak(
     if in_debug_mode {
         debug!("EBREAK:in_debug_mode");
     } else if !in_debug_mode && enter_excp_cond {
-        debug!("EBREAK:enter_excp_cond,pc:{:x}", pc);
+        debug!("EBREAK:enter_excp_cond,pc:{pc:x}");
         return Err(TrapType::Breakpoint(pc));
     } else if !in_debug_mode && enter_debug_cond {
-        debug!("EBREAK:entry_debug_mode,pc:{:x}", pc);
+        debug!("EBREAK:entry_debug_mode,pc:{pc:x}");
         cpu.enter_debug_mode(DebugCause::Ebreak, pc);
     } else {
         unreachable!("EBREAK:unreachable");
-    };
+    }
 
     #[cfg(feature = "support_am")]
     cpu.halt();

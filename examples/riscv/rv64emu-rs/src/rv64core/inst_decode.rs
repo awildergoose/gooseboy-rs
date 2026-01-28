@@ -24,7 +24,8 @@ pub struct InstDecode {
 }
 
 impl InstDecode {
-    pub fn new(config: Rc<Config>) -> Self {
+    #[must_use]
+    pub fn new(config: &Rc<Config>) -> Self {
         let mut i_vec = Vec::new();
         i_vec.extend(INSTRUCTIONS_I);
         i_vec.extend(INSTRUCTIONS_Z);
@@ -41,7 +42,7 @@ impl InstDecode {
 
         i_vec.sort_by(|a: &&Instruction, b: &&Instruction| Instruction::inst_cmp(a, b));
 
-        InstDecode {
+        Self {
             inst_vec: i_vec,
             inst_hash: LruCache::new(config.decode_cache_size().unwrap_or(0)),
             hit: 0,
@@ -101,6 +102,6 @@ impl InstDecode {
         info!(
             "decode cache hit rate: {:.2}%",
             self.hit as f64 / (self.hit + self.miss) as f64 * 100.0
-        )
+        );
     }
 }

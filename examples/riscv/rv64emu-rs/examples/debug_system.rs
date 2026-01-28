@@ -1,3 +1,5 @@
+#![allow(clippy::similar_names)]
+#![allow(clippy::too_many_lines)]
 extern crate rv64emu;
 
 use clap::Parser;
@@ -70,9 +72,10 @@ fn main() {
 
     let args = Args::parse();
 
-    if args.img.is_none() && args.xipflash.is_none() {
-        panic!("Please specify the img or xipflash");
-    }
+    assert!(
+        !(args.img.is_none() && args.xipflash.is_none()),
+        "Please specify the img or xipflash"
+    );
 
     let sim_thread = std::thread::spawn(move || {
         // config
@@ -84,14 +87,14 @@ fn main() {
         config.set_isa("rv64imac");
         config.set_s_mode();
         config.set_disable_check_tohost(true);
-        info!("{:?}", config);
+        info!("{config:?}");
         let config = Rc::new(config);
         let signal_term = Arc::new(AtomicBool::new(false));
 
         let bus_u = rc_refcell_new(Bus::new());
 
         // device dram len:0X08000000
-        let mem = DeviceMemory::new(0x8000000);
+        let mem = DeviceMemory::new(0x0800_0000);
 
         bus_u.borrow_mut().add_device(DeviceType {
             start: MEM_BASE,
@@ -101,7 +104,7 @@ fn main() {
         });
 
         // device flash len:0X08000000
-        let mut flash = DeviceMemory::new(0x8000000);
+        let mut flash = DeviceMemory::new(0x0800_0000);
 
         if let Some(xipflash) = args.xipflash {
             let flash_data = fs::read(xipflash).unwrap();
@@ -126,9 +129,7 @@ fn main() {
         thread::spawn(move || loop {
             let mut buf = [0; 1];
             if let Ok(n) = stdin().read(&mut buf) {
-                if n > 1 {
-                    panic!("Read {} characters into a 1 byte buffer", n);
-                }
+                assert!(n <= 1, "Read {n} characters into a 1 byte buffer");
                 if n == 1 {
                     rx_fifo.push(buf[0]);
                 }
@@ -140,7 +141,7 @@ fn main() {
         let uart_tx_thread = thread::spawn(move || loop {
             while !tx_fifo.is_empty() {
                 if let Some(c) = tx_fifo.pop() {
-                    print!("{}", c as char)
+                    print!("{}", c as char);
                 }
             }
             io::stdout().flush().unwrap();
@@ -171,7 +172,7 @@ fn main() {
             .register_irq_source(SIFIVE_UART_IRQ, Rc::clone(&device_sifive_uart.irq_pending));
 
         bus_u.borrow_mut().add_device(DeviceType {
-            start: 0xc0000000,
+            start: 0xc000_0000,
             len: 0x1000,
             instance: Box::new(device_sifive_uart),
             name: "Sifive_Uart",
@@ -185,7 +186,7 @@ fn main() {
 
         // show device address map
         info!("{0}", bus_u.borrow_mut());
-        info!("boot_pc:0x{:x}", boot_pc);
+        info!("boot_pc:0x{boot_pc:x}");
 
         let hart_num: usize = args.num_harts.unwrap_or(1);
         let mut hart_vec = Vec::new();

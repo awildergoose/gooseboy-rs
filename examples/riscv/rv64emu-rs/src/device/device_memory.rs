@@ -1,4 +1,4 @@
-use alloc::{vec::Vec, boxed::Box};
+use alloc::{boxed::Box, vec::Vec};
 use log::info;
 
 use crate::device::device_trait::DeviceBase;
@@ -8,15 +8,18 @@ pub struct DeviceMemory {
 }
 
 impl DeviceMemory {
+    #[must_use] 
     pub fn new(size: usize) -> Self {
         let datavec: Vec<u8> = vec![0; size];
-        DeviceMemory {
+        Self {
             data: datavec.into_boxed_slice(),
         }
     }
-    pub fn from_boxed_slice(data: Box<[u8]>) -> Self {
-        DeviceMemory { data }
+    #[must_use] 
+    pub const fn from_boxed_slice(data: Box<[u8]>) -> Self {
+        Self { data }
     }
+    #[must_use]
     pub fn size(&self) -> usize {
         self.data.len()
     }
@@ -60,8 +63,8 @@ mod tests_dram {
     #[test]
     fn test_do_read() {
         let mut dram = DeviceMemory::new(1024);
-        let data = 0xDEADBEEF;
-        let data1 = 0xDEADBEEFDEADBEEF_u128;
+        let data = 0xDEAD_BEEF;
+        let data1 = 0xDEAD_BEEF_DEAD_BEEF_u128;
         let len = 4;
 
         // write data to dram
@@ -82,7 +85,7 @@ mod tests_dram {
         assert_eq!(result, data);
         let result = dram.do_read(addr, 8);
         // warn!("{:x}\n{:x}", result, data1);
-        assert_eq!(result as u128, data1);
+        assert_eq!(u128::from(result), data1);
     }
     #[test]
     fn test_do_read_slice() {
@@ -90,8 +93,8 @@ mod tests_dram {
         let mut dram = DeviceMemory::from_boxed_slice(vec_data.into_boxed_slice());
 
         // let mut dram = DeviceDram::new(1024);
-        let data = 0xDEADBEEF;
-        let data1 = 0xDEADBEEFDEADBEEF_u128;
+        let data = 0xDEAD_BEEF;
+        let data1 = 0xDEAD_BEEF_DEAD_BEEF_u128;
         let len = 4;
 
         // write data to dram
@@ -112,6 +115,6 @@ mod tests_dram {
         assert_eq!(result, data);
         let result = dram.do_read(addr, 8);
         // warn!("{:x}\n{:x}", result, data1);
-        assert_eq!(result as u128, data1);
+        assert_eq!(u128::from(result), data1);
     }
 }

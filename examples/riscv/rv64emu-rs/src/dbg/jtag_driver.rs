@@ -65,14 +65,14 @@ pub enum JtagDTMRegister {
 }
 
 impl JtagDTMRegister {
-    fn new(val: u8) -> JtagDTMRegister {
+    fn new(val: u8) -> Self {
         match val {
-            0x00 => JtagDTMRegister::BYPASS0,
-            0x01 => JtagDTMRegister::IDCODE,
-            0x10 => JtagDTMRegister::DTMCS,
-            0x11 => JtagDTMRegister::DMI,
-            0x1f => JtagDTMRegister::BYPASS1F,
-            _ => panic!("Invalid JtagDTMRegister value: {}", val),
+            0x00 => Self::BYPASS0,
+            0x01 => Self::IDCODE,
+            0x10 => Self::DTMCS,
+            0x11 => Self::DMI,
+            0x1f => Self::BYPASS1F,
+            _ => panic!("Invalid JtagDTMRegister value: {val}"),
         }
     }
 }
@@ -84,27 +84,27 @@ struct ShifterRegister {
 }
 
 impl ShifterRegister {
-    fn new(default: u64, len: u8) -> ShifterRegister {
-        ShifterRegister {
+    const fn new(default: u64, len: u8) -> Self {
+        Self {
             data: default,
             len,
             // default,
         }
     }
 
-    fn clear(&mut self) {
+    const fn clear(&mut self) {
         self.data = 0;
     }
-    fn len_mask(&self) -> u64 {
+    const fn len_mask(&self) -> u64 {
         (1 << self.len) - 1
     }
 
-    fn set(&mut self, new_data: u64, len: u8) {
+    const fn set(&mut self, new_data: u64, len: u8) {
         self.len = len;
-        self.data = new_data & self.len_mask()
+        self.data = new_data & self.len_mask();
     }
 
-    fn shift_right(&mut self, new_in: bool) {
+    const fn shift_right(&mut self, new_in: bool) {
         self.data >>= 1;
         self.data |= (new_in as u64) << (self.len - 1);
     }
@@ -113,7 +113,7 @@ impl ShifterRegister {
     //     self.data |= new_in as u64;
     // }
 
-    fn data(&self) -> u64 {
+    const fn data(&self) -> u64 {
         self.data & self.len_mask()
     }
 }
@@ -142,7 +142,8 @@ pub struct JtagDriver {
 }
 
 impl JtagDriver {
-    pub fn new(dm: DebugModule) -> JtagDriver {
+    #[must_use]
+    pub fn new(dm: DebugModule) -> Self {
         let dtmcontrol = DTMCS::new()
             .with_errinfo(0)
             .with_version(1) // 0.13
@@ -151,7 +152,7 @@ impl JtagDriver {
 
         let dmi = DTMI::new().with_op(DMI_OP_SUCCESS);
 
-        JtagDriver {
+        Self {
             dm,
             tck: false,
             tms: false,
@@ -161,13 +162,14 @@ impl JtagDriver {
             dr: ShifterRegister::new(0, 64),
             dtmcs: dtmcontrol,
             dmi,
-            idcode: DTMIDCode::from(0xdeadbeef),
+            idcode: DTMIDCode::from(0xdead_beef),
             bypass0: false,
             state: JtagState::TestLogicReset,
         }
     }
 
-    pub fn get_tdo(&self) -> bool {
+    #[must_use]
+    pub const fn get_tdo(&self) -> bool {
         self.tdo
     }
 
@@ -219,7 +221,7 @@ impl JtagDriver {
         self.tdi = new_tdi;
     }
 
-    fn is_busy(&self) -> bool {
+    const fn is_busy(&self) -> bool {
         false
     }
 
@@ -233,17 +235,17 @@ impl JtagDriver {
             }
             JtagDTMRegister::DMI => {
                 // if self.is_busy() response with 3 (DMI_OP_STATUS_BUSY)
-                let _tmp = if self.is_busy() {
+                let tmp = if self.is_busy() {
                     DMI_OP_STATUS_BUSY as u64
                 } else {
                     self.dmi.into()
                 };
-                self.dr.set(_tmp, 40);
+                self.dr.set(tmp, 40);
             }
             JtagDTMRegister::BYPASS0 => {
                 self.dr.set(self.bypass0 as u64, 1);
             }
-            _ => {
+            JtagDTMRegister::BYPASS1F => {
                 panic!("Invalid JtagDTMRegister: {:?}", self.ir.data());
             }
         }
@@ -254,7 +256,7 @@ impl JtagDriver {
         );
     }
 
-    pub fn reset(&mut self) {
+    pub const fn reset(&mut self) {
         self.ir.clear();
         self.dr.clear();
         self.dmi = DTMI::new();
@@ -292,20 +294,17 @@ impl JtagDriver {
                     }
                     DMI_OP_READ => {
                         let rdata = self.dm.dmi_read(self.dmi.address().into());
-                        match rdata {
-                            Some(data) => {
-                                self.dmi.set_data(data as u32);
-                                self.dmi.set_op(DMI_OP_SUCCESS);
-                                trace!(
-                                    "dmi_read success : {:x} {:x}",
-                                    self.dmi.address(),
-                                    self.dmi.data()
-                                );
-                            }
-                            None => {
-                                self.dmi.set_op(DMI_OP_FAILED);
-                                trace!("dmi_read failed: {:x}", self.dmi.address());
-                            }
+                        if let Some(data) = rdata {
+                            self.dmi.set_data(data as u32);
+                            self.dmi.set_op(DMI_OP_SUCCESS);
+                            trace!(
+                                "dmi_read success : {:x} {:x}",
+                                self.dmi.address(),
+                                self.dmi.data()
+                            );
+                        } else {
+                            self.dmi.set_op(DMI_OP_FAILED);
+                            trace!("dmi_read failed: {:x}", self.dmi.address());
                         }
                     }
                     DMI_OP_WRITE => {
@@ -337,7 +336,7 @@ impl JtagDriver {
                     }
                 }
             }
-            _ => {
+            JtagDTMRegister::BYPASS1F => {
                 panic!("Invalid JtagDTMRegister: {:?}", self.ir.data());
             }
         }

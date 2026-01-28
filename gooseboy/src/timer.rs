@@ -7,7 +7,8 @@ pub struct Timer {
 
 impl Timer {
     /// Create a new timer with the given interval
-    pub fn new(interval: Duration) -> Self {
+    #[must_use]
+    pub const fn new(interval: Duration) -> Self {
         Self {
             interval,
             last_trigger: Duration::ZERO,
@@ -16,7 +17,7 @@ impl Timer {
 
     /// Returns true if the timer should trigger at this `elapsed` time
     pub fn tick(&mut self, elapsed: Duration) -> bool {
-        if elapsed - self.last_trigger >= self.interval {
+        if elapsed.checked_sub(self.last_trigger).unwrap() >= self.interval {
             self.last_trigger = elapsed;
             true
         } else {

@@ -1,9 +1,9 @@
 use core::fmt;
 
-const INTERRUPT_BIT: u64 = 0x8000000000000000_u64;
+const INTERRUPT_BIT: u64 = 0x8000_0000_0000_0000_u64;
 
 #[repr(u64)]
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TrapType {
     InstructionAddressMisaligned(u64),
     InstructionAccessFault(u64),
@@ -33,95 +33,100 @@ pub enum TrapType {
 impl fmt::Display for TrapType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            TrapType::InstructionAddressMisaligned(_) => write!(f, "InstructionAddressMisaligned"),
-            TrapType::InstructionAccessFault(_) => write!(f, "InstructionAccessFault"),
-            TrapType::IllegalInstruction(_) => write!(f, "IllegalInstruction"),
-            TrapType::Breakpoint(_) => write!(f, "Breakpoint"),
-            TrapType::LoadAddressMisaligned(_) => write!(f, "LoadAddressMisaligned"),
-            TrapType::LoadAccessFault(_) => write!(f, "LoadAccessFault"),
-            TrapType::StoreAddressMisaligned(_) => write!(f, "StoreAddressMisaligned"),
-            TrapType::StoreAccessFault(_) => write!(f, "StoreAccessFault"),
-            TrapType::EnvironmentCallFromUMode => write!(f, "EnvironmentCallFromUMode"),
-            TrapType::EnvironmentCallFromSMode => write!(f, "EnvironmentCallFromSMode"),
-            TrapType::EnvironmentCallFromMMode => write!(f, "EnvironmentCallFromMMode"),
-            TrapType::InstructionPageFault(_) => write!(f, "InstructionPageFault"),
-            TrapType::LoadPageFault(_) => write!(f, "LoadPageFault"),
-            TrapType::StorePageFault(_) => write!(f, "StorePageFault"),
-            TrapType::UserSoftwareInterrupt => write!(f, "UserSoftwareInterrupt"),
-            TrapType::SupervisorSoftwareInterrupt => write!(f, "SupervisorSoftwareInterrupt"),
-            TrapType::MachineSoftwareInterrupt => write!(f, "MachineSoftwareInterrupt"),
-            TrapType::UserTimerInterrupt => write!(f, "UserTimerInterrupt"),
-            TrapType::SupervisorTimerInterrupt => write!(f, "SupervisorTimerInterrupt"),
-            TrapType::MachineTimerInterrupt => write!(f, "MachineTimerInterrupt"),
-            TrapType::UserExternalInterrupt => write!(f, "UserExternalInterrupt"),
-            TrapType::SupervisorExternalInterrupt => write!(f, "SupervisorExternalInterrupt"),
-            TrapType::MachineExternalInterrupt => write!(f, "MachineExternalInterrupt"),
+            Self::InstructionAddressMisaligned(_) => write!(f, "InstructionAddressMisaligned"),
+            Self::InstructionAccessFault(_) => write!(f, "InstructionAccessFault"),
+            Self::IllegalInstruction(_) => write!(f, "IllegalInstruction"),
+            Self::Breakpoint(_) => write!(f, "Breakpoint"),
+            Self::LoadAddressMisaligned(_) => write!(f, "LoadAddressMisaligned"),
+            Self::LoadAccessFault(_) => write!(f, "LoadAccessFault"),
+            Self::StoreAddressMisaligned(_) => write!(f, "StoreAddressMisaligned"),
+            Self::StoreAccessFault(_) => write!(f, "StoreAccessFault"),
+            Self::EnvironmentCallFromUMode => write!(f, "EnvironmentCallFromUMode"),
+            Self::EnvironmentCallFromSMode => write!(f, "EnvironmentCallFromSMode"),
+            Self::EnvironmentCallFromMMode => write!(f, "EnvironmentCallFromMMode"),
+            Self::InstructionPageFault(_) => write!(f, "InstructionPageFault"),
+            Self::LoadPageFault(_) => write!(f, "LoadPageFault"),
+            Self::StorePageFault(_) => write!(f, "StorePageFault"),
+            Self::UserSoftwareInterrupt => write!(f, "UserSoftwareInterrupt"),
+            Self::SupervisorSoftwareInterrupt => write!(f, "SupervisorSoftwareInterrupt"),
+            Self::MachineSoftwareInterrupt => write!(f, "MachineSoftwareInterrupt"),
+            Self::UserTimerInterrupt => write!(f, "UserTimerInterrupt"),
+            Self::SupervisorTimerInterrupt => write!(f, "SupervisorTimerInterrupt"),
+            Self::MachineTimerInterrupt => write!(f, "MachineTimerInterrupt"),
+            Self::UserExternalInterrupt => write!(f, "UserExternalInterrupt"),
+            Self::SupervisorExternalInterrupt => write!(f, "SupervisorExternalInterrupt"),
+            Self::MachineExternalInterrupt => write!(f, "MachineExternalInterrupt"),
         }
     }
 }
 
 impl TrapType {
-    pub fn idx(&self) -> u64 {
+    #[must_use]
+    pub const fn idx(&self) -> u64 {
         match self {
-            TrapType::InstructionAddressMisaligned(_) => 0,
-            TrapType::InstructionAccessFault(_) => 1,
-            TrapType::IllegalInstruction(_) => 2,
-            TrapType::Breakpoint(_) => 3,
-            TrapType::LoadAddressMisaligned(_) => 4,
-            TrapType::LoadAccessFault(_) => 5,
-            TrapType::StoreAddressMisaligned(_) => 6,
-            TrapType::StoreAccessFault(_) => 7,
-            TrapType::EnvironmentCallFromUMode => 8,
-            TrapType::EnvironmentCallFromSMode => 9,
-            TrapType::EnvironmentCallFromMMode => 11,
-            TrapType::InstructionPageFault(_) => 12,
-            TrapType::LoadPageFault(_) => 13,
-            TrapType::StorePageFault(_) => 15,
-            TrapType::UserSoftwareInterrupt => INTERRUPT_BIT,
-            TrapType::SupervisorSoftwareInterrupt => INTERRUPT_BIT + 1,
-            TrapType::MachineSoftwareInterrupt => INTERRUPT_BIT + 3,
-            TrapType::UserTimerInterrupt => INTERRUPT_BIT + 4,
-            TrapType::SupervisorTimerInterrupt => INTERRUPT_BIT + 5,
-            TrapType::MachineTimerInterrupt => INTERRUPT_BIT + 7,
-            TrapType::UserExternalInterrupt => INTERRUPT_BIT + 8,
-            TrapType::SupervisorExternalInterrupt => INTERRUPT_BIT + 9,
-            TrapType::MachineExternalInterrupt => INTERRUPT_BIT + 11,
+            Self::InstructionAddressMisaligned(_) => 0,
+            Self::InstructionAccessFault(_) => 1,
+            Self::IllegalInstruction(_) => 2,
+            Self::Breakpoint(_) => 3,
+            Self::LoadAddressMisaligned(_) => 4,
+            Self::LoadAccessFault(_) => 5,
+            Self::StoreAddressMisaligned(_) => 6,
+            Self::StoreAccessFault(_) => 7,
+            Self::EnvironmentCallFromUMode => 8,
+            Self::EnvironmentCallFromSMode => 9,
+            Self::EnvironmentCallFromMMode => 11,
+            Self::InstructionPageFault(_) => 12,
+            Self::LoadPageFault(_) => 13,
+            Self::StorePageFault(_) => 15,
+            Self::UserSoftwareInterrupt => INTERRUPT_BIT,
+            Self::SupervisorSoftwareInterrupt => INTERRUPT_BIT + 1,
+            Self::MachineSoftwareInterrupt => INTERRUPT_BIT + 3,
+            Self::UserTimerInterrupt => INTERRUPT_BIT + 4,
+            Self::SupervisorTimerInterrupt => INTERRUPT_BIT + 5,
+            Self::MachineTimerInterrupt => INTERRUPT_BIT + 7,
+            Self::UserExternalInterrupt => INTERRUPT_BIT + 8,
+            Self::SupervisorExternalInterrupt => INTERRUPT_BIT + 9,
+            Self::MachineExternalInterrupt => INTERRUPT_BIT + 11,
         }
     }
 
-    pub fn is_interupt(&self) -> bool {
+    #[must_use]
+    pub const fn is_interupt(&self) -> bool {
         ((self.idx()) & INTERRUPT_BIT) != 0
     }
+    #[must_use]
     pub fn get_irq_num(&self) -> u64 {
         assert!(self.is_interupt());
         (self.idx()) & (!INTERRUPT_BIT)
     }
 
+    #[must_use]
     pub fn get_exception_num(&self) -> u64 {
         assert!(!self.is_interupt());
         self.idx()
     }
 
-    pub fn get_tval(&self) -> u64 {
+    #[must_use]
+    pub const fn get_tval(&self) -> u64 {
         // The TVAL register is only used for some types of traps.
         // See the RISC-V privilege specification for details.
         match self {
-            TrapType::LoadPageFault(val)
-            | TrapType::StorePageFault(val)
-            | TrapType::StoreAccessFault(val)
-            | TrapType::LoadAccessFault(val)
-            | TrapType::LoadAddressMisaligned(val)
-            | TrapType::StoreAddressMisaligned(val)
-            | TrapType::InstructionAccessFault(val)
-            | TrapType::InstructionPageFault(val)
-            | TrapType::InstructionAddressMisaligned(val)
-            | TrapType::Breakpoint(val)
-            | TrapType::IllegalInstruction(val) => *val,
+            Self::LoadPageFault(val)
+            | Self::StorePageFault(val)
+            | Self::StoreAccessFault(val)
+            | Self::LoadAccessFault(val)
+            | Self::LoadAddressMisaligned(val)
+            | Self::StoreAddressMisaligned(val)
+            | Self::InstructionAccessFault(val)
+            | Self::InstructionPageFault(val)
+            | Self::InstructionAddressMisaligned(val)
+            | Self::Breakpoint(val)
+            | Self::IllegalInstruction(val) => *val,
             _ => 0,
         }
     }
 }
-#[derive(Debug,Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub enum DebugCause {
     NoDebug = 0,
     Ebreak = 1,
@@ -133,15 +138,16 @@ pub enum DebugCause {
 }
 
 impl DebugCause {
-    pub fn from_usize(val: usize) -> DebugCause {
+    #[must_use]
+    pub fn from_usize(val: usize) -> Self {
         match val {
-            0 => DebugCause::NoDebug,
-            1 => DebugCause::Ebreak,
-            2 => DebugCause::Trigger,
-            3 => DebugCause::HaltReq,
-            4 => DebugCause::Step,
-            5 => DebugCause::ResetHaltReq,
-            6 => DebugCause::Group,
+            0 => Self::NoDebug,
+            1 => Self::Ebreak,
+            2 => Self::Trigger,
+            3 => Self::HaltReq,
+            4 => Self::Step,
+            5 => Self::ResetHaltReq,
+            6 => Self::Group,
             _ => panic!("Invalid DebugCause"),
         }
     }

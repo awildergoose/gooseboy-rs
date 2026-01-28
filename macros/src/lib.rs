@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{FnArg, ItemFn};
 
-fn make_wrapper(item: TokenStream, export_name: &str) -> TokenStream {
+fn make_wrapper(item: &TokenStream, export_name: &str) -> TokenStream {
     let input_fn: ItemFn = match syn::parse::<ItemFn>(item.clone()) {
         Ok(i) => i,
         Err(e) => return TokenStream::from(e.to_compile_error()),
@@ -30,7 +30,7 @@ fn make_wrapper(item: TokenStream, export_name: &str) -> TokenStream {
     let internal_ident = if orig_ident == export_ident {
         format_ident!("__gooseboy_internal_{}", orig_ident)
     } else {
-        orig_ident.clone()
+        orig_ident
     };
 
     let mut renamed_fn = input_fn.clone();
@@ -81,15 +81,15 @@ fn make_wrapper(item: TokenStream, export_name: &str) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn main(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    make_wrapper(item, "main")
+    make_wrapper(&item, "main")
 }
 
 #[proc_macro_attribute]
 pub fn update(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    make_wrapper(item, "update")
+    make_wrapper(&item, "update")
 }
 
 #[proc_macro_attribute]
 pub fn gpu_main(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    make_wrapper(item, "gpu_main")
+    make_wrapper(&item, "gpu_main")
 }

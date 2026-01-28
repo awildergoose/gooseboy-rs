@@ -1,5 +1,21 @@
 use crate::{
-    rv64core::{inst::inst_base::*, traptype::TrapType},
+    rv64core::{
+        inst::inst_base::{
+            AccessType, FormatCA, FormatCB, FormatCI, FormatCIW, FormatCJ, FormatCL, FormatCR,
+            FormatCS, FormatCSS, Instruction, MASK_C_ADD, MASK_C_ADDI, MASK_C_ADDI16SP,
+            MASK_C_ADDI4SPN, MASK_C_ADDIW, MASK_C_ADDW, MASK_C_AND, MASK_C_ANDI, MASK_C_BEQZ,
+            MASK_C_BNEZ, MASK_C_EBREAK, MASK_C_J, MASK_C_JALR, MASK_C_JR, MASK_C_LD, MASK_C_LDSP,
+            MASK_C_LI, MASK_C_LUI, MASK_C_LW, MASK_C_LWSP, MASK_C_MV, MASK_C_NOP, MASK_C_OR,
+            MASK_C_SD, MASK_C_SDSP, MASK_C_SLLI, MASK_C_SRAI, MASK_C_SRLI, MASK_C_SUB, MASK_C_SUBW,
+            MASK_C_SW, MASK_C_SWSP, MASK_C_XOR, MATCH_C_ADD, MATCH_C_ADDI, MATCH_C_ADDI16SP,
+            MATCH_C_ADDI4SPN, MATCH_C_ADDIW, MATCH_C_ADDW, MATCH_C_AND, MATCH_C_ANDI, MATCH_C_BEQZ,
+            MATCH_C_BNEZ, MATCH_C_EBREAK, MATCH_C_J, MATCH_C_JALR, MATCH_C_JR, MATCH_C_LD,
+            MATCH_C_LDSP, MATCH_C_LI, MATCH_C_LUI, MATCH_C_LW, MATCH_C_LWSP, MATCH_C_MV,
+            MATCH_C_NOP, MATCH_C_OR, MATCH_C_SD, MATCH_C_SDSP, MATCH_C_SLLI, MATCH_C_SRAI,
+            MATCH_C_SRLI, MATCH_C_SUB, MATCH_C_SUBW, MATCH_C_SW, MATCH_C_SWSP, MATCH_C_XOR,
+        },
+        traptype::TrapType,
+    },
     tools::check_aligned,
 };
 
@@ -21,7 +37,7 @@ pub const INSTRUCTIONS_C: &[Instruction] = &[
             let x2 = cpu.gpr.read(2);
             let mem_addr = x2.wrapping_add(imm);
 
-            let mem_data = match cpu.read(mem_addr, 4, AccessType::Load(mem_addr)) {
+            let mem_data = match cpu.read(mem_addr, 4, &AccessType::Load(mem_addr)) {
                 Ok(data) => data,
                 Err(trap_type) => return Err(trap_type),
             };
@@ -41,7 +57,7 @@ pub const INSTRUCTIONS_C: &[Instruction] = &[
             let x2 = cpu.gpr.read(2);
             let mem_addr = x2.wrapping_add(imm);
 
-            let mem_data = match cpu.read(mem_addr, 8, AccessType::Load(mem_addr)) {
+            let mem_data = match cpu.read(mem_addr, 8, &AccessType::Load(mem_addr)) {
                 Ok(data) => data,
                 Err(trap_type) => return Err(trap_type),
             };
@@ -61,7 +77,7 @@ pub const INSTRUCTIONS_C: &[Instruction] = &[
             let x2 = cpu.gpr.read(2);
             let mem_addr = x2.wrapping_add(imm);
 
-            match cpu.write(mem_addr, rs2, 4, AccessType::Store(mem_addr)) {
+            match cpu.write(mem_addr, rs2, 4, &AccessType::Store(mem_addr)) {
                 Ok(_) => Ok(()),
                 Err(trap_type) => Err(trap_type),
             }
@@ -78,7 +94,7 @@ pub const INSTRUCTIONS_C: &[Instruction] = &[
             let x2 = cpu.gpr.read(2);
             let mem_addr = x2.wrapping_add(imm);
 
-            match cpu.write(mem_addr, rs2, 8, AccessType::Store(mem_addr)) {
+            match cpu.write(mem_addr, rs2, 8, &AccessType::Store(mem_addr)) {
                 Ok(_) => Ok(()),
                 Err(trap_type) => Err(trap_type),
             }
@@ -95,7 +111,7 @@ pub const INSTRUCTIONS_C: &[Instruction] = &[
             let rd = f.rd() as u64;
             let mem_addr = rs1_data.wrapping_add(imm);
 
-            let mem_data = match cpu.read(mem_addr, 4, AccessType::Load(mem_addr)) {
+            let mem_data = match cpu.read(mem_addr, 4, &AccessType::Load(mem_addr)) {
                 Ok(data) => data,
                 Err(trap_type) => return Err(trap_type),
             };
@@ -115,7 +131,7 @@ pub const INSTRUCTIONS_C: &[Instruction] = &[
             let rd = f.rd() as u64;
             let mem_addr = rs1_data.wrapping_add(imm);
 
-            let mem_data = match cpu.read(mem_addr, 8, AccessType::Load(mem_addr)) {
+            let mem_data = match cpu.read(mem_addr, 8, &AccessType::Load(mem_addr)) {
                 Ok(data) => data,
                 Err(trap_type) => return Err(trap_type),
             };
@@ -135,7 +151,7 @@ pub const INSTRUCTIONS_C: &[Instruction] = &[
             let rs1 = cpu.gpr.read(f.rs1() as u64);
             let mem_addr = rs1.wrapping_add(imm);
 
-            match cpu.write(mem_addr, rs2, 4, AccessType::Store(mem_addr)) {
+            match cpu.write(mem_addr, rs2, 4, &AccessType::Store(mem_addr)) {
                 Ok(_) => Ok(()),
                 Err(trap_type) => Err(trap_type),
             }
@@ -152,7 +168,7 @@ pub const INSTRUCTIONS_C: &[Instruction] = &[
             let rs1 = cpu.gpr.read(f.rs1() as u64);
             let mem_addr = rs1.wrapping_add(imm);
 
-            match cpu.write(mem_addr, rs2, 8, AccessType::Store(mem_addr)) {
+            match cpu.write(mem_addr, rs2, 8, &AccessType::Store(mem_addr)) {
                 Ok(_) => Ok(()),
                 Err(trap_type) => Err(trap_type),
             }

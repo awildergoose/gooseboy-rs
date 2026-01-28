@@ -31,7 +31,7 @@ fn update(nano_time: i64) {
     // to automatically wrap text if it passes the end of the framebuffer
     let right_corner = (get_framebuffer_width() - get_text_width(text)) as f64;
     // Gets us an X position that smoothly moves from the left to the right using sine
-    let x_pos = ((time_sec.sin() * 0.5 + 0.5) * (right_corner - 1.0)) as usize;
+    let x_pos = (time_sec.sin().mul_add(0.5, 0.5) * (right_corner - 1.0)) as usize;
 
     // Finally, draw the text with the red color (or use Color::new(r, g, b, a) or Color::new_opaque(r, g, b))
     draw_text(x_pos, 0, text, Color::RED);

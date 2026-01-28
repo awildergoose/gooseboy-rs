@@ -72,7 +72,7 @@ struct SifiveUartIN {
 
 impl SifiveUartIN {
     pub fn new() -> Self {
-        SifiveUartIN {
+        Self {
             txdata: 0.into(),
             rxdata: 0.into(),
             txctrl: 0.into(),
@@ -94,7 +94,7 @@ pub struct DeviceSifiveUart {
 
 impl DeviceSifiveUart {
     pub fn new(uart_tx: FifoUnbounded<u8>, uart_rx: FifoUnbounded<u8>) -> Self {
-        DeviceSifiveUart {
+        Self {
             regs: Box::new(SifiveUartIN::new()),
             txfifo: uart_tx,
             rxfifo: uart_rx,
@@ -138,7 +138,7 @@ impl DeviceBase for DeviceSifiveUart {
             IE => self.regs.ie.0 as u64,
             IP => self.regs.ip.0 as u64,
             DIV => self.regs.div as u64,
-            _ => panic!("sifive_uart: unknown addr: {:#x}", addr),
+            _ => panic!("sifive_uart: unknown addr: {addr:#x}"),
         }
     }
     fn do_write(&mut self, addr: u64, data: u64, len: usize) -> u64 {
@@ -149,12 +149,12 @@ impl DeviceBase for DeviceSifiveUart {
             RXCTRL => self.regs.rxctrl.0 = data as u32,
             IE => {
                 // debug!("sifive_uart: IE: {:#x}", data);
-                self.regs.ie.0 = data as u32
+                self.regs.ie.0 = data as u32;
             }
             RXDATA | IP => {} // read only
             DIV => self.regs.div = data as u32,
-            _ => panic!("sifive_uart: unknown addr: {:#x}", addr),
-        };
+            _ => panic!("sifive_uart: unknown addr: {addr:#x}"),
+        }
 
         0
     }

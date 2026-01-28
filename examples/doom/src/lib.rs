@@ -59,9 +59,9 @@ fn generate_texture(id: u8) -> [[Color; 64]; 64] {
             let mut final_color = color;
             if pattern {
                 final_color = Color::new(
-                    (color.r as f32 * 0.8) as u8,
-                    (color.g as f32 * 0.8) as u8,
-                    (color.b as f32 * 0.8) as u8,
+                    (f32::from(color.r) * 0.8) as u8,
+                    (f32::from(color.g) * 0.8) as u8,
+                    (f32::from(color.b) * 0.8) as u8,
                     255,
                 );
             }
@@ -101,15 +101,15 @@ fn cast_ray(angle: f64) -> (f64, bool, f64, u8) {
         };
 
         let (step_x, mut side_dist_x) = if ray_dir_x < 0.0 {
-            (-1, (PLAYER_X - map_x as f64) * delta_dist_x)
+            (-1, (PLAYER_X - f64::from(map_x)) * delta_dist_x)
         } else {
-            (1, (map_x as f64 + 1.0 - PLAYER_X) * delta_dist_x)
+            (1, (f64::from(map_x) + 1.0 - PLAYER_X) * delta_dist_x)
         };
 
         let (step_y, mut side_dist_y) = if ray_dir_y < 0.0 {
-            (-1, (PLAYER_Y - map_y as f64) * delta_dist_y)
+            (-1, (PLAYER_Y - f64::from(map_y)) * delta_dist_y)
         } else {
-            (1, (map_y as f64 + 1.0 - PLAYER_Y) * delta_dist_y)
+            (1, (f64::from(map_y) + 1.0 - PLAYER_Y) * delta_dist_y)
         };
 
         let (mut current_x, mut current_y) = (map_x, map_y);
@@ -134,16 +134,16 @@ fn cast_ray(angle: f64) -> (f64, bool, f64, u8) {
             }
         }
 
-        let perp_wall_dist = if !side {
-            (current_x as f64 - PLAYER_X + (1 - step_x) as f64 / 2.0) / ray_dir_x
+        let perp_wall_dist = if side {
+            (f64::from(current_y) - PLAYER_Y + f64::from(1 - step_y) / 2.0) / ray_dir_y
         } else {
-            (current_y as f64 - PLAYER_Y + (1 - step_y) as f64 / 2.0) / ray_dir_y
+            (f64::from(current_x) - PLAYER_X + f64::from(1 - step_x) / 2.0) / ray_dir_x
         };
 
-        let mut wall_x = if !side {
-            PLAYER_Y + perp_wall_dist * ray_dir_y
-        } else {
+        let mut wall_x = if side {
             PLAYER_X + perp_wall_dist * ray_dir_x
+        } else {
+            PLAYER_Y + perp_wall_dist * ray_dir_y
         };
         wall_x -= wall_x.floor();
 
@@ -172,7 +172,7 @@ fn draw_view(textures: &[[[Color; 64]; 64]; 9]) {
 
         for x in 0..width {
             let camera_x = 2.0 * x as f64 / width as f64 - 1.0;
-            let ray_angle = PLAYER_ANGLE + PLAYER_FOV / 2.0 * camera_x;
+            let ray_angle = (PLAYER_FOV / 2.0).mul_add(camera_x, PLAYER_ANGLE);
 
             let (wall_dist, side, wall_x, texture_id) = cast_ray(ray_angle);
 
@@ -190,12 +190,12 @@ fn draw_view(textures: &[[[Color; 64]; 64]; 9]) {
                 let mut color = tex[tex_y.min(63)][tex_x.min(63)];
 
                 let shade =
-                    if side { 0.7 } else { 1.0 } * (1.0 - (wall_dist / 16.0).min(1.0) * 0.3);
+                    if side { 0.7 } else { 1.0 } * (wall_dist / 16.0).min(1.0).mul_add(-0.3, 1.0);
 
                 color = Color::new_opaque(
-                    (color.r as f64 * shade) as u8,
-                    (color.g as f64 * shade) as u8,
-                    (color.b as f64 * shade) as u8,
+                    (f64::from(color.r) * shade) as u8,
+                    (f64::from(color.g) * shade) as u8,
+                    (f64::from(color.b) * shade) as u8,
                 );
 
                 set_pixel(x, y, color);

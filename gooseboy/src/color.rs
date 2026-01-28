@@ -8,8 +8,19 @@ pub struct Color {
     pub a: u8,
 }
 
-#[inline(always)]
+#[must_use]
 pub fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
+    fn to_byte(x: f32) -> u8 {
+        let y = x.mul_add(255.0, 0.5);
+        if y <= 0.0 {
+            0
+        } else if y >= 255.0 {
+            255
+        } else {
+            y as u8
+        }
+    }
+
     let mut h = h - h.floor();
     h *= 6.0;
 
@@ -17,8 +28,8 @@ pub fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
     let f = h - i as f32;
 
     let p = v * (1.0 - s);
-    let q = v * (1.0 - s * f);
-    let t = v * (1.0 - s * (1.0 - f));
+    let q = v * s.mul_add(-f, 1.0);
+    let t = v * s.mul_add(-(1.0 - f), 1.0);
 
     let (r, g, b) = match i {
         0 => (v, t, p),
@@ -28,18 +39,6 @@ pub fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
         4 => (t, p, v),
         _ => (v, p, q),
     };
-
-    #[inline(always)]
-    fn to_byte(x: f32) -> u8 {
-        let y = x * 255.0 + 0.5;
-        if y <= 0.0 {
-            0
-        } else if y >= 255.0 {
-            255
-        } else {
-            y as u8
-        }
-    }
 
     (to_byte(r), to_byte(g), to_byte(b))
 }
@@ -142,11 +141,13 @@ impl Color {
         a: 255,
     };
 
-    pub fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
+    #[must_use]
+    pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
         Self { r, g, b, a }
     }
 
-    pub fn new_opaque(r: u8, g: u8, b: u8) -> Self {
+    #[must_use]
+    pub const fn new_opaque(r: u8, g: u8, b: u8) -> Self {
         Self { r, g, b, a: 255 }
     }
 

@@ -12,10 +12,10 @@ pub struct CacheSystem {
 }
 
 impl CacheSystem {
-    pub fn new(bus: RcRefCell<Bus>, config: Rc<Config>) -> Self {
+    pub fn new(bus: RcRefCell<Bus>, config: &Rc<Config>) -> Self {
         let icache = CpuIcache::new(bus.clone(), config.icache_size().unwrap_or(0));
         let dcache = CpuDcache::new(bus.clone(), config.dcache_size().unwrap_or(0));
-        CacheSystem {
+        Self {
             icache,
             dcache,
             bus,

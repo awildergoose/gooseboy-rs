@@ -7,8 +7,9 @@ pub struct DeviceRTC {
 }
 
 impl DeviceRTC {
-    pub fn new() -> Self {
-        DeviceRTC { rtc_time: 0 }
+    #[must_use] 
+    pub const fn new() -> Self {
+        Self { rtc_time: 0 }
     }
 }
 

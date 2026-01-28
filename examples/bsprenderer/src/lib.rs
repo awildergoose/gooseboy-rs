@@ -67,7 +67,7 @@ fn gpu_main() {
     let mut atlas_positions: HashMap<String, (u32, u32, u32, u32)> = HashMap::new();
 
     let mut cursor_y: u32 = 0;
-    for (name, img) in embedded.into_iter() {
+    for (name, img) in embedded {
         let w = img.width();
         let h = img.height();
 
@@ -94,7 +94,7 @@ fn gpu_main() {
     let fallback = atlas_positions
         .values()
         .next()
-        .cloned()
+        .copied()
         .unwrap_or((0u32, 0u32, 1u32, 1u32));
 
     for (i, opt_tex) in bsp.textures.iter().enumerate() {
@@ -144,7 +144,7 @@ fn gpu_main() {
 
     buffer.insert(GpuCommand::PushRecord(PrimitiveType::Triangles));
 
-    for face in bsp.faces.iter() {
+    for face in &bsp.faces {
         let verts: Vec<qbsp::glam::Vec3> = face.vertices(&bsp).collect();
         if verts.len() < 3 {
             continue;
@@ -155,7 +155,7 @@ fn gpu_main() {
 
         let (px, py, tw, th) = texidx_to_placement
             .get(&tex_idx)
-            .cloned()
+            .copied()
             .unwrap_or(fallback);
         let tex_w = tw.max(1);
         let tex_h = th.max(1);
@@ -163,7 +163,7 @@ fn gpu_main() {
         let proj = tex_info.projection;
 
         for tri in triangulate_fan(verts) {
-            for v in tri.iter() {
+            for v in &tri {
                 let p = *v;
                 let uv_world = proj.project(p);
                 let u_world = uv_world.x;

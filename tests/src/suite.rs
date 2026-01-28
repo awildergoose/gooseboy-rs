@@ -9,7 +9,7 @@ pub struct TestResult {
 }
 
 impl TestResult {
-    pub fn new(name: String, status: bool) -> Self {
+    pub const fn new(name: String, status: bool) -> Self {
         Self { name, status }
     }
 }

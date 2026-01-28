@@ -33,7 +33,7 @@ use crate::{
 pub struct RVsim {
     /* riscv-arch-tests need this symbol */
     tohost: Option<u64>,
-    _fromhost: Option<u64>,
+    fromhost: Option<u64>,
     /* riscof tests need this symbol*/
     signature_range: Option<ops::Range<u64>>,
     signature_file: Option<String>,
@@ -51,6 +51,7 @@ pub struct RVsim {
 }
 
 impl RVsim {
+    #[must_use]
     pub fn new(harts: Vec<RcRefCell<CpuCore>>, rbb_port: u16) -> Self {
         assert_ne!(harts.len(), 0, "No hart in rvsim");
         let bus = harts[0].borrow_mut().mmu.caches.borrow_mut().bus.clone();
@@ -65,7 +66,7 @@ impl RVsim {
             config,
             elf_symbols: hashbrown::HashMap::new(),
             tohost: None,
-            _fromhost: None,
+            fromhost: None,
             signature_range: None,
             signature_file: None,
             remote_bitbang,
@@ -79,7 +80,7 @@ impl RVsim {
         let end_regstate_addr = self.elf_symbols.get("end_signature").copied();
 
         self.tohost = tohost_addr;
-        self._fromhost = fromhost_addr;
+        self.fromhost = fromhost_addr;
         if let (Some(begin_regstate_addr), Some(end_regstate_addr)) =
             (begin_regstate_addr, end_regstate_addr)
         {
@@ -88,10 +89,10 @@ impl RVsim {
 
         /* log */
         if let Some(tohost) = self.tohost {
-            info!("tohost: {:#x}", tohost);
+            info!("tohost: {tohost:#x}");
         }
-        if let Some(fromhost) = self._fromhost {
-            info!("fromhost: {:#x}", fromhost);
+        if let Some(fromhost) = self.fromhost {
+            info!("fromhost: {fromhost:#x}");
         }
         if let Some(signature_range) = &self.signature_range {
             info!(
@@ -115,7 +116,7 @@ impl RVsim {
             self.get_symbol_values();
         }
     }
-    fn _load_elf(&mut self, slice: &[u8], collect_symbol: bool) {
+    fn load_elf(&mut self, slice: &[u8], collect_symbol: bool) {
         let elf_data = elf::ElfBytes::<AnyEndian>::minimal_parse(slice);
         if let Ok(elf_data) = elf_data {
             let ehdr: elf::file::FileHeader<AnyEndian> = elf_data.ehdr;
@@ -153,11 +154,11 @@ impl RVsim {
     #[cfg(feature = "std")]
     pub fn load_image(&mut self, file_name: &str) {
         let file_data = std::fs::read(file_name).unwrap();
-        info!("load image from file: {}", file_name);
-        self._load_elf(&file_data, true);
+        info!("load image from file: {file_name}");
+        self.load_elf(&file_data, true);
     }
     pub fn load_image_from_slice(&mut self, slice: &[u8]) {
-        self._load_elf(slice, false);
+        self.load_elf(slice, false);
     }
 
     pub fn prepare_to_run(&mut self) {
@@ -183,12 +184,14 @@ impl RVsim {
     }
 
     // true: exit, false: abort
+    #[must_use]
     pub fn is_finish(&self) -> bool {
         self.harts
             .iter()
             .any(|hart| hart.borrow().cpu_state == CpuState::Stop)
     }
 
+    #[must_use]
     pub fn is_exit_normal(&self) -> bool {
         self.harts
             .iter()
@@ -243,7 +246,7 @@ impl RVsim {
                 self.harts
                     .iter_mut()
                     .for_each(|hart| hart.borrow_mut().cpu_state = CpuState::Abort);
-                info!("FAIL WITH EXIT CODE:{}", cmd.exit_code())
+                info!("FAIL WITH EXIT CODE:{}", cmd.exit_code());
             }
         }
         cmd.character_device_write();
@@ -274,9 +277,9 @@ impl RVsim {
                 let mut bus_u = self.bus.borrow_mut();
                 for i in sig_range.step_by(4) {
                     let tmp_data = bus_u.read(i, 4).unwrap();
-                    file.write_fmt(format_args! {"{tmp_data:08x}\n"}).unwrap();
+                    file.write_fmt(format_args!("{tmp_data:08x}\n")).unwrap();
                 }
-                info!("dump signature done, file: {}", file_name);
+                info!("dump signature done, file: {file_name}");
             },
         );
     }

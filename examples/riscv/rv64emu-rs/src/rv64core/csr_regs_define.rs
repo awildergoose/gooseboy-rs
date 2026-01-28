@@ -48,13 +48,14 @@ pub trait Csr {
     ) -> Result<(), RVerr> {
         assert!(addr < 4096);
         let csr_addr = CsrAddr::from(addr as u16);
-        match csr_addr.check_privilege(privi, access_type) {
-            true => Ok(()),
-            false => Err(RVerr::CsrNotPermit),
+        if csr_addr.check_privilege(privi, &access_type) {
+            Ok(())
+        } else {
+            Err(RVerr::CsrNotPermit)
         }
     }
 }
-fn write_with_mask(old: u64, data: u64, mask: u64) -> u64 {
+const fn write_with_mask(old: u64, data: u64, mask: u64) -> u64 {
     (old & !mask) | (data & mask)
 }
 
@@ -70,9 +71,10 @@ pub struct CommonCSR {
 }
 
 impl CommonCSR {
-    pub fn new(share: RcCell<u64>) -> Self {
+    pub const fn new(share: RcCell<u64>) -> Self {
         Self { inner: share }
     }
+    #[must_use]
     pub fn new_noshare(data: u64) -> Self {
         Self {
             inner: RcCell::new(data.into()),
@@ -111,7 +113,8 @@ pub struct CsrAddr {
 // exceptions. A read/write register might also contain some bits that are read-only, in which case
 // writes to the read-only bits are ignored.
 impl CsrAddr {
-    pub fn check_privilege(&self, privi: PrivilegeLevels, access_type: AccessType) -> bool {
+    #[must_use]
+    pub const fn check_privilege(&self, privi: PrivilegeLevels, access_type: &AccessType) -> bool {
         let has_privilege = (privi as u8) >= self.privilege();
         // warn!("privi:{:?},{}", privi, has_privilege);
         match access_type {
@@ -120,7 +123,7 @@ impl CsrAddr {
         }
     }
 
-    fn not_read_only(&self) -> bool {
+    const fn not_read_only(&self) -> bool {
         let read_only = self.read_write() == 0b11;
         !read_only // not read only
     }
@@ -207,12 +210,15 @@ pub struct XstatusIn {
 impl XstatusIn {
     // When a trap is taken, SPP is set to 0 if the trap originated from user mode, or 1 otherwise
     // 0: user mode 1: s mode
-    pub fn get_spp_priv(&self) -> PrivilegeLevels {
-        match self.spp() {
-            true => PrivilegeLevels::Supervisor,
-            false => PrivilegeLevels::User,
+    #[must_use]
+    pub const fn get_spp_priv(&self) -> PrivilegeLevels {
+        if self.spp() {
+            PrivilegeLevels::Supervisor
+        } else {
+            PrivilegeLevels::User
         }
     }
+    #[must_use]
     pub fn get_mpp_priv(&self) -> PrivilegeLevels {
         // PrivilegeLevels::from_repr(self.mpp().into()).unwrap()
         match self.mpp() {
@@ -236,7 +242,7 @@ pub struct Xstatus {
 }
 
 impl Xstatus {
-    pub fn new(share: RcCell<XstatusIn>, rmask: u64, wmask: u64) -> Self {
+    pub const fn new(share: RcCell<XstatusIn>, rmask: u64, wmask: u64) -> Self {
         Self {
             inner: share,
             rmask,
@@ -292,6 +298,7 @@ pub struct XtvecIn {
 }
 
 impl XtvecIn {
+    #[must_use]
     pub fn get_trap_pc(&self, trap: TrapType) -> u64 {
         let base = self.base() << 2;
         match self.mode() {
@@ -301,8 +308,9 @@ impl XtvecIn {
         }
     }
 
+    #[must_use]
     pub fn get_write_mask(val: u64) -> u64 {
-        let tvec = XtvecIn::from(val);
+        let tvec = Self::from(val);
         if tvec.mode() == TvecMode::Reserved {
             0xFFFF_FFFF_FFFF_FFFF
         } else {
@@ -316,7 +324,7 @@ pub struct Xtvec {
 }
 
 impl Xtvec {
-    pub fn new(share: RcCell<XtvecIn>) -> Self {
+    pub const fn new(share: RcCell<XtvecIn>) -> Self {
         Self { inner: share }
     }
 }
@@ -354,7 +362,7 @@ pub struct Xie {
 }
 
 impl Xie {
-    pub fn new(share: RcCell<XieIn>, mask: u64) -> Self {
+    pub const fn new(share: RcCell<XieIn>, mask: u64) -> Self {
         Self { inner: share, mask }
     }
 }
@@ -391,6 +399,7 @@ pub struct XipIn {
 }
 // standard interrupt priority is MEI, MSI, MTI, SEI, SSI, STI
 impl XipIn {
+    #[must_use]
     pub fn get_priority_interupt(&self) -> TrapType {
         if self.meip() {
             return TrapType::MachineExternalInterrupt;
@@ -415,7 +424,7 @@ impl XipIn {
             7 => self.set_mtip(true),
             9 => self.set_seip(true),
             11 => self.set_meip(true),
-            _ => panic!("invalid irq num:{}", irq_num),
+            _ => panic!("invalid irq num:{irq_num}"),
         }
     }
 }
@@ -426,7 +435,7 @@ pub struct Xip {
 }
 
 impl Xip {
-    pub fn new(share: RcCell<XipIn>, mask: u64) -> Self {
+    pub const fn new(share: RcCell<XipIn>, mask: u64) -> Self {
         Self { inner: share, mask }
     }
 }
@@ -454,7 +463,7 @@ pub struct Xcause {
 }
 
 impl Xcause {
-    pub fn new(share: RcCell<XcauseIn>) -> Self {
+    pub const fn new(share: RcCell<XcauseIn>) -> Self {
         Self { inner: share }
     }
 }
@@ -498,7 +507,7 @@ pub struct Medeleg {
 }
 
 impl Medeleg {
-    pub fn new(share: RcCell<MedelegIn>) -> Self {
+    pub const fn new(share: RcCell<MedelegIn>) -> Self {
         Self { inner: share }
     }
 }
@@ -529,6 +538,7 @@ impl Csr for Mcounteren {
 }
 
 impl Mcounteren {
+    #[must_use]
     pub fn hmp(&self, idx: usize) -> bool {
         assert!(idx >= 3);
         let idx_offset = idx - 3;
@@ -668,23 +678,25 @@ pub enum StapMode {
 }
 
 impl StapMode {
-    pub fn get_levels(&self) -> usize {
+    #[must_use]
+    pub const fn get_levels(&self) -> usize {
         match self {
-            StapMode::Bare => 0,
-            StapMode::Sv39 => 3,
-            StapMode::Sv48 => 4,
-            StapMode::Sv57 => 5,
-            StapMode::Sv64 => 6,
+            Self::Bare => 0,
+            Self::Sv39 => 3,
+            Self::Sv48 => 4,
+            Self::Sv57 => 5,
+            Self::Sv64 => 6,
         }
     }
 
-    pub fn get_ptesize(&self) -> usize {
+    #[must_use]
+    pub const fn get_ptesize(&self) -> usize {
         match self {
-            StapMode::Bare => 0,
-            StapMode::Sv39 => 8,
-            StapMode::Sv48 => 8,
-            StapMode::Sv57 => 8,
-            StapMode::Sv64 => 8,
+            Self::Bare => 0,
+            Self::Sv39 => 8,
+            Self::Sv48 => 8,
+            Self::Sv57 => 8,
+            Self::Sv64 => 8,
         }
     }
 
@@ -693,11 +705,11 @@ impl StapMode {
     }
     const fn from_bits(v: u64) -> Self {
         match v {
-            0 => StapMode::Bare,
-            8 => StapMode::Sv39,
-            9 => StapMode::Sv48,
-            10 => StapMode::Sv57,
-            11 => StapMode::Sv64,
+            0 => Self::Bare,
+            8 => Self::Sv39,
+            9 => Self::Sv48,
+            10 => Self::Sv57,
+            11 => Self::Sv64,
             _ => panic!("invalid satp mode"),
         }
     }
@@ -739,12 +751,12 @@ pub struct Satp {
 }
 
 impl Satp {
-    pub fn new(
+    pub const fn new(
         share: RcCell<SatpIn>,
         xstatus_share: RcCell<XstatusIn>,
         max_mode: StapMode,
     ) -> Self {
-        Satp {
+        Self {
             inner: share,
             xstatus: xstatus_share,
             max_satp_mode: max_mode,
@@ -753,7 +765,7 @@ impl Satp {
 }
 
 impl Satp {
-    fn unsupport_mod(&self, new_mode: StapMode) -> bool {
+    const fn unsupport_mod(&self, new_mode: StapMode) -> bool {
         new_mode as usize > self.max_satp_mode as usize
     }
 }
@@ -789,9 +801,10 @@ impl Csr for Satp {
             PrivilegeLevels::Supervisor
         };
         // warn!("satp:cur_priv:{:?},require_priv:{:?}", privi, require_priv);
-        match require_priv.check_priv(privi) {
-            true => Ok(()),
-            false => Err(RVerr::CsrNotPermit),
+        if require_priv.check_priv(privi) {
+            Ok(())
+        } else {
+            Err(RVerr::CsrNotPermit)
         }
     }
 }
@@ -801,8 +814,8 @@ pub struct Counter {
 }
 
 impl Counter {
-    pub fn new(share: RcCell<u64>) -> Self {
-        Counter { inner: share }
+    pub const fn new(share: RcCell<u64>) -> Self {
+        Self { inner: share }
     }
 }
 
@@ -842,8 +855,8 @@ pub struct Dcsr {
 }
 
 impl Dcsr {
-    pub fn new(share: RcCell<DcsrIn>) -> Self {
-        Dcsr { inner: share }
+    pub const fn new(share: RcCell<DcsrIn>) -> Self {
+        Self { inner: share }
     }
 }
 
@@ -852,8 +865,8 @@ impl Csr for Dcsr {
         u32::from(self.inner.get()) as u64
     }
 
-    fn write(&mut self, _data: u64) {
-        let new_in = DcsrIn::from(_data as u32);
+    fn write(&mut self, data: u64) {
+        let new_in = DcsrIn::from(data as u32);
         let mut old_val = self.inner.get();
 
         // This bit is hardwired to 0 if the hart does not

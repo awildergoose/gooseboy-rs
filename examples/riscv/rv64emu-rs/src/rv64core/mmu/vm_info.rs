@@ -13,21 +13,23 @@ pub enum PageSize {
     InValid,
 }
 impl PageSize {
+    #[must_use] 
     pub const fn from_i(val: usize) -> Self {
         match val {
-            0 => PageSize::P4K,
-            1 => PageSize::P2M,
-            2 => PageSize::P1G,
-            3 => PageSize::P512G,
-            4 => PageSize::P256T,
+            0 => Self::P4K,
+            1 => Self::P2M,
+            2 => Self::P1G,
+            3 => Self::P512G,
+            4 => Self::P256T,
             _ => panic!("Invalid page size"),
         }
     }
+    #[must_use] 
     pub const fn get_mask(&self) -> u64 {
         match self {
-            PageSize::P4K => zero_mask(12),
-            PageSize::P2M => zero_mask(21),
-            PageSize::P1G => zero_mask(30),
+            Self::P4K => zero_mask(12),
+            Self::P2M => zero_mask(21),
+            Self::P1G => zero_mask(30),
 
             _ => panic!("Invalid page size"),
         }
@@ -77,7 +79,8 @@ fn zero_mast_test() {
 }
 
 impl TLBEntry {
-    pub fn new(pte: PTEenume, page_size: PageSize, asid: u16) -> Self {
+    #[must_use] 
+    pub const fn new(pte: PTEenume, page_size: PageSize, asid: u16) -> Self {
         Self {
             pte,
             page_size,
@@ -85,6 +88,7 @@ impl TLBEntry {
         }
     }
 
+    #[must_use] 
     pub fn get_pa(&self, va: &VAenume) -> u64 {
         // debug!("pagesize:{:?}", self.page_size);
         match self.page_size {

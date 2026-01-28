@@ -40,10 +40,12 @@ pub struct Gpr {
 }
 
 impl Gpr {
-    pub fn new() -> Self {
-        Gpr { regs: [0; 32] }
+    #[must_use] 
+    pub const fn new() -> Self {
+        Self { regs: [0; 32] }
     }
 
+    #[must_use] 
     pub fn read(&self, idx: u64) -> u64 {
         assert!(idx < 32);
         if idx == 0 {
@@ -60,6 +62,7 @@ impl Gpr {
             }
         }
     }
+    #[must_use] 
     pub fn get_register_name(num: u64) -> &'static str {
         assert!(num < 32);
         // 数字转枚举
@@ -100,6 +103,7 @@ impl Gpr {
         }
     }
 
+    #[must_use] 
     pub fn get_register_idx(reg_name: &str) -> GprName {
         match reg_name {
             "zero" => GprName::zero,
@@ -139,7 +143,7 @@ impl Gpr {
     }
 
     pub fn read_by_name(&mut self, reg_name: &str) -> u64 {
-        let idx = Gpr::get_register_idx(reg_name);
+        let idx = Self::get_register_idx(reg_name);
 
         self.read(idx as u64)
     }
@@ -163,9 +167,9 @@ impl fmt::Display for Gpr {
         for i in 0..32 {
             ret = f.write_fmt(format_args!(
                 "{}:{}\n",
-                Gpr::get_register_name(i),
+                Self::get_register_name(i),
                 self.read(i)
-            ))
+            ));
         }
         ret
     }

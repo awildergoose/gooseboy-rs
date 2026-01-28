@@ -13,16 +13,18 @@ fn get_framebuffer_surface() -> MutexGuard<'static, Option<Surface>> {
     FRAMEBUFFER_SURFACE.lock().unwrap()
 }
 
+#[must_use] 
 pub fn get_framebuffer_surface_ref() -> &'static Surface {
     let guard = get_framebuffer_surface();
     let surface_ref: &Surface = guard.as_ref().expect("surface not initialized");
-    unsafe { &*(surface_ref as *const Surface) }
+    unsafe { &*std::ptr::from_ref::<Surface>(surface_ref) }
 }
 
+#[must_use] 
 pub fn get_framebuffer_surface_mut() -> &'static mut Surface {
     let mut guard = get_framebuffer_surface();
     let surface_mut: &mut Surface = guard.as_mut().expect("surface not initialized");
-    unsafe { &mut *(surface_mut as *mut Surface) }
+    unsafe { &mut *std::ptr::from_mut::<Surface>(surface_mut) }
 }
 
 pub fn init_fb() {
@@ -35,10 +37,12 @@ pub fn init_fb() {
     }
 }
 
+#[must_use] 
 pub fn get_pixel_index(x: usize, y: usize) -> Option<usize> {
     get_pixel_index_ex(get_framebuffer_surface_ref(), x, y)
 }
 
+#[must_use] 
 pub fn get_pixel_index_ex(surface: &Surface, x: usize, y: usize) -> Option<usize> {
     if x >= surface.width || y >= surface.height {
         return None;
@@ -63,14 +67,17 @@ pub fn set_pixel_ex(surface: &mut Surface, x: usize, y: usize, color: Color) {
     }
 }
 
+#[must_use] 
 pub fn get_framebuffer_width() -> usize {
     get_framebuffer_surface_ref().width
 }
 
+#[must_use] 
 pub fn get_framebuffer_height() -> usize {
     get_framebuffer_surface_ref().height
 }
 
+#[must_use] 
 pub fn get_framebuffer_size() -> usize {
     get_framebuffer_width() * get_framebuffer_height() * 4
 }
@@ -82,10 +89,10 @@ pub fn clear_framebuffer(color: Color) {
 /// # Safety
 /// This expects ptr to be a pointer to an RGBA buffer (check Surface's rgba)
 pub unsafe fn clear_surface(ptr: *const u8, size: usize, color: Color) {
-    let color_val = ((color.a as u32) << 24)
-        | ((color.b as u32) << 16)
-        | ((color.g as u32) << 8)
-        | (color.r as u32);
+    let color_val = (u32::from(color.a) << 24)
+        | (u32::from(color.b) << 16)
+        | (u32::from(color.g) << 8)
+        | u32::from(color.r);
 
     unsafe { bindings::clear_surface(ptr, size as i32, color_val as i32) };
 }
@@ -98,14 +105,16 @@ pub struct Surface {
 }
 
 impl Surface {
-    pub fn new(width: usize, height: usize, rgba: Vec<u8>) -> Self {
+    #[must_use] 
+    pub const fn new(width: usize, height: usize, rgba: Vec<u8>) -> Self {
         Self {
+            rgba,
             width,
             height,
-            rgba,
         }
     }
 
+    #[must_use] 
     pub fn new_empty(width: usize, height: usize) -> Self {
         Self {
             width,

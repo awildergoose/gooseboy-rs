@@ -69,13 +69,13 @@ const ENABLE_END: u64 = CONTEXT_BASE - 1;
  * now there's only two: a source priority threshold over which the hart will
  * take an interrupt, and a register to claim interrupts.
  */
-const CONTEXT_BASE: u64 = 0x200000;
+const CONTEXT_BASE: u64 = 0x0020_0000;
 const CONTEXT_PER_HART: u64 = 0x1000;
 const CONTEXT_THRESHOLD: u64 = 0;
 const CONTEXT_CLAIM: u64 = 4;
 
 const CONTEXT_END: u64 = REG_SIZE - 1;
-const REG_SIZE: u64 = 0x1000000;
+const REG_SIZE: u64 = 0x0100_0000;
 
 pub const SIFIVE_UART_IRQ: u32 = 10;
 
@@ -94,11 +94,11 @@ struct IrqPriority {
     pub reserved: u32,
 }
 impl IrqPriority {
-    pub fn get(&self) -> u8 {
+    pub const fn get(&self) -> u8 {
         self.priority()
     }
     pub fn set(&mut self, priority: u8) {
-        self.set_priority(priority)
+        self.set_priority(priority);
     }
 }
 
@@ -107,10 +107,10 @@ struct IrqPending {
     val: u32,
 }
 impl IrqPending {
-    pub fn new() -> Self {
-        IrqPending { val: 0 }
+    pub const fn new() -> Self {
+        Self { val: 0 }
     }
-    pub fn set_bool(&mut self, irq_id: u32, val: bool) {
+    pub const fn set_bool(&mut self, irq_id: u32, val: bool) {
         if val {
             self.set_bit(irq_id);
         } else {
@@ -118,22 +118,22 @@ impl IrqPending {
         }
     }
     // set the irq_id bit to 1
-    pub fn set_bit(&mut self, irq_id: u32) {
+    pub const fn set_bit(&mut self, irq_id: u32) {
         self.val |= 1 << irq_id;
     }
     // set the irq_id bit to 0
-    pub fn clear_bit(&mut self, irq_id: u32) {
+    pub const fn clear_bit(&mut self, irq_id: u32) {
         self.val &= !(1 << irq_id);
     }
     // get the irq_id bit
-    pub fn get_bit(&self, irq_id: u32) -> bool {
+    pub const fn get_bit(&self, irq_id: u32) -> bool {
         (self.val & (1 << irq_id)) != 0
     }
 
-    pub fn set_all(&mut self, val: u32) {
+    pub const fn set_all(&mut self, val: u32) {
         self.val = val;
     }
-    pub fn get_all(&self) -> u32 {
+    pub const fn get_all(&self) -> u32 {
         self.val
     }
 }
@@ -150,11 +150,11 @@ struct IrqThreshold {
 }
 
 impl IrqThreshold {
-    pub fn get_all(&self) -> u32 {
+    pub const fn get_all(&self) -> u32 {
         self.threshold() as u32
     }
     pub fn set_all(&mut self, val: u32) {
-        self.set_threshold(val as u8)
+        self.set_threshold(val as u8);
     }
 }
 
@@ -173,8 +173,8 @@ struct PlicContext {
     claim: u32,
 }
 impl PlicContext {
-    pub fn new(xip_share: Rc<Cell<XipIn>>, mmode: bool) -> Self {
-        PlicContext {
+    pub const fn new(xip_share: Rc<Cell<XipIn>>, mmode: bool) -> Self {
+        Self {
             threshold: IrqThreshold::new(),
             enable: [IrqEnable::new(); 2],
             claim: 0,
@@ -182,16 +182,17 @@ impl PlicContext {
             xip: xip_share,
         }
     }
-    pub fn get_enable_by_id(&self, irq_id: u32) -> bool {
+    pub const fn get_enable_by_id(&self, irq_id: u32) -> bool {
         self.enable[irq_id as usize / 32].get_bit(irq_id % 32)
     }
 
     pub fn update_xip(&self, level: bool) {
         let mut xip = self.xip.get();
-        match self.mmode {
-            true => xip.set_meip(level),
-            false => xip.set_seip(level),
-        };
+        if self.mmode {
+            xip.set_meip(level);
+        } else {
+            xip.set_seip(level);
+        }
         self.xip.set(xip);
     }
 }
@@ -205,8 +206,9 @@ pub struct SifvePlic {
 }
 
 impl SifvePlic {
+    #[must_use]
     pub fn new() -> Self {
-        SifvePlic {
+        Self {
             irq_sources: Vec::new(),
             vec_irq_priority: vec![IrqPriority::new(); 64],
             irq_pending: [IrqPending::new(); 2],
@@ -215,11 +217,12 @@ impl SifvePlic {
         }
     }
     pub fn register_irq_source(&mut self, irq_id: u32, irq_pending: Rc<Cell<bool>>) {
-        assert!(irq_id < 64, "irq_id:{} is too large", irq_id);
+        assert!(irq_id < 64, "irq_id:{irq_id} is too large");
         // Check if the irq_id is already registered, if so, panic
-        if self.irq_sources.iter().any(|item| item.id == irq_id) {
-            panic!("irq_id:{} is already registered", irq_id);
-        };
+        assert!(
+            !self.irq_sources.iter().any(|item| item.id == irq_id),
+            "irq_id:{irq_id} is already registered"
+        );
         // Register the new irq_source
         self.irq_sources.push(IrqSource {
             id: irq_id,
@@ -231,7 +234,7 @@ impl SifvePlic {
     }
     pub fn tick(&mut self) {
         // Update the pending bits
-        for item in self.irq_sources.iter() {
+        for item in &self.irq_sources {
             let pending_bit = item.pending.get();
             let irq_id = item.id;
             self.irq_pending[irq_id as usize / 32].set_bool(irq_id % 32, pending_bit);
@@ -262,12 +265,12 @@ impl SifvePlic {
         self.vec_irq_priority[idx_word].set(val as u8);
     }
 
-    fn pending_read(&self, offset: u32) -> u32 {
+    const fn pending_read(&self, offset: u32) -> u32 {
         let idx_word = (offset >> 2) as usize;
         self.irq_pending[idx_word].get_all()
     }
     // pending bits are read-only
-    fn pending_write(&mut self, _irq_id: u32, _val: u32) {
+    fn pending_write(&self, _irq_id: u32, _val: u32) {
         warn!("pending bits are read-only");
     }
 
@@ -295,7 +298,7 @@ impl SifvePlic {
 
                 self.context_claim(context_idx)
             }
-            _ => panic!("context_read invalid offset:{}", context_offset),
+            _ => panic!("context_read invalid offset:{context_offset}"),
         }
     }
     fn context_write(&mut self, offset: u32, val: u32) {
@@ -306,9 +309,9 @@ impl SifvePlic {
             CONTEXT_THRESHOLD => self.context[context_idx].threshold.set_all(val),
             CONTEXT_CLAIM => {
                 // debug!("context_write(context_idx:{}, val:{})", context_idx, val);
-                self.context_complete(context_idx, val)
+                self.context_complete(context_idx, val);
             }
-            _ => panic!("context_write invalid offset:{}", context_offset),
+            _ => panic!("context_write invalid offset:{context_offset}"),
         }
     }
 
@@ -340,18 +343,17 @@ impl SifvePlic {
                         }
                     }
                     Ordering::Less => {}
-                };
+                }
             });
 
-        match self.claimed[irq_id as usize] {
-            true => 0,
-            false => {
-                // debug!("context_claim(context_idx:{}),id:{}", context_idx,irq_id);
-                irq_pendding.set(false);
-                self.claimed[irq_id as usize] = true;
-                c.claim = irq_id;
-                irq_id
-            }
+        if self.claimed[irq_id as usize] {
+            0
+        } else {
+            // debug!("context_claim(context_idx:{}),id:{}", context_idx,irq_id);
+            irq_pendding.set(false);
+            self.claimed[irq_id as usize] = true;
+            c.claim = irq_id;
+            irq_id
         }
         // warn!(
         //     "context_claim(context_idx:{}, irq_id:{})",
@@ -359,7 +361,7 @@ impl SifvePlic {
         // );
     }
 
-    fn context_complete(&mut self, _context_idx: usize, val: u32) {
+    const fn context_complete(&mut self, _context_idx: usize, val: u32) {
         self.claimed[val as usize] = false;
     }
 }
@@ -372,7 +374,7 @@ impl Default for SifvePlic {
 
 impl DeviceBase for SifvePlic {
     fn do_read(&mut self, addr: u64, len: usize) -> u64 {
-        assert_eq!(len, 4, "plic write len:{}", len);
+        assert_eq!(len, 4, "plic write len:{len}");
         // debug!("plic read addr:0x{:x} len:{}", addr, len);
         match addr {
             PRIORITY_BASE..=PRIORITY_END => {
@@ -392,12 +394,12 @@ impl DeviceBase for SifvePlic {
                 self.context_read(offset) as u64
             }
             _ => {
-                panic!("plic read addr:0x{:x} len:{}", addr, len)
+                panic!("plic read addr:0x{addr:x} len:{len}")
             }
         }
     }
     fn do_write(&mut self, addr: u64, data: u64, len: usize) -> u64 {
-        assert_eq!(len, 4, "plic write len:{}", len);
+        assert_eq!(len, 4, "plic write len:{len}");
         match addr {
             PRIORITY_BASE..=PRIORITY_END => {
                 let offset = (addr - PRIORITY_BASE) as u32;
@@ -416,7 +418,7 @@ impl DeviceBase for SifvePlic {
                 self.context_write(offset, data as u32);
             }
             _ => {
-                panic!("plic write addr:0x{:x} data:0x{:x} len:{}", addr, data, len);
+                panic!("plic write addr:0x{addr:x} data:0x{data:x} len:{len}");
             }
         }
         0

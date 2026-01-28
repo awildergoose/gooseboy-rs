@@ -63,7 +63,7 @@ struct LayeredCommand {
 }
 
 impl Renderer {
-    pub fn next_atlas_id(&mut self) -> usize {
+    pub const fn next_atlas_id(&mut self) -> usize {
         self.next_atlas_id += 1;
         self.next_atlas_id
     }
@@ -104,7 +104,7 @@ impl Renderer {
                 get_framebuffer_ptr(),
                 result.rgba.as_ptr(),
                 result.rgba.len() as i32,
-            )
+            );
         };
         if !self.group_stack.is_empty() {
             log!("axolotl: group stack is not empty, did you forget to EndGroup?");
@@ -196,9 +196,9 @@ impl Renderer {
             }
             Command::BeginGroup { label, layer } => {
                 if let Some(text) = label {
-                    self.group_stack.push((text.clone(), layer));
+                    self.group_stack.push((text, layer));
                 } else {
-                    self.group_stack.push(("".to_string(), layer));
+                    self.group_stack.push((String::new(), layer));
                 }
             }
             Command::EndGroup {} => {
@@ -219,7 +219,7 @@ impl Renderer {
                     current_layer = *layer;
                 }
                 Command::EndGroup {} => {
-                    current_layer = self.group_stack.last().map(|(_, l)| *l).unwrap_or(0);
+                    current_layer = self.group_stack.last().map_or(0, |(_, l)| *l);
                 }
                 Command::Clear { .. } if !first_clear_done => {
                     layered_commands.push(LayeredCommand {

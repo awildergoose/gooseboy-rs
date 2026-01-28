@@ -27,8 +27,8 @@ pub fn __internal_main() {
     panic::set_panic_handler();
 }
 
-pub fn __internal_update(_nano_time: i64) {}
-pub fn __internal_gpu_main() {}
+pub const fn __internal_update(_nano_time: i64) {}
+pub const fn __internal_gpu_main() {}
 
 pub fn __internal_caught_unwind<R>(res: Result<R, Box<dyn std::any::Any + Send>>) {
     if let Err(payload) = res {

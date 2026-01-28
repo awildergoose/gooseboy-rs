@@ -50,9 +50,9 @@ impl Mmu {
         privilege: Rc<Cell<PrivilegeLevels>>,
         mstatus: RcCell<XstatusIn>,
         satp: RcCell<SatpIn>,
-        config: Rc<Config>,
+        config: &Rc<Config>,
     ) -> Self {
-        Mmu {
+        Self {
             caches,
             access_type: AccessType::Load(0),
             mstatus,
@@ -78,19 +78,19 @@ impl Mmu {
     // S-mode or U-mode.
 
     // todo! check privilege mode
-    fn va_translation_step1(&mut self) -> Result<u8, TrapType> {
+    fn va_translation_step1(&mut self) -> u8 {
         assert_ne!(self.mmu_effective_priv, PrivilegeLevels::Machine); // check privilege mode
         self.level = self.satp_mode.get_levels() as i8;
         self.i = self.level - 1;
         self.a = self.satp.get().ppn() * PAGESIZE;
-        Ok(2)
+        2
     }
     // 2. Let pte be the value of the PTE at address a+va.vpn[i]×PTESIZE. (For Sv32, PTESIZE=4.)
     // If accessing pte violates a PMA or PMP check, raise an access-fault exception corresponding
     // to the original access type.
 
     // todo! PMA or PMP check
-    fn va_translation_step2(&mut self) -> Result<(), TrapType> {
+    fn va_translation_step2(&mut self) {
         let pte_size = self.satp_mode.get_ptesize() as u64;
 
         let pte_addr = self.a + self.va.get_ppn_by_idx(self.i as u8) * pte_size;
@@ -106,8 +106,6 @@ impl Mmu {
             .unwrap();
         // self.pte = Sv39PTE::from(pte_data).into();
         self.pte = self.get_pteops(pte_data);
-
-        Ok(())
     }
     // 3. If pte.v = 0, or if pte.r = 0 and pte.w = 1, or if any bits or encodings that are reserved for
     // future standard use are set within pte, stop and raise a page-fault exception corresponding
@@ -143,7 +141,7 @@ impl Mmu {
     // corresponding to the original access type.
 
     // todo!
-    fn va_translation_step5(&mut self) -> Result<u8, TrapType> {
+    fn va_translation_step5(&self) -> Result<u8, TrapType> {
         // When SUM=0, S-mode memory accesses to pages that are
         // accessible by U-mode (U=1 in Figure 4.18) will fault.
         // When SUM=1, these accesses are permitted.
@@ -178,7 +176,7 @@ impl Mmu {
     }
     // 6. If i > 0 and pte.ppn[i − 1 : 0] ̸= 0, this is a misaligned superpage; stop and raise a page-fault
     // exception corresponding to the original access type.
-    fn va_translation_step6(&mut self) -> Result<u8, TrapType> {
+    fn va_translation_step6(&self) -> Result<u8, TrapType> {
         let is_misalign_superpage = || -> bool {
             // if self.i == 0 this loop do not excute
             // and will return false;
@@ -206,7 +204,7 @@ impl Mmu {
     //       set pte.d to 1.
     //       – If the comparison fails, return to step 2
 
-    fn va_translation_step7(&mut self) -> Result<u8, TrapType> {
+    fn va_translation_step7(&self) -> Result<u8, TrapType> {
         // choese to raise a exception
         if !self.pte.a() || ((!self.pte.d()) && self.access_type.is_store()) {
             Err(self.access_type.throw_page_exception())
@@ -220,7 +218,7 @@ impl Mmu {
     //      + If i > 0, then this is a superpage translation and pa.ppn[i − 1 : 0] = va.vpn[i − 1 : 0].
     //      + pa.ppn[LEVELS − 1 : i] = pte.ppn[LEVELS − 1 : i].
 
-    fn va_translation_step8(&mut self) -> Result<u8, TrapType> {
+    fn va_translation_step8(&mut self) -> u8 {
         let asid = self.satp.get().asid() as u16;
         let page_size = PageSize::from_i(self.i as usize);
 
@@ -248,7 +246,7 @@ impl Mmu {
             assert_eq!(res.pte.raw(), entry.pte.raw());
         }
 
-        Ok(1)
+        1
     }
 
     fn check_sum_bit(&self) -> bool {
@@ -260,11 +258,10 @@ impl Mmu {
     }
 
     pub fn page_table_walk(&mut self) -> Result<u64, TrapType> {
-        let ret = self.va_translation_step1();
-        assert!(ret.is_ok());
+        self.va_translation_step1();
 
         loop {
-            self.va_translation_step2()?;
+            self.va_translation_step2();
             self.va_translation_step3()?;
             if let Ok(step) = self.va_translation_step4() {
                 if step == 5 {
@@ -276,7 +273,7 @@ impl Mmu {
         self.va_translation_step5()?;
         self.va_translation_step6()?;
         self.va_translation_step7()?;
-        self.va_translation_step8()?;
+        self.va_translation_step8();
 
         // debug!("translate: {:x} -> {:x}", self.va.raw(), self.pa.raw());
 
@@ -440,7 +437,7 @@ impl Mmu {
         info!(
             "tlb hit rate: {}",
             self.tlb_hit as f64 / (self.tlb_hit + self.tlb_miss) as f64
-        )
+        );
     }
     pub fn clear_tlb(&mut self) {
         self.tlb.clear();
@@ -455,7 +452,7 @@ impl Mmu {
 
     fn fence_vma_trace_log(&self, tlb_entryl: Option<TLBEntry>) {
         if let Some(tlb_entry) = tlb_entryl {
-            trace!("fence_vma : {:?}", tlb_entry);
+            trace!("fence_vma : {tlb_entry:?}");
         } else {
             trace!("fence_vma : None");
         }
@@ -476,10 +473,10 @@ impl Mmu {
                     .map(|(key, _val)| *key)
                     .collect::<Vec<_>>();
 
-                key_list.iter().for_each(|tlb_key| {
+                for tlb_key in &key_list {
                     let res = self.tlb.remove(tlb_key);
                     self.fence_vma_trace_log(res);
-                });
+                }
             }
             (va, 0) => {
                 let tlb_key = self

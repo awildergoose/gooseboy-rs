@@ -19,7 +19,7 @@ pub struct CpuIcache {
 
 impl CpuIcache {
     pub fn new(bus: RcRefCell<Bus>, size: usize) -> Self {
-        CpuIcache {
+        Self {
             bus,
             inst_hash: HashMap::new(),
             icache_size: size,
@@ -32,10 +32,12 @@ impl CpuIcache {
         if self.icache_size == 0 {
             false
         } else {
-            (0x80000000..0x80000000 + 0x8000000).contains(&addr)
+            (0x8000_0000..0x8000_0000 + 0x0800_0000).contains(&addr)
         }
     }
     // todo len:2,4
+    /// # Errors
+    /// TODO
     pub fn read(&mut self, pc: u64, len: usize) -> Result<u64, RVerr> {
         let addr: u64 = pc;
         if !self.cacheble(addr) {
@@ -45,7 +47,7 @@ impl CpuIcache {
 
         if let Some(inst_pack) = self.inst_hash.get(&pc) {
             self.hit += 1;
-            return Ok(inst_pack.inst as u64);
+            return Ok(u64::from(inst_pack.inst));
         }
         let mut bus = self.bus.borrow_mut();
         match bus.read(addr, len) {
@@ -61,12 +63,12 @@ impl CpuIcache {
             Err(err) => Err(err),
         }
     }
-    pub fn write(&mut self, _addr: u64, _data: u32) -> Result<(), RVerr> {
+    pub const fn write(&mut self, _addr: u64, _data: u32) -> Result<(), RVerr> {
         Err(RVerr::NotFindDevice)
     }
     // random remove a item from caches
     fn remove_random(&mut self) -> Option<InstPack> {
-        let (key, _) = self
+        let (key, ()) = self
             .inst_hash
             .iter()
             .next()

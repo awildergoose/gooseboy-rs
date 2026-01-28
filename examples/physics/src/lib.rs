@@ -168,7 +168,7 @@ fn update(nano_time: i64) {
             let pos = body.position().translation.vector;
             let dx = pos.x - wx;
             let dy = pos.y - wy;
-            let d2 = dx * dx + dy * dy;
+            let d2 = dx.mul_add(dx, dy * dy);
 
             if d2 < best_d2 && d2 < (1.0f32).powi(2) {
                 best_d2 = d2;
@@ -313,7 +313,7 @@ fn apply_explosion(state: &mut PhysicsState, x: f32, y: f32, radius: f32, streng
         let pos = body.position().translation.vector;
         let dx = pos.x - x;
         let dy = pos.y - y;
-        let d2 = dx * dx + dy * dy;
+        let d2 = dx.mul_add(dx, dy * dy);
 
         if d2 <= radius * radius {
             targets.push(h);
@@ -325,7 +325,7 @@ fn apply_explosion(state: &mut PhysicsState, x: f32, y: f32, radius: f32, streng
             let pos = body.position().translation.vector;
             let mut dx = pos.x - x;
             let mut dy = pos.y - y;
-            let dist = (dx * dx + dy * dy).sqrt().max(0.0001);
+            let dist = dx.hypot(dy).max(0.0001);
 
             dx /= dist;
             dy /= dist;

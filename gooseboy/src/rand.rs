@@ -8,16 +8,17 @@ pub struct Rng {
 
 impl Rng {
     #[inline]
+    #[must_use]
     pub const fn new(seed: u64) -> Self {
         Self { state: seed }
     }
 
     #[inline]
-    pub fn next_u64(&mut self) -> u64 {
-        self.state = self.state.wrapping_add(0x9E3779B97F4A7C15_u64);
+    pub const fn next_u64(&mut self) -> u64 {
+        self.state = self.state.wrapping_add(0x9E37_79B9_7F4A_7C15_u64);
         let mut z = self.state;
-        z = (z ^ (z >> 30)).wrapping_mul(0xBF58476D1CE4E5B9_u64);
-        z = (z ^ (z >> 27)).wrapping_mul(0x94D049BB133111EB_u64);
+        z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9_u64);
+        z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB_u64);
         z ^ (z >> 31)
     }
 
@@ -53,40 +54,40 @@ impl Rng {
 
     #[inline]
     pub fn gen_range_u32(&mut self, range: Range<u32>) -> u32 {
-        self.gen_range_u64(range.start as u64..range.end as u64) as u32
+        self.gen_range_u64(u64::from(range.start)..u64::from(range.end)) as u32
     }
 
     #[inline]
     pub fn gen_range_u32_inclusive(&mut self, range: RangeInclusive<u32>) -> u32 {
-        self.gen_range_u64_inclusive((*range.start() as u64)..=(*range.end() as u64)) as u32
+        self.gen_range_u64_inclusive(u64::from(*range.start())..=u64::from(*range.end())) as u32
     }
 
     #[inline]
     pub fn gen_range_i64(&mut self, range: Range<i64>) -> i64 {
-        let start = range.start as i128;
-        let end = range.end as i128;
+        let start = i128::from(range.start);
+        let end = i128::from(range.end);
         debug_assert!(start < end);
         let size = (end - start) as u64;
-        (start + (self.next_u64_bounded(size) as i128)) as i64
+        (start + i128::from(self.next_u64_bounded(size))) as i64
     }
 
     #[inline]
     pub fn gen_range_i64_inclusive(&mut self, range: RangeInclusive<i64>) -> i64 {
-        let start = *range.start() as i128;
-        let end = *range.end() as i128;
+        let start = i128::from(*range.start());
+        let end = i128::from(*range.end());
         debug_assert!(start <= end);
         let size = (end - start) as u64 + 1;
-        (start + (self.next_u64_bounded(size) as i128)) as i64
+        (start + i128::from(self.next_u64_bounded(size))) as i64
     }
 
     #[inline]
     pub fn gen_range_i32(&mut self, range: Range<i32>) -> i32 {
-        self.gen_range_i64(range.start as i64..range.end as i64) as i32
+        self.gen_range_i64(i64::from(range.start)..i64::from(range.end)) as i32
     }
 
     #[inline]
     pub fn gen_range_i32_inclusive(&mut self, range: RangeInclusive<i32>) -> i32 {
-        self.gen_range_i64_inclusive((*range.start() as i64)..=(*range.end() as i64)) as i32
+        self.gen_range_i64_inclusive(i64::from(*range.start())..=i64::from(*range.end())) as i32
     }
 
     #[inline]
@@ -104,7 +105,7 @@ impl Rng {
         let start = range.start;
         let end = range.end;
         debug_assert!(start < end);
-        start + (self.next_f32() * (end - start))
+        self.next_f32().mul_add(end - start, start)
     }
 
     #[inline]
@@ -112,7 +113,7 @@ impl Rng {
         let start = *range.start();
         let end = *range.end();
         debug_assert!(start <= end);
-        start + (self.next_f32() * (end - start))
+        self.next_f32().mul_add(end - start, start)
     }
 
     #[inline]
@@ -120,7 +121,7 @@ impl Rng {
         let start = range.start;
         let end = range.end;
         debug_assert!(start < end);
-        start + (self.next_f64() * (end - start))
+        self.next_f64().mul_add(end - start, start)
     }
 
     #[inline]
@@ -128,6 +129,6 @@ impl Rng {
         let start = *range.start();
         let end = *range.end();
         debug_assert!(start <= end);
-        start + (self.next_f64() * (end - start))
+        self.next_f64().mul_add(end - start, start)
     }
 }

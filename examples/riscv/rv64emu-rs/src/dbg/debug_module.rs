@@ -4,7 +4,12 @@ use alloc::rc::Rc;
 use log::{debug, trace};
 
 use super::{
-    debug_module_register::{self, *},
+    debug_module_register::{
+        self, debug_const, get_dm_register_name, Abstractcs, Command, DMControl, DMStatus,
+        HartInfo, ABSTRACTAUTO_ADDR, ABSTRACTCS_ADDR, ABSTRACT_DATA_BASE, COMMAND_ADDR,
+        DMCONTROL_ADDR, DMSTATUS_ADDR, HALTSUM1_ADDR, HARTINFO_ADDR, HAWINDOW, HAWINDOWSEL_ADDR,
+        PROGBUF_BASE,
+    },
     dm_interface::DebugModuleSlave,
 };
 
@@ -15,8 +20,8 @@ struct DebugModuleConfig {
 }
 
 impl DebugModuleConfig {
-    pub fn new() -> DebugModuleConfig {
-        DebugModuleConfig {
+    pub const fn new() -> Self {
+        Self {
             progbuf_count: 16,
             abstract_data_count: 6,
             dm_base: 0x0,
@@ -40,7 +45,7 @@ pub struct DebugModule {
 }
 
 impl DebugModule {
-    pub fn new(hart: Rc<RefCell<dyn DebugModuleSlave>>) -> DebugModule {
+    pub fn new(hart: Rc<RefCell<dyn DebugModuleSlave>>) -> Self {
         let config = DebugModuleConfig::new();
 
         let dmcontrol = DMControl::new();
@@ -59,7 +64,7 @@ impl DebugModule {
             *x = i as u64;
         });
 
-        DebugModule {
+        Self {
             hart0: hart,
             progbuf: vec![0; config.progbuf_count as usize].into_boxed_slice(),
             abstract_data: vec![0; config.abstract_data_count as usize].into_boxed_slice(),
@@ -87,14 +92,14 @@ impl DebugModule {
         let rdata = if abstract_data_range.contains(&addr) {
             let offset = addr - abstract_data_range.start;
             let value = self.abstract_data.get(offset).unwrap_or_else(|| {
-                debug!("abstract_data out of range: {:x}", offset);
+                debug!("abstract_data out of range: {offset:x}");
                 &0
             });
             *value as u64
         } else if progbuf_range.contains(&addr) {
             let offset = addr - progbuf_range.start;
             let value = self.progbuf.get(offset).unwrap_or_else(|| {
-                debug!("program buffer out of range: {:x}", offset);
+                debug!("program buffer out of range: {offset:x}");
                 &0
             });
             *value as u64
@@ -148,13 +153,9 @@ impl DebugModule {
                 }
                 HARTINFO_ADDR => u32::from(self.hartinfo) as u64,
                 ABSTRACTCS_ADDR => u32::from(self.abstractcs) as u64,
-                COMMAND_ADDR => 0,
-                HALTSUM1_ADDR => 0,
-                HAWINDOWSEL_ADDR => 0,
-                HAWINDOW => 0,
-                ABSTRACTAUTO_ADDR => 0,
+                COMMAND_ADDR | HALTSUM1_ADDR | HAWINDOWSEL_ADDR | HAWINDOW | ABSTRACTAUTO_ADDR => 0,
                 _ => {
-                    debug!("unimplemented dmi_read: {:x}", addr);
+                    debug!("unimplemented dmi_read: {addr:x}");
                     0
                 }
             }
@@ -181,22 +182,28 @@ impl DebugModule {
 
         if abstract_data_range.contains(&addr) {
             let offset = addr - abstract_data_range.start;
-            if let Some(value) = self.abstract_data.get_mut(offset) {
-                *value = wdata as u32;
-                Some(()) // success
-            } else {
-                debug!("abstract_data out of range: {:x}", offset);
-                None // fail
-            }
+            self.abstract_data.get_mut(offset).map_or_else(
+                || {
+                    debug!("abstract_data out of range: {offset:x}");
+                    None // fail
+                },
+                |value| {
+                    *value = wdata as u32;
+                    Some(()) // success
+                },
+            )
         } else if progbuf_range.contains(&addr) {
             let offset = addr - progbuf_range.start;
-            if let Some(value) = self.progbuf.get_mut(offset) {
-                *value = wdata as u32;
-                Some(()) // success
-            } else {
-                debug!("program buffer out of range: {:x}", offset);
-                None // fail
-            }
+            self.progbuf.get_mut(offset).map_or_else(
+                || {
+                    debug!("program buffer out of range: {offset:x}");
+                    None // fail
+                },
+                |value| {
+                    *value = wdata as u32;
+                    Some(()) // success
+                },
+            )
         } else {
             match addr {
                 DMCONTROL_ADDR => {
@@ -295,31 +302,31 @@ impl DebugModule {
                     self.command = Command::from(wdata as u32);
 
                     // If cmderr is non-zero, writes to this register are ignored.
-                    if self.abstractcs.cmderr() != debug_const::CMDERR_NONE as u8 {
-                        debug!(
-                            "Do not perform command when cmderr is not NONE, cmderr: {}",
-                            self.abstractcs.cmderr()
-                        );
-                    } else {
+                    if self.abstractcs.cmderr() == debug_const::CMDERR_NONE as u8 {
                         // This bit is set as soon as command is written, and is not
                         // cleared until that command has completed.
                         self.abstractcs.set_busy(true);
                         self.perform_abstract_command();
                         self.abstractcs.set_busy(false);
+                    } else {
+                        debug!(
+                            "Do not perform command when cmderr is not NONE, cmderr: {}",
+                            self.abstractcs.cmderr()
+                        );
                     }
 
                     Some(())
                 }
                 ABSTRACTAUTO_ADDR => Some(()),
                 _ => {
-                    debug!("unimplemented dmi_write: {:x}", addr);
+                    debug!("unimplemented dmi_write: {addr:x}");
                     None
                 }
             }
         }
     }
 
-    fn reset(&mut self) {
+    fn reset(&self) {
         // self.dmcontrol = DMControl::new();
         // self.dmstatus = DMStatus::new()
         //     .with_version(debug_module_register::debug_const::DMSTATUS_VERSION0_13 as u8)
@@ -463,17 +470,14 @@ impl DebugModule {
                             if command_mem.write() {
                                 let wdata = self.arg_read64(0);
                                 if hart0.write_memory(address, 1, wdata).is_none() {
-                                    debug!("write_memory failed, address: {:x}", address);
+                                    debug!("write_memory failed, address: {address:x}");
                                     self.abstractcs.set_cmderr(debug_const::CMDERR_BUS as u8);
                                 }
+                            } else if let Some(rdata) = hart0.read_memory(address, 1) {
+                                self.arg_write64(0, rdata);
                             } else {
-                                match hart0.read_memory(address, 1) {
-                                    Some(rdata) => self.arg_write64(0, rdata),
-                                    None => {
-                                        debug!("read_memory failed, address: {:x}", address);
-                                        self.abstractcs.set_cmderr(debug_const::CMDERR_BUS as u8)
-                                    }
-                                };
+                                debug!("read_memory failed, address: {address:x}");
+                                self.abstractcs.set_cmderr(debug_const::CMDERR_BUS as u8);
                             }
                         }
                         debug_const::AAMSIZE_16 => {
@@ -481,17 +485,14 @@ impl DebugModule {
                             if command_mem.write() {
                                 let wdata = self.arg_read64(0);
                                 if hart0.write_memory(address, 2, wdata).is_none() {
-                                    debug!("write_memory failed, address: {:x}", address);
+                                    debug!("write_memory failed, address: {address:x}");
                                     self.abstractcs.set_cmderr(debug_const::CMDERR_BUS as u8);
                                 }
+                            } else if let Some(rdata) = hart0.read_memory(address, 2) {
+                                self.arg_write64(0, rdata);
                             } else {
-                                match hart0.read_memory(address, 2) {
-                                    Some(rdata) => self.arg_write64(0, rdata),
-                                    None => {
-                                        debug!("read_memory failed, address: {:x}", address);
-                                        self.abstractcs.set_cmderr(debug_const::CMDERR_BUS as u8)
-                                    }
-                                };
+                                debug!("read_memory failed, address: {address:x}");
+                                self.abstractcs.set_cmderr(debug_const::CMDERR_BUS as u8);
                             }
                         }
                         debug_const::AAMSIZE_32 => {
@@ -499,17 +500,14 @@ impl DebugModule {
                             if command_mem.write() {
                                 let wdata = self.arg_read64(0);
                                 if hart0.write_memory(address, 4, wdata).is_none() {
-                                    debug!("write_memory failed, address: {:x}", address);
+                                    debug!("write_memory failed, address: {address:x}");
                                     self.abstractcs.set_cmderr(debug_const::CMDERR_BUS as u8);
                                 }
+                            } else if let Some(rdata) = hart0.read_memory(address, 4) {
+                                self.arg_write64(0, rdata);
                             } else {
-                                match hart0.read_memory(address, 4) {
-                                    Some(rdata) => self.arg_write64(0, rdata),
-                                    None => {
-                                        debug!("read_memory failed, address: {:x}", address);
-                                        self.abstractcs.set_cmderr(debug_const::CMDERR_BUS as u8)
-                                    }
-                                };
+                                debug!("read_memory failed, address: {address:x}");
+                                self.abstractcs.set_cmderr(debug_const::CMDERR_BUS as u8);
                             }
                         }
                         debug_const::AAMSIZE_64 => {
@@ -517,17 +515,14 @@ impl DebugModule {
                             if command_mem.write() {
                                 let wdata = self.arg_read64(0);
                                 if hart0.write_memory(address, 8, wdata).is_none() {
-                                    debug!("write_memory failed, address: {:x}", address);
+                                    debug!("write_memory failed, address: {address:x}");
                                     self.abstractcs.set_cmderr(debug_const::CMDERR_BUS as u8);
                                 }
+                            } else if let Some(rdata) = hart0.read_memory(address, 8) {
+                                self.arg_write64(0, rdata);
                             } else {
-                                match hart0.read_memory(address, 8) {
-                                    Some(rdata) => self.arg_write64(0, rdata),
-                                    None => {
-                                        debug!("read_memory failed, address: {:x}", address);
-                                        self.abstractcs.set_cmderr(debug_const::CMDERR_BUS as u8)
-                                    }
-                                };
+                                debug!("read_memory failed, address: {address:x}");
+                                self.abstractcs.set_cmderr(debug_const::CMDERR_BUS as u8);
                             }
                         }
                         _ => {
@@ -541,6 +536,6 @@ impl DebugModule {
                 debug!("unimplemented command type: {}", self.command.cmdtype());
                 self.abstractcs.set_cmderr(debug_const::CMDERR_NOTSUP as u8);
             }
-        };
+        }
     }
 }

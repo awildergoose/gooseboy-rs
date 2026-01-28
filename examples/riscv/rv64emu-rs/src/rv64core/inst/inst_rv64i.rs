@@ -1,4 +1,18 @@
-use crate::rv64core::inst::inst_base::*;
+use crate::rv64core::inst::inst_base::{
+    parse_format_b, parse_format_i, parse_format_j, parse_format_r, parse_format_s, parse_format_u,
+    AccessType, Instruction, MASK_ADD, MASK_ADDI, MASK_ADDIW, MASK_ADDW, MASK_AND, MASK_ANDI,
+    MASK_AUIPC, MASK_BEQ, MASK_BGE, MASK_BGEU, MASK_BLT, MASK_BLTU, MASK_BNE, MASK_JAL, MASK_JALR,
+    MASK_LB, MASK_LBU, MASK_LD, MASK_LH, MASK_LHU, MASK_LUI, MASK_LW, MASK_LWU, MASK_OR, MASK_ORI,
+    MASK_SB, MASK_SD, MASK_SH, MASK_SLL, MASK_SLLI, MASK_SLLIW, MASK_SLLW, MASK_SLT, MASK_SLTI,
+    MASK_SLTIU, MASK_SLTU, MASK_SRA, MASK_SRAI, MASK_SRAIW, MASK_SRAW, MASK_SRL, MASK_SRLI,
+    MASK_SRLIW, MASK_SRLW, MASK_SUB, MASK_SUBW, MASK_SW, MASK_XOR, MASK_XORI, MATCH_ADD,
+    MATCH_ADDI, MATCH_ADDIW, MATCH_ADDW, MATCH_AND, MATCH_ANDI, MATCH_AUIPC, MATCH_BEQ, MATCH_BGE,
+    MATCH_BGEU, MATCH_BLT, MATCH_BLTU, MATCH_BNE, MATCH_JAL, MATCH_JALR, MATCH_LB, MATCH_LBU,
+    MATCH_LD, MATCH_LH, MATCH_LHU, MATCH_LUI, MATCH_LW, MATCH_LWU, MATCH_OR, MATCH_ORI, MATCH_SB,
+    MATCH_SD, MATCH_SH, MATCH_SLL, MATCH_SLLI, MATCH_SLLIW, MATCH_SLLW, MATCH_SLT, MATCH_SLTI,
+    MATCH_SLTIU, MATCH_SLTU, MATCH_SRA, MATCH_SRAI, MATCH_SRAIW, MATCH_SRAW, MATCH_SRL, MATCH_SRLI,
+    MATCH_SRLIW, MATCH_SRLW, MATCH_SUB, MATCH_SUBW, MATCH_SW, MATCH_XOR, MATCH_XORI,
+};
 
 use crate::rv64core::traptype::TrapType;
 use crate::tools::check_aligned;
@@ -40,7 +54,7 @@ pub const INSTRUCTIONS_I: &[Instruction] = &[
 
             if !cpu.config.is_enable_isa(b'c') && !check_aligned(next_pc, 4) {
                 return Err(TrapType::InstructionAddressMisaligned(next_pc));
-            };
+            }
 
             #[cfg(feature = "rv_debug_trace")]
             if f.is_call() {
@@ -65,10 +79,9 @@ pub const INSTRUCTIONS_I: &[Instruction] = &[
 
             let next_pc = (rs1_data.wrapping_add(f.imm as u64)) & !1_u64;
 
-            
             if !cpu.config.is_enable_isa(b'c') && !check_aligned(next_pc, 4) {
                 return Err(TrapType::InstructionAddressMisaligned(next_pc));
-            };
+            }
 
             #[cfg(feature = "rv_debug_trace")]
             if let Some(val) = f.get_jalr_type() {
@@ -221,7 +234,7 @@ pub const INSTRUCTIONS_I: &[Instruction] = &[
             let rs1 = cpu.gpr.read(f.rs1) as i64;
             let mem_addr = rs1.wrapping_add(f.imm);
 
-            let mem_data = match cpu.read(mem_addr as u64, 1, AccessType::Load(mem_addr as u64)) {
+            let mem_data = match cpu.read(mem_addr as u64, 1, &AccessType::Load(mem_addr as u64)) {
                 Ok(data) => data,
                 Err(trap_type) => return Err(trap_type),
             };
@@ -241,7 +254,7 @@ pub const INSTRUCTIONS_I: &[Instruction] = &[
             let rs1 = cpu.gpr.read(f.rs1) as i64;
             let mem_addr = rs1.wrapping_add(f.imm);
 
-            let mem_data = match cpu.read(mem_addr as u64, 2, AccessType::Load(mem_addr as u64)) {
+            let mem_data = match cpu.read(mem_addr as u64, 2, &AccessType::Load(mem_addr as u64)) {
                 Ok(data) => data,
                 Err(trap_type) => return Err(trap_type),
             };
@@ -260,7 +273,7 @@ pub const INSTRUCTIONS_I: &[Instruction] = &[
             let rs1 = cpu.gpr.read(f.rs1) as i64;
             let mem_addr = rs1.wrapping_add(f.imm);
 
-            let mem_data = match cpu.read(mem_addr as u64, 4, AccessType::Load(mem_addr as u64)) {
+            let mem_data = match cpu.read(mem_addr as u64, 4, &AccessType::Load(mem_addr as u64)) {
                 Ok(data) => data,
                 Err(trap_type) => return Err(trap_type),
             };
@@ -279,7 +292,7 @@ pub const INSTRUCTIONS_I: &[Instruction] = &[
             let rs1 = cpu.gpr.read(f.rs1) as i64;
             let mem_addr = rs1.wrapping_add(f.imm);
 
-            let mem_data = match cpu.read(mem_addr as u64, 1, AccessType::Load(mem_addr as u64)) {
+            let mem_data = match cpu.read(mem_addr as u64, 1, &AccessType::Load(mem_addr as u64)) {
                 Ok(data) => data,
                 Err(trap_type) => return Err(trap_type),
             };
@@ -298,7 +311,7 @@ pub const INSTRUCTIONS_I: &[Instruction] = &[
             let rs1 = cpu.gpr.read(f.rs1) as i64;
             let mem_addr = rs1.wrapping_add(f.imm);
 
-            let mem_data = match cpu.read(mem_addr as u64, 2, AccessType::Load(mem_addr as u64)) {
+            let mem_data = match cpu.read(mem_addr as u64, 2, &AccessType::Load(mem_addr as u64)) {
                 Ok(data) => data,
                 Err(trap_type) => return Err(trap_type),
             };
@@ -327,7 +340,7 @@ pub const INSTRUCTIONS_I: &[Instruction] = &[
                 mem_addr as u64,
                 rs2 as u64,
                 1,
-                AccessType::Store(mem_addr as u64),
+                &AccessType::Store(mem_addr as u64),
             ) {
                 Ok(_) => Ok(()),
                 Err(trap_type) => Err(trap_type),
@@ -348,7 +361,7 @@ pub const INSTRUCTIONS_I: &[Instruction] = &[
                 mem_addr as u64,
                 rs2 as u64,
                 2,
-                AccessType::Store(mem_addr as u64),
+                &AccessType::Store(mem_addr as u64),
             ) {
                 Ok(_) => Ok(()),
                 Err(trap_type) => Err(trap_type),
@@ -369,7 +382,7 @@ pub const INSTRUCTIONS_I: &[Instruction] = &[
                 mem_addr as u64,
                 rs2 as u64,
                 4,
-                AccessType::Store(mem_addr as u64),
+                &AccessType::Store(mem_addr as u64),
             ) {
                 Ok(_) => Ok(()),
                 Err(trap_type) => Err(trap_type),
@@ -686,7 +699,7 @@ pub const INSTRUCTIONS_I: &[Instruction] = &[
             let rs1 = cpu.gpr.read(f.rs1) as i64;
             let mem_addr = rs1.wrapping_add(f.imm);
 
-            let mem_data = match cpu.read(mem_addr as u64, 4, AccessType::Load(mem_addr as u64)) {
+            let mem_data = match cpu.read(mem_addr as u64, 4, &AccessType::Load(mem_addr as u64)) {
                 Ok(data) => data,
                 Err(trap_type) => return Err(trap_type),
             };
@@ -705,7 +718,7 @@ pub const INSTRUCTIONS_I: &[Instruction] = &[
             let rs1 = cpu.gpr.read(f.rs1) as i64;
             let mem_addr = rs1.wrapping_add(f.imm);
 
-            let mem_data = match cpu.read(mem_addr as u64, 8, AccessType::Load(mem_addr as u64)) {
+            let mem_data = match cpu.read(mem_addr as u64, 8, &AccessType::Load(mem_addr as u64)) {
                 Ok(data) => data,
                 Err(trap_type) => return Err(trap_type),
             };
@@ -724,7 +737,7 @@ pub const INSTRUCTIONS_I: &[Instruction] = &[
             let rs1 = cpu.gpr.read(f.rs1) as i64;
             let rs2 = cpu.gpr.read(f.rs2);
             let mem_addr = rs1.wrapping_add(f.imm);
-            match cpu.write(mem_addr as u64, rs2, 8, AccessType::Store(mem_addr as u64)) {
+            match cpu.write(mem_addr as u64, rs2, 8, &AccessType::Store(mem_addr as u64)) {
                 Ok(_) => Ok(()),
                 Err(trap_type) => Err(trap_type),
             }

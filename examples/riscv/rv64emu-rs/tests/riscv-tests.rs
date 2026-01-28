@@ -119,7 +119,7 @@ fn run_arch_tests() {
         .filter(|item| !item.ret)
         .for_each(|x| println!("{:40}{}", x.name, x.ret));
 
-    tests_ret.iter().for_each(|x| {
+    for x in &tests_ret {
         assert!(x.ret);
-    });
+    }
 }

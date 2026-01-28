@@ -13,10 +13,12 @@ pub enum Permission {
     ExtendedMemory = 8,
 }
 
+#[must_use] 
 pub fn get_time_nanos() -> i64 {
     unsafe { bindings::get_time_nanos() }
 }
 
+#[must_use] 
 pub fn has_permission(permission: Permission) -> bool {
     unsafe { bindings::has_permission(permission as i32) }
 }

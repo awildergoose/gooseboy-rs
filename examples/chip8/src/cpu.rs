@@ -1,6 +1,6 @@
 use rand::{Rng, SeedableRng, rngs::SmallRng};
 
-use crate::misc::*;
+use crate::misc::{V, I, FONT, Instruction};
 
 pub const WIDTH: usize = 64;
 pub const HEIGHT: usize = 32;
@@ -62,7 +62,7 @@ impl Cpu {
             0x0000 => match instruction {
                 0x00E0 => Instruction::CLEAR,
                 0x00EE => Instruction::RETURN,
-                _ => panic!("unknown 0x0--- instruction: {:#X}", instruction),
+                _ => panic!("unknown 0x0--- instruction: {instruction:#X}"),
             },
             0x1000 => Instruction::JUMP { addr: nnn },
             0x2000 => Instruction::CALL { addr: nnn },
@@ -81,7 +81,7 @@ impl Cpu {
                 0x6 => Instruction::SHR { vx },
                 0x7 => Instruction::SUBREVERSE { vx, vy },
                 0xE => Instruction::SHL { vx },
-                _ => panic!("unknown 0x8--n instruction: {:#X}", instruction),
+                _ => panic!("unknown 0x8--n instruction: {instruction:#X}"),
             },
             0x9000 => Instruction::SKIPNEREG { vx, vy },
             0xA000 => Instruction::SETI { addr: nnn },
@@ -91,7 +91,7 @@ impl Cpu {
             0xE000 => match nn {
                 0x9E => Instruction::KEYDOWN { vx },
                 0xA1 => Instruction::KEYUP { vx },
-                _ => panic!("unknown 0xe-nn instruction: {:#X}", instruction),
+                _ => panic!("unknown 0xe-nn instruction: {instruction:#X}"),
             },
             0xF000 => match nn {
                 0x07 => Instruction::GETDELAY { vx },
@@ -103,17 +103,17 @@ impl Cpu {
                 0x33 => Instruction::BCD { vx },
                 0x55 => Instruction::STORE { vx },
                 0x65 => Instruction::LOAD { vx },
-                _ => panic!("unknown 0xf-nn instruction: {:#X}", instruction),
+                _ => panic!("unknown 0xf-nn instruction: {instruction:#X}"),
             },
-            _ => panic!("unknown instruction: {:#X}", instruction),
+            _ => panic!("unknown instruction: {instruction:#X}"),
         }
     }
 
-    pub fn skip(&mut self) {
+    pub const fn skip(&mut self) {
         self.pc += 2;
     }
 
-    fn set_pixel_xor(&mut self, x: usize, y: usize, bit: u8) -> bool {
+    const fn set_pixel_xor(&mut self, x: usize, y: usize, bit: u8) -> bool {
         if bit == 0 {
             return false;
         }
@@ -182,20 +182,20 @@ impl Cpu {
                 let (res, overflow) =
                     self.registers[vx as usize].overflowing_add(self.registers[vy as usize]);
                 self.registers[vx as usize] = res;
-                self.registers[0xF] = if overflow { 1 } else { 0 };
+                self.registers[0xF] = u8::from(overflow);
             }
             Instruction::SUB { vx, vy } => {
                 let vx_val = self.registers[vx as usize];
                 let vy_val = self.registers[vy as usize];
 
-                self.registers[0xF] = if vx_val > vy_val { 1 } else { 0 };
+                self.registers[0xF] = u8::from(vx_val > vy_val);
                 self.registers[vx as usize] = vx_val.wrapping_sub(vy_val);
             }
             Instruction::SUBREVERSE { vx, vy } => {
                 let vx_val = self.registers[vx as usize];
                 let vy_val = self.registers[vy as usize];
 
-                self.registers[0xF] = if vy_val > vx_val { 1 } else { 0 };
+                self.registers[0xF] = u8::from(vy_val > vx_val);
                 self.registers[vx as usize] = vy_val.wrapping_sub(vx_val);
             }
             Instruction::SHR { vx } => {
@@ -210,10 +210,10 @@ impl Cpu {
                 self.i_reg = addr;
             }
             Instruction::JUMPV0 { addr } => {
-                self.pc = addr + (self.registers[0] as u16);
+                self.pc = addr + u16::from(self.registers[0]);
             }
             Instruction::RAND { vx, mask } => {
-                self.registers[vx as usize] = self.rng.random::<u8>() & mask
+                self.registers[vx as usize] = self.rng.random::<u8>() & mask;
             }
             Instruction::DRAW { vx, vy, n } => {
                 let x0 = self.registers[vx as usize] as usize;
@@ -271,7 +271,7 @@ impl Cpu {
                 self.sound_timer = self.registers[vx as usize];
             }
             Instruction::ADDI { vx } => {
-                self.i_reg = self.registers[vx as usize] as u16;
+                self.i_reg = u16::from(self.registers[vx as usize]);
             }
             Instruction::FONT { vx } => {
                 let digit = self.registers[vx as usize] as usize;

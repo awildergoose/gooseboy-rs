@@ -50,8 +50,9 @@ pub struct DebugState {
 }
 
 impl DebugState {
-    pub fn new() -> Self {
-        DebugState {
+    #[must_use]
+    pub const fn new() -> Self {
+        Self {
             resumereq_flag: false,
             resetreq_signal: false,
             haltreq_signal: false,
@@ -69,7 +70,7 @@ impl Default for DebugState {
     }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum CpuState {
     Running,
     Haltd,
@@ -86,8 +87,8 @@ pub struct CpuCoreBuild {
     trace_sender: Option<crossbeam_channel::Sender<TraceType>>,
 }
 impl CpuCoreBuild {
-    pub fn new(shared_bus: RcRefCell<Bus>, config: Rc<Config>) -> Self {
-        CpuCoreBuild {
+    pub const fn new(shared_bus: RcRefCell<Bus>, config: Rc<Config>) -> Self {
+        Self {
             hart_id: 0,
             shared_bus,
             config,
@@ -97,7 +98,7 @@ impl CpuCoreBuild {
             smode: true,
         }
     }
-    pub fn with_boot_pc(&mut self, boot_pc: u64) -> &mut Self {
+    pub const fn with_boot_pc(&mut self, boot_pc: u64) -> &mut Self {
         self.boot_pc = boot_pc;
         self
     }
@@ -106,15 +107,16 @@ impl CpuCoreBuild {
         self.trace_sender = Some(trace_sender);
         self
     }
-    pub fn with_hart_id(&mut self, hart_id: usize) -> &mut Self {
+    pub const fn with_hart_id(&mut self, hart_id: usize) -> &mut Self {
         self.hart_id = hart_id;
         self
     }
-    pub fn with_smode(&mut self, smode: bool) -> &mut Self {
+    pub const fn with_smode(&mut self, smode: bool) -> &mut Self {
         self.smode = smode;
         self
     }
 
+    #[must_use]
     pub fn build(&self) -> CpuCore {
         let mut csr_regs_u = CsrRegs::new(self.hart_id, self.config.clone());
         let privi_u = Rc::new(Cell::new(PrivilegeLevels::Machine));
@@ -125,14 +127,14 @@ impl CpuCoreBuild {
         let xip = csr_regs_u.xip.clone();
 
         let cache_system =
-            RcRefCell::new(CacheSystem::new(self.shared_bus.clone(), self.config.clone()).into());
+            RcRefCell::new(CacheSystem::new(self.shared_bus.clone(), &self.config.clone()).into());
 
         let mmu_u = Mmu::new(
             cache_system.clone(),
             privi_u.clone(),
             xstatus,
             satp,
-            self.config.clone(),
+            &self.config.clone(),
         );
         {
             let bus_u = mmu_u.caches.borrow_mut().bus.clone();
@@ -151,7 +153,7 @@ impl CpuCoreBuild {
             gpr: Gpr::new(),
             csr_regs: csr_regs_u,
             mmu: mmu_u,
-            decode: InstDecode::new(self.config.clone()),
+            decode: InstDecode::new(&self.config.clone()),
             cache_system,
             pc: self.boot_pc,
             npc: self.boot_pc,
@@ -229,35 +231,32 @@ impl CpuCore {
 
     pub fn decode_and_excute(&mut self, inst: u32) -> Result<(), TrapType> {
         let inst_op = self.decode.fast_path(inst);
-        match inst_op {
-            Some(i) => {
-                #[cfg(feature = "rv_debug_trace")]
-                if let Some(sender) = &self.trace_sender {
-                    sender.send(TraceType::Itrace(self.pc, inst)).unwrap();
-                };
-                (i.operation)(self, inst, self.pc) // return
-            }
-            None => {
-                warn!("IllegalInstruction,pc:{:X},inst:{:x}", self.pc, inst);
-                Err(TrapType::IllegalInstruction(inst.into()))
-            }
+        if let Some(i) = inst_op {
+            #[cfg(feature = "rv_debug_trace")]
+            if let Some(sender) = &self.trace_sender {
+                sender.send(TraceType::Itrace(self.pc, inst)).unwrap();
+            };
+            (i.operation)(self, inst, self.pc) // return
+        } else {
+            warn!("IllegalInstruction,pc:{:X},inst:{:x}", self.pc, inst);
+            Err(TrapType::IllegalInstruction(inst.into()))
         }
     }
 
-    fn advance_pc(&mut self, inst: u32) {
+    const fn advance_pc(&mut self, inst: u32) {
         let is_rvc = is_compressed_instruction(inst);
         self.npc = self.pc.wrapping_add(if is_rvc { 2 } else { 4 });
     }
     pub fn show_perf(&self) {
         let cycle = self.csr_regs.cycle.get();
         let instret = self.csr_regs.instret.get();
-        info!("cycle:{},instret:{}", cycle, instret);
+        info!("cycle:{cycle},instret:{instret}");
         // let x = self.cache_system.borrow();
         // self.decode.show_perf();
         // self.mmu.show_perf();
     }
 
-    fn set_pc(&mut self, pc: u64) {
+    const fn set_pc(&mut self, pc: u64) {
         self.npc = pc;
     }
 
@@ -279,7 +278,7 @@ impl CpuCore {
         if (self.cur_priv.get() as usize) < (PrivilegeLevels::Machine as usize) {
             let mut xstatus_tmp = self.csr_regs.xstatus.get();
             xstatus_tmp.set_mprv(false);
-            self.csr_regs.xstatus.set(xstatus_tmp)
+            self.csr_regs.xstatus.set(xstatus_tmp);
         }
 
         // 4. The debug mode is cleared.
@@ -303,7 +302,7 @@ impl CpuCore {
         // execute one instruction
         self.real_excute();
         // after execute one instruction, enter debug mode
-        self.enter_debug_mode(DebugCause::Step, self.npc)
+        self.enter_debug_mode(DebugCause::Step, self.npc);
     }
 
     // fetch and execute one instruction
@@ -343,7 +342,7 @@ impl CpuCore {
                         self.debug_state.havereset = true;
                         self.reset();
                     } else if self.debug_state.haltreq_signal {
-                        self.enter_debug_mode(DebugCause::HaltReq, self.npc)
+                        self.enter_debug_mode(DebugCause::HaltReq, self.npc);
                     } else if self.debug_state.singlestep_flag {
                         self.single_step_proc();
                     } else {
@@ -357,7 +356,7 @@ impl CpuCore {
                     }
                 }
                 _ => break,
-            };
+            }
         }
     }
 
@@ -391,7 +390,7 @@ impl CpuCore {
                     self.csr_regs.instret.set(instret + 1);
                 }
                 _ => break,
-            };
+            }
         }
     }
 
@@ -560,9 +559,9 @@ impl CpuCore {
         &mut self,
         addr: u64,
         len: usize,
-        access_type: AccessType,
+        access_type: &AccessType,
     ) -> Result<u64, TrapType> {
-        self.mmu.update_access_type(&access_type);
+        self.mmu.update_access_type(access_type);
         let paddr = self.mmu.translate(addr, len)?;
         match self.cache_system.borrow_mut().dcache.read(paddr, len) {
             Ok(data) => Ok(data),
@@ -587,9 +586,9 @@ impl CpuCore {
         addr: u64,
         data: u64,
         len: usize,
-        access_type: AccessType,
+        access_type: &AccessType,
     ) -> Result<u64, TrapType> {
-        self.mmu.update_access_type(&access_type);
+        self.mmu.update_access_type(access_type);
         let paddr = self.mmu.translate(addr, len)?;
         match self
             .cache_system
@@ -626,7 +625,7 @@ impl CpuCore {
 
     // halt
     pub fn enter_debug_mode(&mut self, cause: DebugCause, pc: u64) {
-        debug!("enter debug mode,cause:{:?},pc:{:x}", cause, pc);
+        debug!("enter debug mode,cause:{cause:?},pc:{pc:x}");
 
         let mut dcsr = self.csr_regs.dcsr.get();
 
@@ -683,7 +682,7 @@ impl Difftest for CpuCore {
 
     fn set_reg(&mut self, idx: usize, val: u64) {
         assert!(idx < 32, "idx must be less than 32");
-        self.gpr.write(idx as u64, val)
+        self.gpr.write(idx as u64, val);
     }
 
     fn get_reg(&self, idx: usize) -> u64 {
@@ -695,13 +694,13 @@ impl Difftest for CpuCore {
 impl DebugModuleSlave for CpuCore {
     fn read_gpr(&mut self, regno: usize) -> u64 {
         let val = self.gpr.read(regno as u64);
-        debug!("[DebugModuleSlave] read gpr[{}]:{:x}", regno, val);
+        debug!("[DebugModuleSlave] read gpr[{regno}]:{val:x}");
         val
     }
 
     fn write_gpr(&mut self, regno: usize, value: u64) {
         self.gpr.write(regno as u64, value);
-        debug!("[DebugModuleSlave] write gpr[{}]:{:x}", regno, value);
+        debug!("[DebugModuleSlave] write gpr[{regno}]:{value:x}");
     }
 
     fn read_memory(&mut self, address: u64, length: usize) -> Option<u64> {
@@ -713,8 +712,7 @@ impl DebugModuleSlave for CpuCore {
             .read(paddr, length)
             .ok();
         debug!(
-            "[DebugModuleSlave] read memory address:{:x},length:{},value:{:x?}",
-            address, length, result
+            "[DebugModuleSlave] read memory address:{address:x},length:{length},value:{result:x?}"
         );
         result
     }
@@ -728,21 +726,20 @@ impl DebugModuleSlave for CpuCore {
             .write(paddr, value, length)
             .ok();
         debug!(
-            "[DebugModuleSlave] write memory address:{:x},length:{},value:{:x?}",
-            address, length, value
+            "[DebugModuleSlave] write memory address:{address:x},length:{length},value:{value:x?}"
         );
         result
     }
 
     fn read_csr(&mut self, csr_addr: usize) -> u64 {
         let val = self.csr_regs.read_raw(csr_addr as u64);
-        debug!("[DebugModuleSlave] read csr[{:x}]:{:x}", csr_addr, val);
+        debug!("[DebugModuleSlave] read csr[{csr_addr:x}]:{val:x}");
         val
     }
 
     fn write_csr(&mut self, csr_addr: usize, value: u64) {
         self.csr_regs.write_raw(csr_addr as u64, value);
-        debug!("[DebugModuleSlave] write csr[{:x}]:{:x}", csr_addr, value);
+        debug!("[DebugModuleSlave] write csr[{csr_addr:x}]:{value:x}");
     }
 
     fn set_haltreq(&mut self, val: bool) {

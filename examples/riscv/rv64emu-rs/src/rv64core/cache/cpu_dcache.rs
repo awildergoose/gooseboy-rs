@@ -26,10 +26,10 @@ impl CacheLine {
     // pub fn hit(&self, tag: u64) -> bool {
     //     self.valid && self.tag == tag
     // }
-    pub fn dirty(&self) -> bool {
+    pub const fn dirty(&self) -> bool {
         self.dirty
     }
-    pub fn read(&mut self, addr: usize, len: usize) -> u64 {
+    pub fn read(&self, addr: usize, len: usize) -> u64 {
         // self.inc_lru();
 
         let mut des = 0_u64.to_le_bytes();
@@ -43,7 +43,7 @@ impl CacheLine {
         self.data[addr..(len + addr)].copy_from_slice(&src[..len]);
         self.dirty = true;
     }
-    fn inc_lru(&mut self) {
+    const fn inc_lru(&mut self) {
         self.lru = self.lru.wrapping_add(1);
         // self.lru += 1;
     }
@@ -67,7 +67,7 @@ impl CpuDcache {
     pub fn new(bus: RcRefCell<Bus>, dcache_size: usize) -> Self {
         // let caches = vec![CacheLine::new(); 32];
         let caches = hashbrown::HashMap::new();
-        CpuDcache {
+        Self {
             bus,
             caches,
             dcache_size,
@@ -75,26 +75,26 @@ impl CpuDcache {
             miss: 0,
         }
     }
-    fn tag(&self, addr: u64) -> u64 {
+    const fn tag(&self, addr: u64) -> u64 {
         addr >> 6
     }
-    fn offset(&self, addr: u64) -> usize {
+    const fn offset(&self, addr: u64) -> usize {
         (addr & 0x3f) as usize
     }
-    fn cacheline_base(&self, addr: u64) -> u64 {
+    const fn cacheline_base(&self, addr: u64) -> u64 {
         addr & !0x3f
     }
     fn cacheable(&self, addr: u64) -> bool {
         if self.dcache_size == 0 {
             false
         } else {
-            (0x80000000..0x80000000 + 0x8000000).contains(&addr)
+            (0x8000_0000..0x8000_0000 + 0x800_0000).contains(&addr)
         }
     }
 
     // random remove a item from caches
     fn remove_random(&mut self) -> Option<CacheLine> {
-        let (key, _) = self
+        let (key, ()) = self
             .caches
             .iter()
             .next()
@@ -165,7 +165,7 @@ impl CpuDcache {
         info!(
             "dcache hit rate: {}",
             self.hit as f64 / (self.hit + self.miss) as f64
-        )
+        );
     }
 
     fn alloc_cache_line(&mut self, addr: u64) {
@@ -190,7 +190,7 @@ impl CpuDcache {
         let need_write_back = self.caches.len() >= self.dcache_size;
 
         if need_write_back {
-            let mut cache_line_wb: CacheLine = self.remove_random().expect("remove_random err");
+            let cache_line_wb: CacheLine = self.remove_random().expect("remove_random err");
             let mut bus = self.bus.borrow_mut();
 
             let addr = cache_line_wb.tag << 6;
@@ -198,7 +198,7 @@ impl CpuDcache {
                 let data: u64 = cache_line_wb.read(i, 8);
                 bus.write(addr + i as u64, data, 8).unwrap();
             }
-        };
+        }
         self.caches.insert(tag, new_line);
     }
 }

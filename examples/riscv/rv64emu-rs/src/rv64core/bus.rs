@@ -35,6 +35,7 @@ pub struct Bus {
 unsafe impl Send for Bus {}
 
 impl Bus {
+    #[must_use]
     pub fn new() -> Self {
         let plic = DevicePlic {
             start: 0x0C00_0000,
@@ -50,7 +51,7 @@ impl Bus {
             name: "CLINT",
         };
 
-        Bus {
+        Self {
             devices: vec![],
             clint,
             plic,
@@ -64,13 +65,13 @@ impl Bus {
 
     pub fn read(&mut self, addr: u64, len: usize) -> Result<u64, RVerr> {
         if !check_aligned(addr, len) {
-            warn!("bus read:{:x},{:x}", addr, len);
+            warn!("bus read:{addr:x},{len:x}");
             return Err(RVerr::AddrMisalign);
         }
 
         // special devices
         // such as clint
-        let mut special_device = || -> Result<u64, RVerr> {
+        let special_device = || -> Result<u64, RVerr> {
             if check_area(self.clint.start, self.clint.len, addr) {
                 Ok(self.clint.instance.do_read(addr - self.clint.start, len))
             } else if check_area(self.plic.start, self.plic.len, addr) {
@@ -91,10 +92,7 @@ impl Bus {
             .map(|device| device.instance.do_read(addr - device.start, len));
 
         // first find general devices
-        match general_device {
-            Some(val) => Ok(val),
-            None => special_device(),
-        }
+        general_device.map_or_else(special_device, Ok)
     }
 
     pub fn write(&mut self, addr: u64, data: u64, len: usize) -> Result<u64, RVerr> {
@@ -102,7 +100,7 @@ impl Bus {
             return Err(RVerr::AddrMisalign);
         }
 
-        let mut special_device = || -> Result<u64, RVerr> {
+        let special_device = || -> Result<u64, RVerr> {
             if check_area(self.clint.start, self.clint.len, addr) {
                 Ok(self
                     .clint
@@ -127,14 +125,11 @@ impl Bus {
             .find(|device| check_area(device.start, device.len, addr))
             .map(|device| device.instance.do_write(addr - device.start, data, len));
 
-        match general_device {
-            Some(val) => Ok(val),
-            None => special_device(),
-        }
+        general_device.map_or_else(special_device, Ok)
     }
 
     pub fn copy_from_slice(&mut self, addr: u64, data: &[u8]) -> Result<(), RVerr> {
-        let mut special_device = || -> Result<(), RVerr> {
+        let special_device = || -> Result<(), RVerr> {
             if check_area(self.clint.start, self.clint.len, addr) {
                 self.clint
                     .instance
@@ -159,10 +154,7 @@ impl Bus {
             .find(|device| check_area(device.start, device.len, addr))
             .map(|device| device.instance.copy_from_slice(addr - device.start, data));
 
-        match general_device {
-            Some(val) => Ok(val),
-            None => special_device(),
-        }
+        general_device.map_or_else(special_device, Ok)
     }
 
     pub fn copy_to_slice(&mut self, addr: u64, data: &mut [u8]) -> Result<(), RVerr> {
@@ -172,7 +164,7 @@ impl Bus {
             .find(|device| check_area(device.start, device.len, addr))
             .map(|device| device.instance.copy_to_slice(addr - device.start, data));
 
-        let mut special_device = || -> Result<(), RVerr> {
+        let special_device = || -> Result<(), RVerr> {
             if check_area(self.clint.start, self.clint.len, addr) {
                 self.clint
                     .instance
@@ -191,10 +183,7 @@ impl Bus {
             }
         };
 
-        match general_device {
-            Some(val) => Ok(val),
-            None => special_device(),
-        }
+        general_device.map_or_else(special_device, Ok)
     }
 
     pub fn update(&mut self, interval_cycle: usize) {

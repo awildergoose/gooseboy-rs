@@ -29,8 +29,8 @@ struct ClintHart {
 }
 
 impl ClintHart {
-    pub fn new(xip_share: RcCell<XipIn>) -> Self {
-        ClintHart {
+    pub const fn new(xip_share: RcCell<XipIn>) -> Self {
+        Self {
             mtimecmp: u64::MAX,
             xip: xip_share,
         }
@@ -39,24 +39,24 @@ impl ClintHart {
         let msip = self.xip.get().msip();
         msip as u64
     }
-    pub fn msip_write(&mut self, data: u64) {
+    pub fn msip_write(&self, data: u64) {
         let mut xip = self.xip.get();
         xip.set_msip(data == 1);
         self.xip.set(xip);
     }
 
-    pub fn mtimecmp_read(&self) -> u64 {
+    pub const fn mtimecmp_read(&self) -> u64 {
         self.mtimecmp
     }
 
-    pub fn mtimecmp_write(&mut self, data: u64) {
+    pub const fn mtimecmp_write(&mut self, data: u64) {
         self.mtimecmp = data;
     }
-    pub fn mtimecmph_read(&self) -> u64 {
+    pub const fn mtimecmph_read(&self) -> u64 {
         self.mtimecmp >> 32
     }
-    pub fn mtimecmph_write(&mut self, data: u64) {
-        self.mtimecmp = (self.mtimecmp & 0xffffffff) | (data << 32);
+    pub const fn mtimecmph_write(&mut self, data: u64) {
+        self.mtimecmp = (self.mtimecmp & 0xffff_ffff) | (data << 32);
     }
 }
 
@@ -66,8 +66,9 @@ pub struct Clint {
 }
 
 impl Clint {
+    #[must_use]
     pub fn new() -> Self {
-        Clint {
+        Self {
             harts: vec![],
             mitme: RcCell::new(0.into()),
         }
@@ -78,7 +79,7 @@ impl Clint {
         self.mitme.clone()
     }
 
-    fn mtime_inc(&mut self, inc: usize) {
+    fn mtime_inc(&self, inc: usize) {
         let mut mitme = self.mitme.get();
         mitme += inc as u64;
         self.mitme.set(mitme);
@@ -86,7 +87,7 @@ impl Clint {
 
     pub fn tick(&mut self, inc: usize) {
         self.mtime_inc(inc);
-        for hart in self.harts.iter_mut() {
+        for hart in &mut self.harts {
             let level = self.mitme.get() >= hart.mtimecmp;
             let mut xip = hart.xip.get();
             xip.set_mtip(level);
@@ -108,21 +109,23 @@ impl DeviceBase for Clint {
                 let is_mtimecmph = (addr - MTIMECMP_BASE) % MTIMECMP_PER_HART == 4;
                 let hart = &self.harts[hart_id as usize];
 
-                match is_mtimecmph {
-                    true => hart.mtimecmph_read(),
-                    false => hart.mtimecmp_read(),
+                if is_mtimecmph {
+                    hart.mtimecmph_read()
+                } else {
+                    hart.mtimecmp_read()
                 }
             }
             (MTIME_BASE..=MTIME_BASE_END, _) => {
                 let is_mtimeh = addr == MTIME_BASE + 4;
                 let mitme: u64 = self.mitme.get();
-                match is_mtimeh {
-                    true => mitme >> 32,
-                    false => mitme,
+                if is_mtimeh {
+                    mitme >> 32
+                } else {
+                    mitme
                 }
             }
             _ => {
-                panic!("clint read:{:x},{:x}", addr, len);
+                panic!("clint read:{addr:x},{len:x}");
             }
         }
     }
@@ -138,18 +141,19 @@ impl DeviceBase for Clint {
                 let hart_id = (addr - MTIMECMP_BASE) / MTIMECMP_PER_HART;
                 let is_mtimecmph = (addr - MTIMECMP_BASE) % MTIMECMP_PER_HART == 4;
                 let hart = &mut self.harts[hart_id as usize];
-                match is_mtimecmph {
-                    true => hart.mtimecmph_write(data),
-                    false => hart.mtimecmp_write(data),
+                if is_mtimecmph {
+                    hart.mtimecmph_write(data);
+                } else {
+                    hart.mtimecmp_write(data);
                 }
             }
             (MTIME_BASE, 8) => {
                 self.mitme.set(data);
             }
             _ => {
-                panic!("clint write:{:x},{:x},{:x}", addr, len, data);
+                panic!("clint write:{addr:x},{len:x},{data:x}");
             }
-        };
+        }
         0
     }
 

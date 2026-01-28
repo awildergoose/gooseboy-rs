@@ -1,4 +1,5 @@
 // #![allow(unused)]
+#![allow(clippy::unreadable_literal)]
 use core::{cmp::Ordering, mem::discriminant};
 
 use bitfield_struct::bitfield;
@@ -755,14 +756,15 @@ pub struct Instruction {
 impl Instruction {
     /**
      * Compare two instructions for sorting.
-     * The comparison is done by comparing the match_data first, then the mask.
+     * The comparison is done by comparing the `match_data` first, then the mask.
      * This is done to ensure that the most specific match is found first.
-     * The mask is used to differentiate between instructions with the same match_data.
-     * Because some instructions have the same match_data, but different masks.
-     * The priority is given to the instruction (same match_data) with the biggest mask.
+     * The mask is used to differentiate between instructions with the same `match_data`.
+     * Because some instructions have the same `match_data`, but different masks.
+     * The priority is given to the instruction (same `match_data`) with the biggest mask.
      *
      */
-    pub fn inst_cmp(lhs: &Instruction, rhs: &Instruction) -> Ordering {
+    #[must_use]
+    pub fn inst_cmp(lhs: &Self, rhs: &Self) -> Ordering {
         match (lhs.match_data.cmp(&rhs.match_data), lhs.mask.cmp(&rhs.mask)) {
             (Ordering::Less, _) => Ordering::Greater,
             (Ordering::Greater, _) => Ordering::Less,
@@ -788,6 +790,7 @@ impl FormatI {
     // only used in jalr instruction
     // jalr is used to return from a function or call a function
     // true means "return", false means "call"
+    #[must_use]
     pub fn get_jalr_type(&self) -> Option<bool> {
         let rs1_is_link = matches!(self.rs1, 1 | 5);
         let rd_is_link = matches!(self.rd, 1 | 5);
@@ -800,9 +803,10 @@ impl FormatI {
         let is_call_3 = rs1_is_link && rd_is_link && !rs1_eq_rd;
         let is_call = is_call_1 || is_call_2 || is_call_3;
 
-        if is_call && is_return {
-            panic!("jalr type error, is_call and is_return are both true")
-        }
+        assert!(
+            !(is_call && is_return),
+            "jalr type error, is_call and is_return are both true"
+        );
 
         if is_return {
             Some(true)
@@ -820,7 +824,8 @@ pub struct FormatJ {
 }
 
 impl FormatJ {
-    pub fn is_call(&self) -> bool {
+    #[must_use]
+    pub const fn is_call(&self) -> bool {
         self.rd == 1 || self.rd == 5
     }
 }
@@ -840,7 +845,8 @@ pub struct FormatU {
     pub imm: u64,
 }
 
-pub fn parse_format_b(word: u32) -> FormatB {
+#[must_use]
+pub const fn parse_format_b(word: u32) -> FormatB {
     FormatB {
         rs1: ((word >> 15) & 0x1f) as u64, // [19:15]
         rs2: ((word >> 20) & 0x1f) as u64, // [24:20]
@@ -857,7 +863,8 @@ pub fn parse_format_b(word: u32) -> FormatB {
     }
 }
 
-pub fn parse_format_i(word: u32) -> FormatI {
+#[must_use]
+pub const fn parse_format_i(word: u32) -> FormatI {
     FormatI {
         rd: ((word >> 7) & 0x1f) as u64,   // [11:7]
         rs1: ((word >> 15) & 0x1f) as u64, // [19:15]
@@ -872,7 +879,8 @@ pub fn parse_format_i(word: u32) -> FormatI {
     }
 }
 
-pub fn parse_format_j(word: u32) -> FormatJ {
+#[must_use]
+pub const fn parse_format_j(word: u32) -> FormatJ {
     FormatJ {
         rd: ((word >> 7) & 0x1f) as u64, // [11:7]
         imm: (
@@ -888,7 +896,8 @@ pub fn parse_format_j(word: u32) -> FormatJ {
     }
 }
 
-pub fn parse_format_r(word: u32) -> FormatR {
+#[must_use]
+pub const fn parse_format_r(word: u32) -> FormatR {
     FormatR {
         rd: ((word >> 7) & 0x1f) as u64,   // [11:7]
         rs1: ((word >> 15) & 0x1f) as u64, // [19:15]
@@ -896,7 +905,8 @@ pub fn parse_format_r(word: u32) -> FormatR {
     }
 }
 
-pub fn parse_format_s(word: u32) -> FormatS {
+#[must_use]
+pub const fn parse_format_s(word: u32) -> FormatS {
     FormatS {
         rs1: ((word >> 15) & 0x1f) as u64, // [19:15]
         rs2: ((word >> 20) & 0x1f) as u64, // [24:20]
@@ -912,7 +922,8 @@ pub fn parse_format_s(word: u32) -> FormatS {
     }
 }
 
-pub fn parse_format_u(word: u32) -> FormatU {
+#[must_use]
+pub const fn parse_format_u(word: u32) -> FormatU {
     FormatU {
         rd: ((word >> 7) & 0x1f) as u64, // [11:7]
         imm: (
@@ -932,7 +943,8 @@ pub struct FormatCSR {
     pub rd: u64,
 }
 
-pub fn parse_format_csr(word: u32) -> FormatCSR {
+#[must_use]
+pub const fn parse_format_csr(word: u32) -> FormatCSR {
     FormatCSR {
         csr: ((word >> 20) & 0xfff) as u64, // [31:20]
         rs1: ((word >> 15) & 0x1f) as u64,  // [19:15], also uimm
@@ -945,19 +957,23 @@ pub struct FormatCR {
     rs2: u64,
 }
 impl FormatCR {
-    pub fn new(word: u32) -> FormatCR {
-        FormatCR {
+    #[must_use]
+    pub const fn new(word: u32) -> Self {
+        Self {
             rd_rs1: ((word >> 7) & 0x1f) as u64, // [11:7]
             rs2: ((word >> 2) & 0x1f) as u64,    // [6:2]
         }
     }
-    pub fn rd(&self) -> u64 {
+    #[must_use]
+    pub const fn rd(&self) -> u64 {
         self.rd_rs1
     }
-    pub fn rs1(&self) -> u64 {
+    #[must_use]
+    pub const fn rs1(&self) -> u64 {
         self.rd_rs1
     }
-    pub fn rs2(&self) -> u64 {
+    #[must_use]
+    pub const fn rs2(&self) -> u64 {
         self.rs2
     }
 }
@@ -968,54 +984,64 @@ pub struct FormatCI {
     imm12: usize,
 }
 impl FormatCI {
-    pub fn new(word: u32) -> FormatCI {
-        FormatCI {
+    #[must_use]
+    pub const fn new(word: u32) -> Self {
+        Self {
             rd_rs1: ((word >> 7) & 0x1f) as usize, // [11:7]
             imm2_6: ((word >> 2) & 0x1f) as usize, // [6:2]
             imm12: ((word >> 12) & 0x1) as usize,  // [12]
         }
     }
 
-    pub fn rd(&self) -> usize {
+    #[must_use]
+    pub const fn rd(&self) -> usize {
         self.rd_rs1
     }
-    pub fn rs1(&self) -> usize {
+    #[must_use]
+    pub const fn rs1(&self) -> usize {
         self.rd_rs1
     }
-    pub fn imm_c_lwsp(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_lwsp(&self) -> usize {
         let offset5 = self.imm12 & 0b1;
         let offset4_2 = (self.imm2_6 >> 2) & 0b111;
         let offset7_6 = self.imm2_6 & 0b11;
         (offset7_6 << 6) | (offset5 << 5) | (offset4_2 << 2)
     }
 
-    pub fn imm_c_ldsp(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_ldsp(&self) -> usize {
         let offset5 = self.imm12 & 0b1;
         let offset4_3 = (self.imm2_6 >> 3) & 0b11;
         let offset8_6 = (self.imm2_6) & 0b111;
         (offset8_6 << 6) | (offset5 << 5) | (offset4_3 << 3)
     }
 
-    pub fn imm_c_lqsp(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_lqsp(&self) -> usize {
         let offset5 = self.imm12 & 0b1;
         let offset4 = (self.imm2_6 >> 4) & 0b1;
         let offset9_6 = (self.imm2_6) & 0b1111;
         (offset9_6 << 6) | (offset5 << 5) | (offset4 << 4)
     }
 
-    pub fn imm_c_flwsp(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_flwsp(&self) -> usize {
         self.imm_c_lwsp()
     }
 
-    pub fn imm_c_fldsp(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_fldsp(&self) -> usize {
         self.imm_c_ldsp()
     }
 
-    pub fn rd_is_zero(&self) -> bool {
+    #[must_use]
+    pub const fn rd_is_zero(&self) -> bool {
         self.rd_rs1 == 0
     }
 
-    pub fn imm_c_li(&self) -> isize {
+    #[must_use]
+    pub const fn imm_c_li(&self) -> isize {
         let imm4_0 = self.imm2_6 & 0b11111;
         let imm5 = self.imm12 & 0b1;
 
@@ -1023,7 +1049,8 @@ impl FormatCI {
         sign_extended(imm as isize, 6)
     }
 
-    pub fn imm_c_lui(&self) -> isize {
+    #[must_use]
+    pub const fn imm_c_lui(&self) -> isize {
         let nzimm16_12 = self.imm2_6 & 0b11111;
         let nzimm17 = self.imm12 & 0b1;
 
@@ -1031,13 +1058,16 @@ impl FormatCI {
         sign_extended(imm as isize, 18)
     }
 
-    pub fn imm_c_addi(&self) -> isize {
+    #[must_use]
+    pub const fn imm_c_addi(&self) -> isize {
         self.imm_c_li()
     }
-    pub fn imm_c_addiw(&self) -> isize {
+    #[must_use]
+    pub const fn imm_c_addiw(&self) -> isize {
         self.imm_c_li()
     }
-    pub fn imm_c_addi16sp(&self) -> isize {
+    #[must_use]
+    pub const fn imm_c_addi16sp(&self) -> isize {
         let nzimm9 = self.imm12 & 0b1;
 
         let nzimm5 = self.imm2_6 & 0b1;
@@ -1050,7 +1080,8 @@ impl FormatCI {
         sign_extended(nzimm as isize, 10)
     }
 
-    pub fn imm_c_slli(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_slli(&self) -> usize {
         let shamt4_0 = self.imm2_6 & 0b11111;
         let shamt5 = self.imm12 & 0b1;
 
@@ -1063,36 +1094,43 @@ pub struct FormatCSS {
     imm7_12: usize,
 }
 impl FormatCSS {
-    pub fn new(word: u32) -> FormatCSS {
-        FormatCSS {
+    #[must_use]
+    pub const fn new(word: u32) -> Self {
+        Self {
             rs2: ((word >> 2) & 0x1f) as usize,     // [6:2]
             imm7_12: ((word >> 7) & 0x3f) as usize, // [12:7]
         }
     }
 
-    pub fn rs2(&self) -> usize {
+    #[must_use]
+    pub const fn rs2(&self) -> usize {
         self.rs2
     }
-    pub fn imm_c_swsp(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_swsp(&self) -> usize {
         let offset7_6: usize = self.imm7_12 & 0b11;
         let offset5_2: usize = (self.imm7_12 >> 2) & 0b1111;
         (offset7_6 << 6) | (offset5_2 << 2)
     }
 
-    pub fn imm_c_sdsp(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_sdsp(&self) -> usize {
         let offset8_6: usize = self.imm7_12 & 0b111;
         let offset5_3: usize = (self.imm7_12 >> 3) & 0b111;
         (offset8_6 << 6) | (offset5_3 << 3)
     }
-    pub fn imm_c_sqsp(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_sqsp(&self) -> usize {
         let offset9_6: usize = self.imm7_12 & 0b1111;
         let offset5_4: usize = (self.imm7_12 >> 4) & 0b11;
         (offset9_6 << 6) | (offset5_4 << 4)
     }
-    pub fn imm_c_fswsp(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_fswsp(&self) -> usize {
         self.imm_c_swsp()
     }
-    pub fn imm_c_fsdsp(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_fsdsp(&self) -> usize {
         self.imm_c_sdsp()
     }
 }
@@ -1102,18 +1140,21 @@ pub struct FormatCIW {
     pub imm5_12: usize,
 }
 impl FormatCIW {
-    pub fn new(word: u32) -> FormatCIW {
-        FormatCIW {
+    #[must_use]
+    pub const fn new(word: u32) -> Self {
+        Self {
             rd_c: ((word >> 2) & 0b111) as usize,   // [4:2]
             imm5_12: ((word >> 5) & 0xff) as usize, // [6:2]
         }
     }
 
-    pub fn rd(&self) -> usize {
+    #[must_use]
+    pub const fn rd(&self) -> usize {
         self.rd_c + 8
     }
 
-    pub fn imm_c_addi4spn(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_addi4spn(&self) -> usize {
         let nzuimm3 = self.imm5_12 & 0b1;
         let nzuimm2 = (self.imm5_12 >> 1) & 0b1;
         let nzuimm9_6 = (self.imm5_12 >> 2) & 0b1111;
@@ -1130,8 +1171,9 @@ pub struct FormatCL {
     imm10_12: u8,
 }
 impl FormatCL {
-    pub fn new(word: u32) -> FormatCL {
-        FormatCL {
+    #[must_use]
+    pub const fn new(word: u32) -> Self {
+        Self {
             rd_c: ((word >> 2) & 0b111) as usize,   // [4:2]
             rs1_c: ((word >> 7) & 0b111) as usize,  // [9:7]
             imm5_6: ((word >> 5) & 0b11) as u8,     // [6:5]
@@ -1139,26 +1181,31 @@ impl FormatCL {
         }
     }
 
-    pub fn rd(&self) -> usize {
+    #[must_use]
+    pub const fn rd(&self) -> usize {
         self.rd_c + 8
     }
 
-    pub fn rs1(&self) -> usize {
+    #[must_use]
+    pub const fn rs1(&self) -> usize {
         self.rs1_c + 8
     }
 
-    pub fn imm_c_lw(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_lw(&self) -> usize {
         let offset6 = (self.imm5_6 & 0b1) as usize;
         let offset2 = ((self.imm5_6 >> 1) & 0b1) as usize;
         let offset5_3 = (self.imm10_12 & 0b111) as usize;
         (offset6 << 6) | (offset5_3 << 3) | (offset2 << 2)
     }
-    pub fn imm_c_ld(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_ld(&self) -> usize {
         let offset7_6 = (self.imm5_6 & 0b11) as usize;
         let offset5_3 = (self.imm10_12 & 0b111) as usize;
         (offset7_6 << 6) | (offset5_3 << 3)
     }
-    pub fn imm_c_lq(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_lq(&self) -> usize {
         let offset8 = (self.imm10_12 & 0b1) as usize;
         let offset7_6 = (self.imm5_6 & 0b11) as usize;
         let offset5_4 = ((self.imm10_12 >> 1) & 0b11) as usize;
@@ -1166,10 +1213,12 @@ impl FormatCL {
         (offset8 << 8) | (offset7_6 << 6) | (offset5_4 << 4)
     }
 
-    pub fn imm_c_flw(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_flw(&self) -> usize {
         self.imm_c_lw()
     }
-    pub fn imm_c_fld(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_fld(&self) -> usize {
         self.imm_c_ld()
     }
 }
@@ -1182,8 +1231,9 @@ pub struct FormatCS {
 }
 
 impl FormatCS {
-    pub fn new(word: u32) -> FormatCS {
-        FormatCS {
+    #[must_use]
+    pub const fn new(word: u32) -> Self {
+        Self {
             rs1_c: ((word >> 7) & 0b111) as usize,  // [9:7]
             rs2_c: ((word >> 2) & 0b111) as usize,  // [6:2]
             imm5_6: ((word >> 5) & 0b11) as usize,  // [6:5]
@@ -1191,27 +1241,32 @@ impl FormatCS {
         }
     }
 
-    pub fn rs1(&self) -> usize {
+    #[must_use]
+    pub const fn rs1(&self) -> usize {
         self.rs1_c + 8
     }
 
-    pub fn rs2(&self) -> usize {
+    #[must_use]
+    pub const fn rs2(&self) -> usize {
         self.rs2_c + 8
     }
 
-    pub fn imm_c_sw(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_sw(&self) -> usize {
         let offset6 = self.imm5_6 & 0b1;
         let offset2 = (self.imm5_6 >> 1) & 0b1;
         let offset5_3 = (self.imm10_12 & 0b111) as usize;
         (offset6 << 6) | (offset5_3 << 3) | (offset2 << 2)
     }
 
-    pub fn imm_c_sd(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_sd(&self) -> usize {
         let offset7_6 = self.imm5_6 & 0b11;
         let offset5_3 = (self.imm10_12 & 0b111) as usize;
         (offset7_6 << 6) | (offset5_3 << 3)
     }
-    pub fn imm_c_sq(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_sq(&self) -> usize {
         let offset8 = (self.imm10_12 & 0b1) as usize;
         let offset7_6 = self.imm5_6 & 0b11;
         let offset5_4 = ((self.imm10_12 >> 1) & 0b11) as usize;
@@ -1219,10 +1274,12 @@ impl FormatCS {
         (offset8 << 8) | (offset7_6 << 6) | (offset5_4 << 4)
     }
 
-    pub fn imm_c_fsw(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_fsw(&self) -> usize {
         self.imm_c_sw()
     }
-    pub fn imm_c_fsd(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_fsd(&self) -> usize {
         self.imm_c_sd()
     }
 }
@@ -1233,22 +1290,26 @@ pub struct FormatCA {
 }
 
 impl FormatCA {
-    pub fn new(word: u32) -> FormatCA {
-        FormatCA {
+    #[must_use]
+    pub const fn new(word: u32) -> Self {
+        Self {
             rs2_c: ((word >> 2) & 0b111) as usize,    // [4:2]
             rd_rs1_c: ((word >> 7) & 0b111) as usize, // [9:7]
         }
     }
 
-    pub fn rs2(&self) -> usize {
+    #[must_use]
+    pub const fn rs2(&self) -> usize {
         self.rs2_c + 8
     }
 
-    pub fn rs1(&self) -> usize {
+    #[must_use]
+    pub const fn rs1(&self) -> usize {
         self.rd_rs1_c + 8
     }
 
-    pub fn rd(&self) -> usize {
+    #[must_use]
+    pub const fn rd(&self) -> usize {
         self.rd_rs1_c + 8
     }
 }
@@ -1259,23 +1320,27 @@ pub struct FormatCB {
     offset10_12: u8,
 }
 impl FormatCB {
-    pub fn new(word: u32) -> FormatCB {
-        FormatCB {
+    #[must_use]
+    pub const fn new(word: u32) -> Self {
+        Self {
             rs1_rd_c: ((word >> 7) & 0b111) as usize,  // [9:7]
             offset2_6: ((word >> 2) & 0b11111) as u8,  // [6:2]
             offset10_12: ((word >> 10) & 0b111) as u8, // [12:10]
         }
     }
 
-    pub fn rs1(&self) -> usize {
+    #[must_use]
+    pub const fn rs1(&self) -> usize {
         self.rs1_rd_c + 8
     }
 
-    pub fn rd(&self) -> usize {
+    #[must_use]
+    pub const fn rd(&self) -> usize {
         self.rs1_rd_c + 8
     }
 
-    pub fn imm_c_beqz(&self) -> isize {
+    #[must_use]
+    pub const fn imm_c_beqz(&self) -> isize {
         let offset5 = (self.offset2_6 & 0b1) as usize;
         let offset2_1 = ((self.offset2_6 >> 1) & 0b11) as usize;
         let offset7_6 = ((self.offset2_6 >> 3) & 0b11) as usize;
@@ -1290,21 +1355,25 @@ impl FormatCB {
 
         sign_extended(offset as isize, 9)
     }
-    pub fn imm_c_bnez(&self) -> isize {
+    #[must_use]
+    pub const fn imm_c_bnez(&self) -> isize {
         self.imm_c_beqz()
     }
 
-    pub fn imm_c_srli(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_srli(&self) -> usize {
         let shamt4_0 = (self.offset2_6 & 0b11111) as usize;
         let shamt5 = ((self.offset10_12 >> 2) & 0b1) as usize;
 
         (shamt5 << 5) | shamt4_0
     }
-    pub fn imm_c_srai(&self) -> usize {
+    #[must_use]
+    pub const fn imm_c_srai(&self) -> usize {
         self.imm_c_srli()
     }
 
-    pub fn imm_c_andi(&self) -> isize {
+    #[must_use]
+    pub const fn imm_c_andi(&self) -> isize {
         sign_extended(self.imm_c_srli() as isize, 6)
     }
 }
@@ -1314,13 +1383,15 @@ pub struct FormatCJ {
 }
 
 impl FormatCJ {
-    pub fn new(word: u32) -> FormatCJ {
-        FormatCJ {
+    #[must_use]
+    pub const fn new(word: u32) -> Self {
+        Self {
             jump_target: ((word >> 2) & 0b111_1111_1111) as usize, // [12:2]
         }
     }
 
-    pub fn imm_c_j(&self) -> isize {
+    #[must_use]
+    pub const fn imm_c_j(&self) -> isize {
         let offset5 = self.jump_target & 0b1;
         let offest3_1 = (self.jump_target >> 1) & 0b111;
         let offset7 = (self.jump_target >> 4) & 0b1;
@@ -1342,7 +1413,8 @@ impl FormatCJ {
         sign_extended(offset as isize, 12)
     }
 
-    pub fn imm_c_jal(&self) -> isize {
+    #[must_use]
+    pub const fn imm_c_jal(&self) -> isize {
         self.imm_c_j()
     }
 }
@@ -1369,7 +1441,7 @@ pub enum RVerr {
     NotFindDevice,
 }
 
-#[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Clone, Copy)]
 pub enum PrivilegeLevels {
     User = 0,
     Supervisor = 1,
@@ -1401,54 +1473,62 @@ fn access_type_test() {
 
 impl AccessType {
     // only check eume type without data
+    #[must_use]
     pub fn is_store(&self) -> bool {
-        self == &AccessType::Store(0) || self == &AccessType::Amo(0)
+        self == &Self::Store(0) || self == &Self::Amo(0)
     }
+    #[must_use]
     pub fn is_load(&self) -> bool {
-        self == &AccessType::Load(0)
+        self == &Self::Load(0)
     }
+    #[must_use]
     pub fn is_fetch(&self) -> bool {
-        self == &AccessType::Fetch(0)
+        self == &Self::Fetch(0)
     }
 
-    pub fn throw_page_exception(&self) -> TrapType {
+    #[must_use]
+    pub const fn throw_page_exception(&self) -> TrapType {
         match self {
-            AccessType::Fetch(tval) => TrapType::InstructionPageFault(*tval),
-            AccessType::Load(tval) => TrapType::LoadPageFault(*tval),
-            AccessType::Store(tval) => TrapType::StorePageFault(*tval),
-            AccessType::Amo(tval) => TrapType::StorePageFault(*tval), // todo! ???
+            Self::Fetch(tval) => TrapType::InstructionPageFault(*tval),
+            Self::Load(tval) => TrapType::LoadPageFault(*tval),
+            Self::Store(tval) => TrapType::StorePageFault(*tval),
+            Self::Amo(tval) => TrapType::StorePageFault(*tval), // todo! ???
         }
     }
 
-    pub fn throw_access_exception(&self) -> TrapType {
+    #[must_use]
+    pub const fn throw_access_exception(&self) -> TrapType {
         match self {
-            AccessType::Fetch(tval) => TrapType::InstructionAccessFault(*tval),
-            AccessType::Load(tval) => TrapType::LoadAccessFault(*tval),
-            AccessType::Store(tval) => TrapType::StoreAccessFault(*tval),
-            AccessType::Amo(tval) => TrapType::StoreAccessFault(*tval), // todo! ???
+            Self::Fetch(tval) => TrapType::InstructionAccessFault(*tval),
+            Self::Load(tval) => TrapType::LoadAccessFault(*tval),
+            Self::Store(tval) => TrapType::StoreAccessFault(*tval),
+            Self::Amo(tval) => TrapType::StoreAccessFault(*tval), // todo! ???
         }
     }
-    pub fn throw_addr_misaligned_exception(&self) -> TrapType {
+    #[must_use]
+    pub const fn throw_addr_misaligned_exception(&self) -> TrapType {
         match self {
-            AccessType::Fetch(tval) => TrapType::InstructionAddressMisaligned(*tval),
-            AccessType::Load(tval) => TrapType::LoadAddressMisaligned(*tval),
-            AccessType::Store(tval) => TrapType::StoreAddressMisaligned(*tval),
-            AccessType::Amo(tval) => TrapType::StoreAddressMisaligned(*tval), // todo! ???
+            Self::Fetch(tval) => TrapType::InstructionAddressMisaligned(*tval),
+            Self::Load(tval) => TrapType::LoadAddressMisaligned(*tval),
+            Self::Store(tval) => TrapType::StoreAddressMisaligned(*tval),
+            Self::Amo(tval) => TrapType::StoreAddressMisaligned(*tval), // todo! ???
         }
     }
 }
 
 impl PrivilegeLevels {
     // check if another_priv >= self
-    pub fn check_priv(&self, another_priv: PrivilegeLevels) -> bool {
+    #[must_use]
+    pub const fn check_priv(&self, another_priv: Self) -> bool {
         (another_priv as u64) >= (*self as u64)
     }
 
-    pub fn from_usize(priv_num: usize) -> Option<PrivilegeLevels> {
+    #[must_use]
+    pub const fn from_usize(priv_num: usize) -> Option<Self> {
         match priv_num {
-            0 => Some(PrivilegeLevels::User),
-            1 => Some(PrivilegeLevels::Supervisor),
-            3 => Some(PrivilegeLevels::Machine),
+            0 => Some(Self::User),
+            1 => Some(Self::Supervisor),
+            3 => Some(Self::Machine),
             _ => None,
         }
     }
@@ -1476,14 +1556,15 @@ pub struct FesvrCmd {
     pub device: u8,
 }
 impl FesvrCmd {
-    fn is_character_device(&self) -> bool {
+    const fn is_character_device(&self) -> bool {
         self.device() == 1
     }
-    fn is_syscall_device(&self) -> bool {
+    const fn is_syscall_device(&self) -> bool {
         self.device() == 0
     }
 
-    pub fn exit_code(&self) -> u64 {
+    #[must_use]
+    pub const fn exit_code(&self) -> u64 {
         let val0_48 = (self.0 << 16) >> 16;
         val0_48 >> 1 // [48:1]
     }
@@ -1491,14 +1572,16 @@ impl FesvrCmd {
     pub fn character_device_write(&self) {
         #[cfg(feature = "std")]
         if (self.cmd() == 1) && self.is_character_device() {
-            let c = char::from_u32(self.tohost() as u32).unwrap();
             use std::io::{stdout, Write};
+
+            let c = char::from_u32(self.tohost() as u32).unwrap();
             print!("{c}");
             stdout().flush().unwrap();
         }
     }
 
-    pub fn syscall_device(&self) -> Option<bool> {
+    #[must_use]
+    pub const fn syscall_device(&self) -> Option<bool> {
         if self.cmd() == 0 && self.is_syscall_device() && ((self.tohost() & 1_u16) == 1) {
             Some(self.exit_code() == 0)
         } else {
@@ -1507,6 +1590,7 @@ impl FesvrCmd {
     }
 }
 
-pub fn is_compressed_instruction(inst: u32) -> bool {
+#[must_use]
+pub const fn is_compressed_instruction(inst: u32) -> bool {
     inst & 0b11 != 0b11
 }

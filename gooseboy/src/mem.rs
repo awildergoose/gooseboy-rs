@@ -14,9 +14,10 @@ pub unsafe fn copy(dst: *const u8, src: *const u8, len: i32) {
     unsafe { bindings::mem_copy(dst, src, len) }
 }
 
+#[must_use] 
 pub fn alloc_bytes<T>(len: usize) -> *mut T {
     let layout = Layout::from_size_align(len, 4).unwrap();
-    unsafe { alloc::alloc(layout) as *mut T }
+    unsafe { alloc::alloc(layout).cast::<T>() }
 }
 
 /// # Safety
@@ -35,7 +36,8 @@ pub fn write_i32(ptr: *mut i32, value: i32) {
     }
 }
 
-pub fn read_i32(ptr: *const i32) -> i32 {
+#[must_use] 
+pub const fn read_i32(ptr: *const i32) -> i32 {
     unsafe {
         let p = ptr;
         *p

@@ -1,4 +1,4 @@
-use crate::rv64core::inst::inst_base::*;
+use crate::rv64core::inst::inst_base::{Instruction, MASK_MUL, MATCH_MUL, parse_format_r, MASK_MULH, MATCH_MULH, MASK_MULHSU, MATCH_MULHSU, MASK_MULHU, MATCH_MULHU, MASK_DIV, MATCH_DIV, MASK_DIVU, MATCH_DIVU, MASK_REM, MATCH_REM, MASK_REMU, MATCH_REMU, MASK_MULW, MATCH_MULW, MASK_DIVW, MATCH_DIVW, MASK_DIVUW, MATCH_DIVUW, MASK_REMW, MATCH_REMW, MASK_REMUW, MATCH_REMUW};
 // ┌───────────────────────┬──────────┬─────────┬──────────┬───────────┬──────────┬──────────┐
 // │ Condition             │ Dividend │  Dvisor │  DIVU[W] │   REMU[W] │   DIV[W ]│  REM[W]  │
 // ├───────────────────────┼──────────┼─────────┼──────────┼───────────┼──────────┼──────────┤

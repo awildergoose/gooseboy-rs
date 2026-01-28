@@ -3,12 +3,14 @@ use std::fs::File;
 use std::io::{BufReader, Write};
 use std::process::Command;
 
+/// # Panics
+/// Panics if FFMPEG fails to convert the audio file
 pub fn convert_audio() {
     println!("cargo:rerun-if-changed=audio/");
 
     let audio_dir = "audio";
     let out_dir = std::env::var("OUT_DIR").unwrap();
-    let raw_dir = format!("{}/raw", out_dir);
+    let raw_dir = format!("{out_dir}/raw");
 
     fs::create_dir_all(&raw_dir).unwrap();
 
@@ -16,7 +18,7 @@ pub fn convert_audio() {
         let path = entry.unwrap().path();
         if path.extension().and_then(|s| s.to_str()) == Some("wav") {
             let file_stem = path.file_stem().unwrap().to_str().unwrap();
-            let output = format!("{}/{}.raw", raw_dir, file_stem);
+            let output = format!("{raw_dir}/{file_stem}.raw");
 
             let status = Command::new("ffmpeg")
                 .args([
@@ -34,13 +36,13 @@ pub fn convert_audio() {
                 .status()
                 .expect("Failed to run ffmpeg");
 
-            if !status.success() {
-                panic!("FFmpeg failed on {}", path.display());
-            }
+            assert!(status.success(), "FFmpeg failed on {}", path.display());
         }
     }
 }
 
+/// # Panics
+/// Panics if the image color type is unsupported
 pub fn convert_images() {
     println!("cargo:rerun-if-changed=images/");
 
@@ -49,7 +51,7 @@ pub fn convert_images() {
     fs::create_dir_all(img_dir).unwrap();
     fs::create_dir_all(gen_dir).unwrap();
 
-    let mut f = File::create(format!("{}/sprites.rs", gen_dir)).unwrap();
+    let mut f = File::create(format!("{gen_dir}/sprites.rs")).unwrap();
     writeln!(f, "// Auto-generated").unwrap();
     writeln!(f, "use std::sync::LazyLock;").unwrap();
     writeln!(f, "use gooseboy::sprite::Sprite;\n").unwrap();
@@ -60,7 +62,7 @@ pub fn convert_images() {
             let file_stem = path.file_stem().unwrap().to_str().unwrap();
             let const_name = file_stem.to_uppercase();
             let out_dir = std::env::var("OUT_DIR").unwrap();
-            let out_bin = format!("{}/{}.bin", out_dir, file_stem);
+            let out_bin = format!("{out_dir}/{file_stem}.bin");
 
             let file = File::open(&path).unwrap();
             let decoder = png::Decoder::new(BufReader::new(file));
@@ -83,7 +85,7 @@ pub fn convert_images() {
                     rgba
                 }
                 png::ColorType::Rgba => buf[..frame_info.buffer_size()].to_vec(),
-                _ => panic!("unsupported color type: {:?}", color),
+                _ => panic!("unsupported color type: {color:?}"),
             };
 
             std::fs::write(out_bin, pixels).unwrap();

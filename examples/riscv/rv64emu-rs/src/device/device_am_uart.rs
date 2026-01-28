@@ -6,8 +6,8 @@ pub struct DeviceUart {
 }
 
 impl DeviceUart {
-    pub fn new(uart_tx: FifoUnbounded<u8>) -> Self {
-        DeviceUart { txfifo: uart_tx }
+    pub const fn new(uart_tx: FifoUnbounded<u8>) -> Self {
+        Self { txfifo: uart_tx }
     }
 }
 

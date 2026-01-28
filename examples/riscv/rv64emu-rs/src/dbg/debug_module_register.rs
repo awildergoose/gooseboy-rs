@@ -61,7 +61,8 @@ pub mod debug_const {
     pub const SBERROR_OTHER: usize = 7;
 }
 
-pub fn get_dm_register_name(addr: usize) -> &'static str {
+#[must_use]
+pub const fn get_dm_register_name(addr: usize) -> &'static str {
     match addr {
         ABSTRACT_DATA_BASE => "ABSTRACT_DATA",
         DMCONTROL_ADDR => "DMCONTROL",
@@ -175,9 +176,11 @@ pub struct Command {
 }
 
 impl Command {
+    #[must_use]
     pub fn cmd_reg(&self) -> CommandReg {
         CommandReg::from(self.0)
     }
+    #[must_use]
     pub fn cmd_mem(&self) -> CommandMem {
         CommandMem::from(self.0)
     }

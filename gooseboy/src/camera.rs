@@ -10,6 +10,7 @@ pub struct CameraTransform {
     pub pitch: f32,
 }
 
+#[must_use]
 pub fn get_camera_transform() -> CameraTransform {
     let ptr = alloc_bytes(size_of::<CameraTransform>());
     unsafe {
@@ -30,26 +31,32 @@ pub fn set_camera_transform(transform: CameraTransform) {
     }
 }
 
+#[must_use]
 pub fn get_camera_x() -> f32 {
     get_camera_transform().x
 }
 
+#[must_use]
 pub fn get_camera_y() -> f32 {
     get_camera_transform().y
 }
 
+#[must_use]
 pub fn get_camera_z() -> f32 {
     get_camera_transform().z
 }
 
+#[must_use]
 pub fn get_camera_yaw() -> f32 {
     get_camera_transform().yaw
 }
 
+#[must_use]
 pub fn get_camera_pitch() -> f32 {
     get_camera_transform().pitch
 }
 
+#[must_use]
 pub fn get_camera_position() -> Vec3<f32> {
     let transform = get_camera_transform();
 
@@ -60,6 +67,7 @@ pub fn get_camera_position() -> Vec3<f32> {
     }
 }
 
+#[must_use]
 pub fn get_camera_rotation() -> Vec2<f32> {
     let transform = get_camera_transform();
 
@@ -114,6 +122,7 @@ pub fn set_camera_rotation(position: Vec2<f32>) {
     set_camera_transform(transform);
 }
 
+#[must_use]
 pub fn get_camera_forward_vector() -> Vec3<f32> {
     let transform = get_camera_transform();
     let yaw = transform.yaw;
@@ -131,6 +140,7 @@ pub fn get_camera_forward_vector() -> Vec3<f32> {
     }
 }
 
+#[must_use]
 pub fn get_camera_right_vector() -> Vec3<f32> {
     let forward = get_camera_forward_vector();
     let up = Vec3::new(0.0, 1.0, 0.0);
@@ -158,8 +168,10 @@ pub fn update_debug_camera(sens: f64, speed: f32) {
         release_mouse();
     }
 
-    set_camera_yaw(((get_camera_yaw() as f64) - (get_mouse_accumulated_dx() * sens)) as f32);
-    set_camera_pitch(((get_camera_pitch() as f64) - (get_mouse_accumulated_dy() * sens)) as f32);
+    set_camera_yaw(get_mouse_accumulated_dx().mul_add(-sens, f64::from(get_camera_yaw())) as f32);
+    set_camera_pitch(
+        get_mouse_accumulated_dy().mul_add(-sens, f64::from(get_camera_pitch())) as f32,
+    );
 
     let mut position = get_camera_position();
     let forward = get_camera_forward_vector();

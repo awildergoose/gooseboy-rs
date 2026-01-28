@@ -60,7 +60,7 @@ impl CsrRegs {
         mstatus_val.set_sbe(false);
         mstatus_val.set_ube(false);
         if self.config.s_mode() {
-            mstatus_val.set_sxl(2) // 64
+            mstatus_val.set_sxl(2); // 64
         }
         if self.config.u_mode() {
             mstatus_val.set_uxl(2); // 64
@@ -88,6 +88,7 @@ impl CsrRegs {
         self.dpc.set(0);
     }
 
+    #[must_use] 
     pub fn new(hart_id: usize, config: Rc<Config>) -> Self {
         let mut misa_val = Misa::new().with_i(true).with_mxl(2); // 64
 
@@ -113,7 +114,7 @@ impl CsrRegs {
         mstatus_val.set_sbe(false);
         mstatus_val.set_ube(false);
         if config.s_mode() {
-            mstatus_val.set_sxl(misa_val.mxl())
+            mstatus_val.set_sxl(misa_val.mxl());
         }
         if config.u_mode() {
             mstatus_val.set_uxl(misa_val.mxl());

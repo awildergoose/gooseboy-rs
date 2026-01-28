@@ -36,7 +36,7 @@ struct Iir {
 }
 impl Default for Iir {
     fn default() -> Self {
-        Iir::from(0xC1)
+        Self::from(0xC1)
     }
 }
 
@@ -164,7 +164,7 @@ struct Uart16550aIN {
 }
 impl Uart16550aIN {
     pub fn new() -> Self {
-        Uart16550aIN {
+        Self {
             rbr: 0,
             thr: 0,
             ier: Ier::new(),
@@ -187,14 +187,14 @@ pub struct Device16550aUART {
 
 impl Device16550aUART {
     pub fn new(uart_tx: FifoUnbounded<u8>, uart_rx: FifoUnbounded<u8>) -> Self {
-        Device16550aUART {
+        Self {
             regs: Uart16550aIN::new(),
             txfifo: uart_tx,
             rxfifo: uart_rx,
         }
     }
 
-    fn read_lsr(&mut self) -> u8 {
+    fn read_lsr(&self) -> u8 {
         let mut lsr = self.regs.lsr;
         if self.rxfifo.is_empty() {
             lsr.set_data_ready(false);
@@ -233,7 +233,7 @@ impl DeviceBase for Device16550aUART {
             LSR => self.read_lsr() as u64,
             MSR => self.regs.msr.0 as u64,
             SCR => self.regs.scr as u64,
-            _ => panic!("invalid read address:{:x}", addr),
+            _ => panic!("invalid read address:{addr:x}"),
         }
     }
 
@@ -251,7 +251,7 @@ impl DeviceBase for Device16550aUART {
             LSR => self.regs.lsr = Lsr::from(data as u8),
             MSR => self.regs.msr = Msr::from(data as u8),
             SCR => self.regs.scr = data as u8,
-            _ => panic!("invalid write address:{:x}", addr),
+            _ => panic!("invalid write address:{addr:x}"),
         }
         0
     }

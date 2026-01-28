@@ -24,10 +24,12 @@ pub struct Vertex {
 }
 
 impl Vertex {
-    pub fn new(x: f32, y: f32, z: f32, u: f32, v: f32) -> Self {
+    #[must_use]
+    pub const fn new(x: f32, y: f32, z: f32, u: f32, v: f32) -> Self {
         Self { x, y, z, u, v }
     }
 
+    #[must_use]
     pub fn as_bytes(&self) -> [u8; 20] {
         let mut bytes = [0u8; 20];
         bytes[..4].copy_from_slice(&self.x.to_le_bytes());
@@ -46,10 +48,11 @@ pub enum PrimitiveType {
 }
 
 impl PrimitiveType {
-    pub fn repr(&self) -> u8 {
+    #[must_use]
+    pub const fn repr(&self) -> u8 {
         match self {
-            PrimitiveType::Triangles => 0,
-            PrimitiveType::Quads => 1,
+            Self::Triangles => 0,
+            Self::Quads => 1,
         }
     }
 }
@@ -74,7 +77,8 @@ pub enum GpuCommand<'a> {
 }
 
 impl GpuCommand<'_> {
-    pub fn repr(&self) -> u8 {
+    #[must_use]
+    pub const fn repr(&self) -> u8 {
         match self {
             GpuCommand::Push => 0x00,
             GpuCommand::Pop => 0x01,
@@ -98,15 +102,16 @@ impl GpuCommand<'_> {
         buf.push(self.repr());
         match self {
             GpuCommand::PushRecord(p) => buf.extend_from_slice(&p.repr().to_le_bytes()),
-            GpuCommand::DrawRecorded(id) => buf.extend_from_slice(&id.to_le_bytes()),
+            GpuCommand::DrawRecorded(id) | GpuCommand::BindTexture(id) => {
+                buf.extend_from_slice(&id.to_le_bytes());
+            }
             GpuCommand::EmitVertex(v) => buf.extend_from_slice(&v.as_bytes()),
-            GpuCommand::BindTexture(id) => buf.extend_from_slice(&id.to_le_bytes()),
             GpuCommand::RegisterTexture { rgba, w, h } => {
                 buf.extend_from_slice(&w.to_le_bytes());
                 buf.extend_from_slice(&h.to_le_bytes());
                 buf.extend_from_slice(rgba);
             }
-            GpuCommand::Translate { x, y, z } => {
+            GpuCommand::Translate { x, y, z } | GpuCommand::Scale { x, y, z } => {
                 buf.extend_from_slice(&x.to_le_bytes());
                 buf.extend_from_slice(&y.to_le_bytes());
                 buf.extend_from_slice(&z.to_le_bytes());
@@ -122,13 +127,8 @@ impl GpuCommand<'_> {
                 buf.extend_from_slice(&pitch.to_le_bytes());
                 buf.extend_from_slice(&roll.to_le_bytes());
             }
-            GpuCommand::Scale { x, y, z } => {
-                buf.extend_from_slice(&x.to_le_bytes());
-                buf.extend_from_slice(&y.to_le_bytes());
-                buf.extend_from_slice(&z.to_le_bytes());
-            }
             GpuCommand::LoadMatrix(mat) | GpuCommand::MulMatrix(mat) => {
-                for f in mat.iter() {
+                for f in mat {
                     buf.extend_from_slice(&f.to_le_bytes());
                 }
             }
@@ -142,11 +142,12 @@ pub struct GpuCommandBuffer {
 }
 
 impl GpuCommandBuffer {
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self { buffer: Vec::new() }
     }
 
-    pub fn insert(&mut self, cmd: GpuCommand) -> &mut Self {
+    pub fn insert(&mut self, cmd: &GpuCommand) -> &mut Self {
         cmd.serialize(&mut self.buffer);
         self
     }
@@ -166,6 +167,7 @@ impl Default for GpuCommandBuffer {
     }
 }
 
+#[must_use]
 pub fn gpu_read_value<T: Copy>(offset: u32) -> T {
     let ptr = alloc_bytes(size_of::<T>());
     unsafe {
@@ -176,12 +178,10 @@ pub fn gpu_read_value<T: Copy>(offset: u32) -> T {
 
 /// Do note; this method is very slow compared to creating your own mesh
 /// file format, it's only here for quick testing, Only supports [v, f, vf]
-/// in the obj_data string
+/// in the `obj_data` string
+#[must_use]
+#[allow(clippy::similar_names)]
 pub fn load_obj(obj_data: &str, flip_v: bool) -> Vec<Vertex> {
-    let mut vertices: Vec<Vertex> = Vec::new();
-    let mut positions: Vec<[f32; 3]> = Vec::new();
-    let mut texcoords: Vec<[f32; 2]> = Vec::new();
-
     fn parse_index(s: &str, len: usize) -> Option<usize> {
         if s.is_empty() {
             return None;
@@ -204,6 +204,10 @@ pub fn load_obj(obj_data: &str, flip_v: bool) -> Vec<Vertex> {
             _ => None,
         }
     }
+
+    let mut vertices: Vec<Vertex> = Vec::new();
+    let mut positions: Vec<[f32; 3]> = Vec::new();
+    let mut texcoords: Vec<[f32; 2]> = Vec::new();
 
     for line in obj_data.lines() {
         let line = line.trim();
@@ -230,7 +234,7 @@ pub fn load_obj(obj_data: &str, flip_v: bool) -> Vec<Vertex> {
 
             let mut face_indices: Vec<(Option<usize>, Option<usize>)> =
                 Vec::with_capacity(tokens.len());
-            for tok in tokens.iter() {
+            for tok in &tokens {
                 let comps: Vec<&str> = tok.split('/').collect();
                 let v_idx_opt = comps.first().and_then(|s| parse_index(s, positions.len()));
                 let vt_idx_opt = comps.get(1).and_then(|s| {
@@ -247,33 +251,34 @@ pub fn load_obj(obj_data: &str, flip_v: bool) -> Vec<Vertex> {
             let n = face_indices.len();
             for i in 1..(n - 1) {
                 let tri = [face_indices[0], face_indices[i], face_indices[i + 1]];
-                for &(v_idx_opt, vt_idx_opt) in tri.iter() {
+                for &(v_idx_opt, vt_idx_opt) in &tri {
                     let pos = match v_idx_opt {
                         Some(idx) if idx < positions.len() => positions[idx],
                         _ => [0.0, 0.0, 0.0],
                     };
 
-                    let (u, mut v) = if let Some(tidx) = vt_idx_opt {
-                        if tidx < texcoords.len() {
-                            let tc = texcoords[tidx];
-                            (tc[0], tc[1])
-                        } else {
-                            (0.0f32, 0.0f32)
-                        }
-                    } else if positions.len() == texcoords.len() {
-                        if let Some(vidx) = v_idx_opt {
-                            if vidx < texcoords.len() {
-                                let tc = texcoords[vidx];
-                                (tc[0], tc[1])
+                    let (u, mut v) = vt_idx_opt.map_or_else(
+                        || {
+                            if positions.len() == texcoords.len() {
+                                v_idx_opt.map_or((0.0f32, 0.0f32), |vidx| {
+                                    if vidx < texcoords.len() {
+                                        texcoords[vidx].into()
+                                    } else {
+                                        (0.0f32, 0.0f32)
+                                    }
+                                })
                             } else {
                                 (0.0f32, 0.0f32)
                             }
-                        } else {
-                            (0.0f32, 0.0f32)
-                        }
-                    } else {
-                        (0.0f32, 0.0f32)
-                    };
+                        },
+                        |tidx| {
+                            if tidx < texcoords.len() {
+                                texcoords[tidx].into()
+                            } else {
+                                (0.0f32, 0.0f32)
+                            }
+                        },
+                    );
 
                     if flip_v {
                         v = 1.0 - v;

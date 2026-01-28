@@ -31,22 +31,19 @@ pub fn draw_text_wrapped_ex<S: AsRef<str>>(
     let mut cx = x;
 
     for ch in text.bytes() {
-        match ch {
-            b'\n' => {
-                y += 8;
+        if ch == b'\n' {
+            y += 8;
+            cx = x;
+        } else {
+            if let Some(mw) = max_width
+                && cx + 8 > x + mw
+            {
                 cx = x;
+                y += 8;
             }
-            _ => {
-                if let Some(mw) = max_width
-                    && cx + 8 > x + mw
-                {
-                    cx = x;
-                    y += 8;
-                }
 
-                draw_char_ex(surface, cx, y, ch, color);
-                cx += 8;
-            }
+            draw_char_ex(surface, cx, y, ch, color);
+            cx += 8;
         }
     }
 }
@@ -70,9 +67,10 @@ pub fn draw_text_wrapped<S: AsRef<str>>(x: usize, y: usize, text: S, color: Colo
         text.as_ref(),
         color,
         Some(get_framebuffer_width()),
-    )
+    );
 }
 
+#[must_use]
 pub fn color_from_name(name: &str) -> Option<Color> {
     match name.to_ascii_lowercase().as_str() {
         "black" => Some(Color::BLACK),
@@ -164,24 +162,20 @@ pub fn draw_text_formatted_ex(
             }
         }
 
-        match b {
-            b'\n' => {
-                y += 8;
+        if b == b'\n' {
+            y += 8;
+            cx = x;
+        } else {
+            if let Some(mw) = max_width
+                && cx + 8 > x + mw
+            {
                 cx = x;
-                i += 1;
+                y += 8;
             }
-            _ => {
-                if let Some(mw) = max_width
-                    && cx + 8 > x + mw
-                {
-                    cx = x;
-                    y += 8;
-                }
-                draw_char_ex(surface, cx, y, b, color);
-                cx += 8;
-                i += 1;
-            }
+            draw_char_ex(surface, cx, y, b, color);
+            cx += 8;
         }
+        i += 1;
     }
 }
 

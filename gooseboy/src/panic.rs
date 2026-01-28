@@ -4,10 +4,10 @@ use crate::log;
 
 pub fn set_panic_handler() {
     panic::set_hook(Box::new(|info| {
-        let location = info
-            .location()
-            .map(|l| format!("{}:{}:{}", l.file(), l.line(), l.column()))
-            .unwrap_or_else(|| "<unknown>".into());
+        let location = info.location().map_or_else(
+            || "<unknown>".into(),
+            |l| format!("{}:{}:{}", l.file(), l.line(), l.column()),
+        );
 
         let payload = info
             .payload()

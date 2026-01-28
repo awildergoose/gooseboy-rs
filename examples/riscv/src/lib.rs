@@ -100,14 +100,14 @@ fn main() {
     });
 
     let hart0 = Rc::new(RefCell::new(
-        CpuCoreBuild::new(bus.clone(), config.clone())
+        CpuCoreBuild::new(bus, config)
             .with_boot_pc(0x8000_0000)
             .with_hart_id(0)
             .with_smode(true)
             .build(),
     ));
 
-    let mut sim = RVsim::new(vec![hart0.clone()], 0);
+    let mut sim = RVsim::new(vec![hart0], 0);
     sim.load_image_from_slice(HELLO_BIN);
     sim.prepare_to_run();
 
@@ -230,13 +230,13 @@ fn update(_nano_time: i64) {
 
         let mut y_px = 0usize;
         let surface = gooseboy::framebuffer::get_framebuffer_surface_mut();
-        for line in CONSOLE_LINES.iter() {
+        for line in &CONSOLE_LINES {
             if y_px >= fb_height {
                 break;
             }
 
             let mut x_px = 0usize;
-            for cell in line.iter() {
+            for cell in line {
                 if x_px + 8 > fb_width {
                     y_px += 8;
                     x_px = 0;
@@ -297,7 +297,7 @@ fn wrapped_line_count_cells(line: &[ConsoleCell], max_width: usize) -> usize {
     }
     let mut cx = 0usize;
     let mut lines = 1usize;
-    for _cell in line.iter() {
+    for _cell in line {
         if cx + 8 > max_width {
             lines += 1;
             cx = 8;
@@ -312,9 +312,9 @@ fn brighten(color: Color) -> Color {
     let factor = 1.5;
 
     Color {
-        r: (color.r as f32 * factor).min(255.0) as u8,
-        g: (color.g as f32 * factor).min(255.0) as u8,
-        b: (color.b as f32 * factor).min(255.0) as u8,
+        r: (f32::from(color.r) * factor).min(255.0) as u8,
+        g: (f32::from(color.g) * factor).min(255.0) as u8,
+        b: (f32::from(color.b) * factor).min(255.0) as u8,
         a: color.a,
     }
 }
