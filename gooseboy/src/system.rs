@@ -13,12 +13,26 @@ pub enum Permission {
     ExtendedMemory = 8,
 }
 
-#[must_use] 
+#[must_use]
 pub fn get_time_nanos() -> i64 {
     unsafe { bindings::get_time_nanos() }
 }
 
-#[must_use] 
+#[must_use]
 pub fn has_permission(permission: Permission) -> bool {
     unsafe { bindings::has_permission(permission as i32) }
+}
+
+#[must_use]
+#[allow(clippy::cast_possible_truncation)]
+#[allow(clippy::cast_precision_loss)]
+pub fn convert_nano_time_to_seconds(nano_time: i64) -> f32 {
+    convert_nano_time_to_seconds_f64(nano_time) as f32
+}
+
+#[must_use]
+#[allow(clippy::cast_possible_truncation)]
+#[allow(clippy::cast_precision_loss)]
+pub fn convert_nano_time_to_seconds_f64(nano_time: i64) -> f64 {
+    nano_time as f64 / 1_000_000_000.0
 }

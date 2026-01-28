@@ -1,6 +1,7 @@
 #![no_main]
 
 use gooseboy::framebuffer::{get_framebuffer_width, init_fb};
+use gooseboy::system::convert_nano_time_to_seconds_f64;
 use gooseboy::text::{draw_text, get_text_width};
 use gooseboy::{color::Color, framebuffer::clear_framebuffer};
 
@@ -25,12 +26,15 @@ fn update(nano_time: i64) {
     // String type here, with the caveat of having to clone it at draw_text
     let text = "Hello, world!";
     // Convert the time from nanoseconds to seconds
-    let time_sec = nano_time as f64 / 1_000_000_000.0;
+    let time_sec = convert_nano_time_to_seconds_f64(nano_time);
     // Get the position of the right corner and subtract the width of the text
     // to make the text fit into the screen, You can also use draw_text_wrapped
     // to automatically wrap text if it passes the end of the framebuffer
+    #[allow(clippy::cast_precision_loss)]
     let right_corner = (get_framebuffer_width() - get_text_width(text)) as f64;
     // Gets us an X position that smoothly moves from the left to the right using sine
+    #[allow(clippy::cast_possible_truncation)]
+    #[allow(clippy::cast_sign_loss)]
     let x_pos = (time_sec.sin().mul_add(0.5, 0.5) * (right_corner - 1.0)) as usize;
 
     // Finally, draw the text with the red color (or use Color::new(r, g, b, a) or Color::new_opaque(r, g, b))

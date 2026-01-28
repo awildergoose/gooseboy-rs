@@ -2,11 +2,13 @@
     "rust-analyzer.check.command": "clippy",
     "rust-analyzer.check.extraArgs": [
         "--",
-        "-D",
+        "-W",
         "warnings",
-        "-D",
+        "-W",
         "clippy::pedantic",
-        "-D",
-        "clippy::nursery"
+        "-W",
+        "clippy::nursery",
+        "-A",
+        "clippy::used_underscore_binding"
     ],
 }

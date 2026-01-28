@@ -3,6 +3,7 @@
 use gooseboy::framebuffer::init_fb;
 use gooseboy::gpu::{GpuCommand, GpuCommandBuffer, PrimitiveType, Vertex, gpu_read_value};
 use gooseboy::input::grab_mouse;
+use gooseboy::system::convert_nano_time_to_seconds;
 use gooseboy::text::draw_text_formatted;
 use gooseboy::{color::Color, framebuffer::clear_framebuffer};
 
@@ -56,8 +57,7 @@ fn update(nano_time: i64) {
         Color::RED,
     );
 
-    let time_sec = (nano_time as f64 / 1_000_000_000.0) as f32;
-    let angle = time_sec;
+    let angle = convert_nano_time_to_seconds(nano_time);
     let mut buffer = GpuCommandBuffer::new();
 
     buffer.insert(&GpuCommand::Push);

@@ -26,6 +26,8 @@ fn main() {
 #[allow(clippy::too_many_lines)]
 #[allow(clippy::similar_names)]
 #[allow(clippy::cast_precision_loss)]
+#[allow(clippy::cast_possible_wrap)]
+#[allow(clippy::cast_possible_truncation)]
 fn gpu_main() {
     use gooseboy::gpu::{GpuCommand, GpuCommandBuffer, Vertex};
     use qbsp::prelude::*;

@@ -79,6 +79,8 @@ fn generate_texture(id: u8) -> [[Color; 64]; 64] {
 }
 
 fn generate_textures() -> [[[Color; 64]; 64]; 9] {
+    // TODO
+    #[allow(clippy::large_stack_arrays)]
     let mut textures = [[[Color::BLACK; 64]; 64]; 9];
     for (i, texture) in textures.iter_mut().enumerate() {
         *texture = generate_texture(i as u8);

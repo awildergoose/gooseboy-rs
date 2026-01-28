@@ -117,6 +117,11 @@ impl Renderer {
 }
 
 impl Renderer {
+    /// .
+    ///
+    /// # Panics
+    ///
+    /// Panics if
     pub fn process_command(&mut self, command: Command, surface: &mut Surface) {
         match command {
             Command::Clear { color } => {

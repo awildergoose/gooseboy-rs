@@ -33,8 +33,14 @@ pub fn storage_write_slice(offset: i32, data: &[u8]) {
 }
 
 /// Requires `StorageRead` permission
-pub fn storage_read_slice(offset: i32, buf: &mut [u8]) -> i32 {
-    unsafe { storage_read(offset, buf.as_mut_ptr(), unsafe_casts::arr_len(buf)) }
+pub fn storage_read_slice(offset: i32, buf: &mut [u8]) -> u32 {
+    unsafe {
+        unsafe_casts::i32_as_u32(storage_read(
+            offset,
+            buf.as_mut_ptr(),
+            unsafe_casts::arr_len(buf),
+        ))
+    }
 }
 
 /// Requires `StorageWrite` permission

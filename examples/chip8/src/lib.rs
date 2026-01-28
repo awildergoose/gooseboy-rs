@@ -13,6 +13,7 @@ use gooseboy::keys::{
     KEY_1, KEY_2, KEY_3, KEY_4, KEY_A, KEY_C, KEY_D, KEY_E, KEY_F, KEY_Q, KEY_R, KEY_S, KEY_V,
     KEY_W, KEY_X, KEY_Z,
 };
+use gooseboy::system::convert_nano_time_to_seconds_f64;
 
 static mut CHIP: Option<Cpu> = None;
 
@@ -33,8 +34,10 @@ static mut LAST_NANO: i64 = 0;
 
 #[gooseboy::update]
 #[allow(static_mut_refs)]
+#[allow(clippy::cast_possible_truncation)]
+#[allow(clippy::cast_sign_loss)]
 fn update(nano_time: i64) {
-    let mut dt = (nano_time - unsafe { LAST_NANO }) as f64 / 1_000_000_000.0;
+    let mut dt = convert_nano_time_to_seconds_f64(nano_time - unsafe { LAST_NANO });
     if dt <= 0.0 || dt > 0.5 {
         dt = 1.0 / 60.0;
     }
