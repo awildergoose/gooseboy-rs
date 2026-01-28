@@ -23,10 +23,34 @@ fn main() {
 
 #[gooseboy::gpu_main]
 #[allow(static_mut_refs)]
+#[allow(clippy::too_many_lines)]
+#[allow(clippy::similar_names)]
+#[allow(clippy::cast_precision_loss)]
 fn gpu_main() {
     use gooseboy::gpu::{GpuCommand, GpuCommandBuffer, Vertex};
     use qbsp::prelude::*;
     use std::collections::HashMap;
+
+    fn fract_positive(x: f32) -> f32 {
+        let f = x - x.floor();
+        if f < 0.0 { f + 1.0 } else { f }
+    }
+
+    fn triangulate_fan<I>(vertices: I) -> Vec<[qbsp::glam::Vec3; 3]>
+    where
+        I: IntoIterator<Item = qbsp::glam::Vec3>,
+    {
+        let verts: Vec<_> = vertices.into_iter().collect();
+        let mut tris = Vec::new();
+        if verts.len() < 3 {
+            return tris;
+        }
+        let v0 = verts[0];
+        for i in 1..(verts.len() - 1) {
+            tris.push([v0, verts[i], verts[i + 1]]);
+        }
+        tris
+    }
 
     grab_mouse();
 
@@ -113,36 +137,14 @@ fn gpu_main() {
     unsafe {
         let atlas_ref: &Vec<u8> = &ATLAS_BYTES;
         let (w, h) = *ATLAS_SIZE;
-        buffer.insert(GpuCommand::RegisterTexture {
+        buffer.insert(&GpuCommand::RegisterTexture {
             rgba: atlas_ref.as_slice(),
             w,
             h,
         });
     }
 
-    #[inline(always)]
-    fn fract_positive(x: f32) -> f32 {
-        let f = x - x.floor();
-        if f < 0.0 { f + 1.0 } else { f }
-    }
-
-    fn triangulate_fan<I>(vertices: I) -> Vec<[qbsp::glam::Vec3; 3]>
-    where
-        I: IntoIterator<Item = qbsp::glam::Vec3>,
-    {
-        let verts: Vec<_> = vertices.into_iter().collect();
-        let mut tris = Vec::new();
-        if verts.len() < 3 {
-            return tris;
-        }
-        let v0 = verts[0];
-        for i in 1..(verts.len() - 1) {
-            tris.push([v0, verts[i], verts[i + 1]]);
-        }
-        tris
-    }
-
-    buffer.insert(GpuCommand::PushRecord(PrimitiveType::Triangles));
+    buffer.insert(&GpuCommand::PushRecord(PrimitiveType::Triangles));
 
     for face in &bsp.faces {
         let verts: Vec<qbsp::glam::Vec3> = face.vertices(&bsp).collect();
@@ -151,7 +153,7 @@ fn gpu_main() {
         }
 
         let tex_info = &bsp.tex_info[face.texture_info_idx.0 as usize];
-        let tex_idx = tex_info.texture_idx.0.unwrap_or(0) as i32;
+        let tex_idx = tex_info.texture_idx.0.unwrap_or(0).cast_signed();
 
         let (px, py, tw, th) = texidx_to_placement
             .get(&tex_idx)
@@ -175,21 +177,21 @@ fn gpu_main() {
                 let atlas_u = (px as f32 + u_tiled * (tw as f32)) / (atlas_w as f32);
                 let atlas_v = (py as f32 + v_tiled * (th as f32)) / (atlas_h as f32);
 
-                buffer.insert(GpuCommand::EmitVertex(Vertex::new(
+                buffer.insert(&GpuCommand::EmitVertex(Vertex::new(
                     v.x, v.y, v.z, atlas_u, atlas_v,
                 )));
             }
         }
     }
 
-    buffer.insert(GpuCommand::PopRecord);
+    buffer.insert(&GpuCommand::PopRecord);
     buffer.upload();
 
     unsafe {
-        GLOBAL_BUFFER.insert(GpuCommand::Push);
-        GLOBAL_BUFFER.insert(GpuCommand::BindTexture(0));
-        GLOBAL_BUFFER.insert(GpuCommand::DrawRecorded(0));
-        GLOBAL_BUFFER.insert(GpuCommand::Pop);
+        GLOBAL_BUFFER.insert(&GpuCommand::Push);
+        GLOBAL_BUFFER.insert(&GpuCommand::BindTexture(0));
+        GLOBAL_BUFFER.insert(&GpuCommand::DrawRecorded(0));
+        GLOBAL_BUFFER.insert(&GpuCommand::Pop);
     }
 }
 

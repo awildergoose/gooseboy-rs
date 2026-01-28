@@ -46,6 +46,9 @@ unsafe fn init_video_stream() {
 
 #[gooseboy::update]
 fn update(nano_time: i64) {
+    #[allow(clippy::cast_precision_loss)]
+    #[allow(clippy::cast_possible_truncation)]
+    #[allow(clippy::cast_sign_loss)]
     unsafe {
         if VIDEO_ENDED {
             return;
@@ -76,9 +79,8 @@ unsafe fn decode_next_frame() -> bool {
     let bytes_per_row = vw.div_ceil(8);
     let frame_size = bytes_per_row * vh;
 
-    let decoder = match unsafe { VIDEO_STREAM.as_mut() } {
-        Some(d) => d,
-        None => return false,
+    let Some(decoder) = (unsafe { VIDEO_STREAM.as_mut() }) else {
+        return false;
     };
 
     let mut frame_data = vec![0u8; frame_size];
@@ -148,13 +150,13 @@ unsafe fn decode_next_frame() -> bool {
                 fb[fb_idx] = 0xFF;
                 fb[fb_idx + 1] = 0xFF;
                 fb[fb_idx + 2] = 0xFF;
-                fb[fb_idx + 3] = 0xFF;
             } else {
                 fb[fb_idx] = 0x00;
                 fb[fb_idx + 1] = 0x00;
                 fb[fb_idx + 2] = 0x00;
-                fb[fb_idx + 3] = 0xFF;
             }
+
+            fb[fb_idx + 3] = 0xFF;
         }
     }
 

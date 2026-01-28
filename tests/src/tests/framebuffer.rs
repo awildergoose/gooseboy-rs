@@ -3,6 +3,7 @@ use gooseboy::color::Color;
 use gooseboy::framebuffer::{
     get_framebuffer_height, get_framebuffer_ptr, get_framebuffer_width, get_pixel_index, set_pixel,
 };
+use gooseboy::unsafe_casts;
 
 pub fn test_framebuffer() {
     let w = get_framebuffer_width();
@@ -17,7 +18,7 @@ pub fn test_framebuffer() {
 
     unsafe {
         if let Some(idx) = get_pixel_index(0, 0) {
-            let fb_ptr = get_framebuffer_ptr();
+            let fb_ptr = unsafe_casts::as_raw_pointer(get_framebuffer_ptr());
             if fb_ptr.is_null() {
                 test!("fb:fb_ptr_null", false);
                 return;

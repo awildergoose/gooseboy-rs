@@ -27,11 +27,11 @@ fn gpu_main() {
     ];
     let mut buffer = GpuCommandBuffer::new();
 
-    buffer.insert(GpuCommand::PushRecord(PrimitiveType::Quads));
+    buffer.insert(&GpuCommand::PushRecord(PrimitiveType::Quads));
     for v in quad_vertices {
-        buffer.insert(GpuCommand::EmitVertex(v));
+        buffer.insert(&GpuCommand::EmitVertex(v));
     }
-    buffer.insert(GpuCommand::PopRecord);
+    buffer.insert(&GpuCommand::PopRecord);
 
     buffer.upload();
 }
@@ -60,15 +60,15 @@ fn update(nano_time: i64) {
     let angle = time_sec;
     let mut buffer = GpuCommandBuffer::new();
 
-    buffer.insert(GpuCommand::Push);
-    buffer.insert(GpuCommand::RotateAxis {
+    buffer.insert(&GpuCommand::Push);
+    buffer.insert(&GpuCommand::RotateAxis {
         x: 0.0,
         y: 1.0,
         z: 0.0,
         angle,
     });
-    buffer.insert(GpuCommand::BindTexture(0));
-    buffer.insert(GpuCommand::DrawRecorded(0));
-    buffer.insert(GpuCommand::Pop);
+    buffer.insert(&GpuCommand::BindTexture(0));
+    buffer.insert(&GpuCommand::DrawRecorded(0));
+    buffer.insert(&GpuCommand::Pop);
     buffer.upload();
 }

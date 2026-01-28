@@ -36,29 +36,29 @@ impl AnsiParser {
                     self.state = AnsiState::Escape;
                     self.buffer.clear();
                     self.buffer.push(byte);
-                    None
-                } else {
-                    None
                 }
+
+                None
             }
             AnsiState::Escape => {
                 if byte == b'[' {
                     self.state = AnsiState::Csi;
                     self.buffer.push(byte);
-                    None
                 } else {
                     self.state = AnsiState::Normal;
-                    None
                 }
+
+                None
             }
             AnsiState::Csi => {
                 self.buffer.push(byte);
-                
+
                 if (64..=126).contains(&byte) {
                     self.state = AnsiState::Normal;
                     let codes = parse_csi(&self.buffer);
                     return Some(codes);
                 }
+
                 None
             }
         }

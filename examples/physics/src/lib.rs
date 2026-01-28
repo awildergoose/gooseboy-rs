@@ -1,4 +1,8 @@
 #![no_main]
+#![allow(clippy::cast_possible_truncation)]
+#![allow(clippy::cast_possible_wrap)]
+#![allow(clippy::cast_precision_loss)]
+#![allow(clippy::cast_sign_loss)]
 
 use std::collections::HashMap;
 
@@ -131,6 +135,7 @@ fn main() {
 
 // TODO stop doing this
 #[allow(static_mut_refs)]
+#[allow(clippy::too_many_lines)]
 #[gooseboy::update]
 fn update(nano_time: i64) {
     let mut dt = (nano_time - unsafe { LAST_NANO }) as f64 / 1_000_000_000.0;
@@ -341,8 +346,8 @@ fn apply_explosion(state: &mut PhysicsState, x: f32, y: f32, radius: f32, streng
             body.apply_impulse(impulse, true);
 
             let seed = (h.0.into_raw_parts().0)
-                .wrapping_mul(1664525)
-                .wrapping_add(1013904223);
+                .wrapping_mul(1_664_525)
+                .wrapping_add(1_013_904_223);
             let sign = if (seed & 1) == 0 { 1.0 } else { -1.0 };
             let ang_impulse = sign * (impulse_mag * 0.02);
             body.apply_torque_impulse(ang_impulse, true);

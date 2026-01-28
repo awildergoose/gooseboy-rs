@@ -3,17 +3,16 @@ use gooseboy::bindings::Pointer;
 use gooseboy::color::Color;
 use gooseboy::framebuffer::{clear_framebuffer, get_framebuffer_ptr, get_pixel_index};
 use gooseboy::sprite::Sprite;
+use gooseboy::unsafe_casts;
 
 unsafe fn read_pixel_rgba(fb_ptr: Pointer, x: usize, y: usize) -> Option<[u8; 4]> {
-    if let Some(idx) = get_pixel_index(x, y) {
+    get_pixel_index(x, y).map(|idx| {
         let b0 = unsafe { *fb_ptr.add(idx) };
         let b1 = unsafe { *fb_ptr.add(idx + 1) };
         let b2 = unsafe { *fb_ptr.add(idx + 2) };
         let b3 = unsafe { *fb_ptr.add(idx + 3) };
-        Some([b0, b1, b2, b3])
-    } else {
-        None
-    }
+        [b0, b1, b2, b3]
+    })
 }
 
 pub fn test_sprite() {
@@ -27,7 +26,7 @@ pub fn test_sprite() {
     let s = Sprite::new(2, 2, &rgba_opaque);
     s.blit(1, 1);
 
-    let fb_ptr = get_framebuffer_ptr();
+    let fb_ptr = unsafe_casts::as_raw_pointer(get_framebuffer_ptr());
     if fb_ptr.is_null() {
         test!("sprite:fb_ptr_null", false);
         return;

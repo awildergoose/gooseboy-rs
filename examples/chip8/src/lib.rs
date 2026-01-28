@@ -22,7 +22,7 @@ fn main() {
 
     let mut chip = Cpu::default();
     let rom_bytes: &[u8] = include_bytes!("../roms/Breakout.ch8");
-    chip.load_rom(rom_bytes.to_vec());
+    chip.load_rom(rom_bytes);
 
     unsafe {
         CHIP = Some(chip);
@@ -50,15 +50,15 @@ fn update(nano_time: i64) {
             chip.step();
         }
 
-        let mut timer_acc = dt * 60.0;
-        while timer_acc >= 1.0 {
+        let mut timer_acc = (dt * 60.0) as i32;
+        while timer_acc >= 1 {
             if chip.delay_timer > 0 {
                 chip.delay_timer -= 1;
             }
             if chip.sound_timer > 0 {
                 chip.sound_timer -= 1;
             }
-            timer_acc -= 1.0;
+            timer_acc -= 1;
         }
 
         let c = &mut chip.keys;

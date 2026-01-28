@@ -1,6 +1,7 @@
+#![allow(clippy::similar_names)]
 use rand::{Rng, SeedableRng, rngs::SmallRng};
 
-use crate::misc::{V, I, FONT, Instruction};
+use crate::misc::{FONT, I, Instruction, V};
 
 pub const WIDTH: usize = 64;
 pub const HEIGHT: usize = 32;
@@ -44,7 +45,7 @@ impl Default for Cpu {
 }
 
 impl Cpu {
-    pub fn load_rom(&mut self, rom: Vec<u8>) {
+    pub fn load_rom(&mut self, rom: &[u8]) {
         for (i, &byte) in rom.iter().enumerate() {
             self.memory[0x200 + i] = byte;
         }
@@ -125,8 +126,10 @@ impl Cpu {
         prev_set
     }
 
-    pub fn execute(&mut self, instruction: Instruction) {
-        match instruction {
+    #[allow(clippy::too_many_lines)]
+    #[allow(clippy::cast_possible_truncation)]
+    pub fn execute(&mut self, instruction: &Instruction) {
+        match *instruction {
             Instruction::CLEAR => self.display.fill(0),
             Instruction::RETURN => {
                 self.sp -= 1;
@@ -305,6 +308,6 @@ impl Cpu {
         let instruction = u16::from_be_bytes([self.memory[pc_index], self.memory[pc_index + 1]]);
         self.pc = self.pc.wrapping_add(2);
         let decoded = Self::decode(instruction);
-        self.execute(decoded);
+        self.execute(&decoded);
     }
 }

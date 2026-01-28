@@ -1,13 +1,16 @@
+#![allow(clippy::cast_possible_truncation)]
+#![allow(clippy::cast_sign_loss)]
 use glam::{Mat3, Vec2};
 use gooseboy::{
     color::Color,
     framebuffer::{
         Surface, blit_premultiplied_clipped, clear_surface, get_framebuffer_height,
-        get_framebuffer_ptr, get_framebuffer_width,
+        get_framebuffer_ptr, get_framebuffer_ptr_mut, get_framebuffer_width,
     },
     log, mem,
     sprite::Sprite,
     text::{draw_text_wrapped_ex, get_text_height, get_text_width},
+    unsafe_casts,
 };
 
 use crate::transformer::{self, Resample};
@@ -101,9 +104,9 @@ impl Renderer {
         let result = self.process_commands();
         unsafe {
             mem::copy(
-                get_framebuffer_ptr(),
+                unsafe_casts::as_raw_pointer_mut(get_framebuffer_ptr_mut()),
                 result.rgba.as_ptr(),
-                result.rgba.len() as i32,
+                unsafe_casts::arr_len(&result.rgba),
             );
         };
         if !self.group_stack.is_empty() {

@@ -7,17 +7,29 @@ use crate::{
 };
 
 pub static FRAMEBUFFER_SURFACE: Mutex<Option<Surface>> = Mutex::new(None);
+
 pub type RawFramebufferPointer = *const [u8; 4];
+pub type RawFramebufferPointerMut = *mut [u8; 4];
 
 #[unsafe(no_mangle)]
 pub extern "C" fn get_framebuffer_ptr() -> RawFramebufferPointer {
     get_framebuffer_surface_ref().rgba.as_ptr() as RawFramebufferPointer
 }
 
+#[must_use]
+pub fn get_framebuffer_ptr_mut() -> RawFramebufferPointerMut {
+    get_framebuffer_surface_mut().rgba.as_mut_ptr() as RawFramebufferPointerMut
+}
+
 fn get_framebuffer_surface() -> MutexGuard<'static, Option<Surface>> {
     FRAMEBUFFER_SURFACE.lock().unwrap()
 }
 
+/// Returns the framebuffer surface as a reference.
+///
+/// # Panics
+///
+/// Panics if the framebuffer was not initialized.
 #[must_use]
 #[allow(clippy::significant_drop_tightening)]
 pub fn get_framebuffer_surface_ref() -> &'static Surface {
@@ -26,6 +38,11 @@ pub fn get_framebuffer_surface_ref() -> &'static Surface {
     unsafe { &*std::ptr::from_ref::<Surface>(surface_ref) }
 }
 
+/// Returns the framebuffer surface as a mutable reference.
+///
+/// # Panics
+///
+/// Panics if the framebuffer was not initialized.
 #[must_use]
 #[allow(clippy::significant_drop_tightening)]
 pub fn get_framebuffer_surface_mut() -> &'static mut Surface {
@@ -34,6 +51,11 @@ pub fn get_framebuffer_surface_mut() -> &'static mut Surface {
     unsafe { &mut *std::ptr::from_mut::<Surface>(surface_mut) }
 }
 
+/// Initializes the framebuffer surface.
+///
+/// # Panics
+///
+/// Panics if the framebuffer surface was being accessed by another thread and had panicked. (never)
 pub fn init_fb() {
     unsafe {
         let mut guard = FRAMEBUFFER_SURFACE.lock().unwrap();

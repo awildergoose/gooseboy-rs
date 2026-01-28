@@ -6,6 +6,7 @@ use gooseboy::keys::{KEY_A, KEY_D, KEY_LEFT, KEY_RIGHT};
 use gooseboy::text::{draw_text_formatted, get_formatted_text_width};
 use gooseboy::{color::Color, framebuffer::clear_framebuffer};
 
+#[allow(clippy::significant_drop_tightening)]
 pub fn render() {
     clear_framebuffer(Color::BLACK);
 

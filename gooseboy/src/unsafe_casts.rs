@@ -53,3 +53,15 @@ pub const fn arr_len<T>(arr: &[T]) -> i32 {
 pub fn str_len(str: impl AsRef<str>) -> i32 {
     str.as_ref().len() as i32
 }
+
+#[inline]
+#[must_use]
+pub const fn as_raw_pointer<T>(value: *const T) -> *const u8 {
+    value.cast::<u8>()
+}
+
+#[inline]
+#[must_use]
+pub const fn as_raw_pointer_mut<T>(value: *mut T) -> *mut u8 {
+    value.cast::<u8>()
+}

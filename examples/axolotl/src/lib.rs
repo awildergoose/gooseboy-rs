@@ -48,6 +48,7 @@ fn make_transform_for_object(angle: f32, pos: Vec2, size: Vec2) -> Mat3 {
 #[gooseboy::update]
 fn update(nano_time: i64) {
     unsafe {
+        #[allow(clippy::cast_precision_loss)]
         let dt = (nano_time - LAST_NANO_TIME) as f32 / 1_000_000_000.0; // convert to seconds
         ANGLE += dt;
         LAST_NANO_TIME = nano_time;
@@ -69,6 +70,7 @@ fn update(nano_time: i64) {
     });
     r.group("text sprite rect", 0, |r| {
         let text = "Hello, world!";
+        #[allow(clippy::cast_precision_loss)]
         let text_sz = Vec2::new(get_text_width(text) as f32, get_text_height(text) as f32);
         let tx = make_transform_for_object(unsafe { ANGLE }, Vec2::new(50.0, 50.0), text_sz);
         r.command(Command::Text {

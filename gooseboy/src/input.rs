@@ -79,6 +79,9 @@ pub fn release_mouse() {
 }
 
 /// Requires `InputKeyboard` permission
+///
+/// # Panics
+/// Panics if the previous keys static was accessed by another thread and had panicked. (never)
 pub fn is_key_just_pressed(key: Key) -> bool {
     let currently_pressed = is_key_down(key);
     let mut prev_keys = PREV_KEYS.lock().unwrap();
@@ -91,6 +94,9 @@ pub fn is_key_just_pressed(key: Key) -> bool {
 }
 
 /// Requires `InputMouse` permission
+///
+/// # Panics
+/// Panics if the previous mouse buttons static was accessed by another thread and had panicked. (never)
 pub fn is_mouse_button_just_pressed(button: i32) -> bool {
     let currently_pressed = is_mouse_button_down(button);
     let mut prev_mouse = PREV_MOUSE.lock().unwrap();

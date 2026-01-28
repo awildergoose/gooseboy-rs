@@ -1,5 +1,10 @@
 // run this with 640000 initial memory and 1280000 maximum memory and
 // with the -Xmx4G java flag
+#![allow(clippy::similar_names)]
+#![allow(clippy::too_many_lines)]
+#![allow(clippy::cast_possible_truncation)]
+#![allow(clippy::cast_sign_loss)]
+#![allow(clippy::cast_possible_wrap)]
 #![allow(static_mut_refs)]
 #![no_main]
 
@@ -93,7 +98,7 @@ fn main() {
         .register_irq_source(SIFIVE_UART_IRQ, Rc::clone(&device_sifive.irq_pending));
 
     bus.borrow_mut().add_device(DeviceType {
-        start: 0xc0000000,
+        start: 0xc000_0000,
         len: 0x1000,
         instance: Box::new(device_sifive),
         name: "Sifive_Uart",
@@ -139,14 +144,8 @@ fn update(_nano_time: i64) {
     }
 
     unsafe {
-        let sim = match SIM.as_mut() {
-            Some(s) => s,
-            None => return,
-        };
-        let uart = match UART_TX.as_mut() {
-            Some(u) => u,
-            None => return,
-        };
+        let Some(sim) = SIM.as_mut() else { return };
+        let Some(uart) = UART_TX.as_mut() else { return };
 
         sim.run_once(5_000 * 5);
 
@@ -181,8 +180,7 @@ fn update(_nano_time: i64) {
                         AnsiCode::Unknown => {}
                     }
                 }
-                
-                
+
                 continue;
             }
 
@@ -328,7 +326,6 @@ fn ansi_to_color(n: u8, bold: bool) -> Color {
         4 => Color::BLUE,
         5 => Color::MAGENTA,
         6 => Color::CYAN,
-        7 => Color::WHITE,
         _ => Color::WHITE,
     };
     if bold { brighten(base) } else { base }

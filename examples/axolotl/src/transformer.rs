@@ -1,3 +1,7 @@
+#![allow(clippy::cast_possible_truncation)]
+#![allow(clippy::cast_precision_loss)]
+#![allow(clippy::cast_possible_wrap)]
+#![allow(clippy::cast_sign_loss)]
 use glam::{Mat3, Vec2};
 use gooseboy::color::Color;
 
@@ -71,26 +75,39 @@ fn sample_bilinear_premult(input: &[u8], width: usize, height: usize, x: f32, y:
         let w11 = fx * fy;
 
         [
-            (f32::from(c11[0]).mul_add(w11, f32::from(c01[0]).mul_add(w01, f32::from(c00[0]).mul_add(w00, f32::from(c10[0]) * w10)))
-                + 0.5) as u8,
-            (f32::from(c11[1]).mul_add(w11, f32::from(c01[1]).mul_add(w01, f32::from(c00[1]).mul_add(w00, f32::from(c10[1]) * w10)))
-                + 0.5) as u8,
-            (f32::from(c11[2]).mul_add(w11, f32::from(c01[2]).mul_add(w01, f32::from(c00[2]).mul_add(w00, f32::from(c10[2]) * w10)))
-                + 0.5) as u8,
-            (f32::from(c11[3]).mul_add(w11, f32::from(c01[3]).mul_add(w01, f32::from(c00[3]).mul_add(w00, f32::from(c10[3]) * w10)))
-                + 0.5) as u8,
+            (f32::from(c11[0]).mul_add(
+                w11,
+                f32::from(c01[0])
+                    .mul_add(w01, f32::from(c00[0]).mul_add(w00, f32::from(c10[0]) * w10)),
+            ) + 0.5) as u8,
+            (f32::from(c11[1]).mul_add(
+                w11,
+                f32::from(c01[1])
+                    .mul_add(w01, f32::from(c00[1]).mul_add(w00, f32::from(c10[1]) * w10)),
+            ) + 0.5) as u8,
+            (f32::from(c11[2]).mul_add(
+                w11,
+                f32::from(c01[2])
+                    .mul_add(w01, f32::from(c00[2]).mul_add(w00, f32::from(c10[2]) * w10)),
+            ) + 0.5) as u8,
+            (f32::from(c11[3]).mul_add(
+                w11,
+                f32::from(c01[3])
+                    .mul_add(w01, f32::from(c00[3]).mul_add(w00, f32::from(c10[3]) * w10)),
+            ) + 0.5) as u8,
         ]
     }
 }
 
-#[must_use] 
+#[must_use]
 pub fn get_output_dimensions(width: usize, height: usize) -> (usize, usize) {
     let diag = ((width * width + height * height) as f32).sqrt();
     let out = diag.ceil() as usize;
     (out, out)
 }
 
-#[must_use] 
+#[must_use]
+#[allow(clippy::many_single_char_names)]
 pub fn transform_rgba(
     input: &[u8],
     width: usize,
@@ -196,6 +213,8 @@ fn compute_bounds(width: usize, height: usize, transform: Mat3) -> (Vec2, Vec2) 
 
 #[inline(never)]
 #[allow(clippy::too_many_arguments)]
+#[allow(clippy::many_single_char_names)]
+#[allow(clippy::similar_names)]
 fn transform_nearest_fast(
     src: &[u8],
     width: usize,
@@ -244,6 +263,8 @@ fn transform_nearest_fast(
 
 #[inline(never)]
 #[allow(clippy::too_many_arguments)]
+#[allow(clippy::many_single_char_names)]
+#[allow(clippy::similar_names)]
 fn transform_bilinear_fast(
     src: &[u8],
     width: usize,

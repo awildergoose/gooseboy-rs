@@ -1,4 +1,8 @@
 #![no_main]
+#![allow(clippy::cast_sign_loss)]
+#![allow(clippy::cast_possible_truncation)]
+#![allow(clippy::cast_precision_loss)]
+#![allow(clippy::cast_possible_wrap)]
 
 use gooseboy::color::Color;
 use gooseboy::framebuffer::{
@@ -56,15 +60,16 @@ fn generate_texture(id: u8) -> [[Color; 64]; 64] {
             };
 
             let pattern = ((x / 8) % 2) == ((y / 8) % 2);
-            let mut final_color = color;
-            if pattern {
-                final_color = Color::new(
+            let final_color = if pattern {
+                Color::new(
                     (f32::from(color.r) * 0.8) as u8,
                     (f32::from(color.g) * 0.8) as u8,
                     (f32::from(color.b) * 0.8) as u8,
                     255,
-                );
-            }
+                )
+            } else {
+                color
+            };
 
             *pixel = final_color;
         }
@@ -264,7 +269,8 @@ fn handle_input(dt: f64) {
         }
 
         if is_key_just_pressed(KEY_Q) {
-            PLAYER_FOV = if PLAYER_FOV == PI / 3.0 {
+            let error_margin = 0.001;
+            PLAYER_FOV = if (PLAYER_FOV - PI / 3.0).abs() < error_margin {
                 PI / 2.0
             } else {
                 PI / 3.0

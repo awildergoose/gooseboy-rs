@@ -38,7 +38,9 @@ fn make_wrapper(item: &TokenStream, export_name: &str) -> TokenStream {
 
     let mut attrs = renamed_fn.attrs.clone();
     let hidden_attr: syn::Attribute = syn::parse_quote!(#[doc(hidden)]);
+    let allow_clippy: syn::Attribute = syn::parse_quote!(#[allow(clippy::used_underscore_binding)]);
     attrs.insert(0, hidden_attr);
+    attrs.insert(1, allow_clippy);
     renamed_fn.attrs = attrs;
 
     let call_args_vec: Vec<proc_macro2::TokenStream> = input_fn
