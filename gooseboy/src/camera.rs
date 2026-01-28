@@ -1,7 +1,7 @@
-use crate::{Vec2, Vec3, bindings, mem::alloc_bytes};
+use crate::{Vec2, Vec3, bindings};
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct CameraTransform {
     pub x: f32,
     pub y: f32,
@@ -12,11 +12,13 @@ pub struct CameraTransform {
 
 #[must_use]
 pub fn get_camera_transform() -> CameraTransform {
-    let ptr = alloc_bytes(size_of::<CameraTransform>());
+    let mut transform = CameraTransform::default();
+
     unsafe {
-        bindings::get_camera_transform(ptr);
-        *(ptr as *const CameraTransform)
+        bindings::get_camera_transform((&raw mut transform).cast::<u8>());
     }
+
+    transform
 }
 
 pub fn set_camera_transform(transform: CameraTransform) {
@@ -168,7 +170,9 @@ pub fn update_debug_camera(sens: f64, speed: f32) {
         release_mouse();
     }
 
+    #[allow(clippy::cast_possible_truncation)]
     set_camera_yaw(get_mouse_accumulated_dx().mul_add(-sens, f64::from(get_camera_yaw())) as f32);
+    #[allow(clippy::cast_possible_truncation)]
     set_camera_pitch(
         get_mouse_accumulated_dy().mul_add(-sens, f64::from(get_camera_pitch())) as f32,
     );

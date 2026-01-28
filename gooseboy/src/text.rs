@@ -9,8 +9,7 @@ pub fn draw_char(x: usize, y: usize, c: u8, color: Color) {
 }
 
 pub fn draw_char_ex(surface: &mut Surface, x: usize, y: usize, c: u8, color: Color) {
-    for row in 0..8 {
-        let bits = FONT[c as usize][row];
+    for (row, &bits) in FONT[c as usize].iter().take(8).enumerate() {
         for col in 0..8 {
             if bits & (1 << (7 - col)) != 0 {
                 set_pixel_ex(surface, x + col, y + row, color);

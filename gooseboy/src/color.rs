@@ -9,23 +9,28 @@ pub struct Color {
 }
 
 #[must_use]
+#[allow(clippy::many_single_char_names)]
 pub fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
+    #[inline]
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     fn to_byte(x: f32) -> u8 {
         let y = x.mul_add(255.0, 0.5);
+
         if y <= 0.0 {
             0
         } else if y >= 255.0 {
             255
         } else {
-            y as u8
+            (y as i32) as u8
         }
     }
 
     let mut h = h - h.floor();
     h *= 6.0;
 
-    let i = h.floor() as i32;
-    let f = h - i as f32;
+    #[allow(clippy::cast_possible_truncation)]
+    let i = h as i32;
+    let f = h.fract();
 
     let p = v * (1.0 - s);
     let q = v * s.mul_add(-f, 1.0);

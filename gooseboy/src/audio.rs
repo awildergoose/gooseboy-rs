@@ -1,5 +1,6 @@
-use crate::bindings::{
-    self, is_audio_playing, play_audio, set_audio_pitch, set_audio_volume, stop_audio,
+use crate::{
+    bindings::{self, is_audio_playing, play_audio, set_audio_pitch, set_audio_volume, stop_audio},
+    unsafe_casts,
 };
 
 /// Requires Audio permission
@@ -14,7 +15,7 @@ impl Audio {
     }
 
     pub fn play(&mut self) -> Option<AudioInstance> {
-        let id = unsafe { play_audio(self.data.as_ptr(), self.data.len() as i32) };
+        let id = unsafe { play_audio(self.data.as_ptr(), unsafe_casts::arr_len(&self.data)) };
         if id == -1 {
             return None;
         }

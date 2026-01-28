@@ -9,7 +9,7 @@ pub struct Sprite {
 }
 
 impl Sprite {
-    #[must_use] 
+    #[must_use]
     pub fn new(width: usize, height: usize, rgba: &[u8]) -> Self {
         Self {
             width,
@@ -19,7 +19,7 @@ impl Sprite {
         }
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn new_blended(width: usize, height: usize, rgba: &[u8]) -> Self {
         Self {
             width,
@@ -83,6 +83,7 @@ pub fn blit_ex(
 
             if blend && src[3] < 255 {
                 let a = f32::from(src[3]) / 255.0;
+                #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
                 for i in 0..3 {
                     dst[i] = f32::from(dst[i]).mul_add(1.0 - a, f32::from(src[i]) * a) as u8;
                 }

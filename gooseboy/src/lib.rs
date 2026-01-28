@@ -16,6 +16,7 @@ pub mod storage;
 pub mod system;
 pub mod text;
 pub mod timer;
+pub mod unsafe_casts;
 
 pub use gooseboy_macros::gpu_main;
 pub use gooseboy_macros::main;

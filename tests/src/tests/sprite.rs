@@ -1,9 +1,10 @@
 use crate::test;
+use gooseboy::bindings::Pointer;
 use gooseboy::color::Color;
 use gooseboy::framebuffer::{clear_framebuffer, get_framebuffer_ptr, get_pixel_index};
 use gooseboy::sprite::Sprite;
 
-unsafe fn read_pixel_rgba(fb_ptr: *const u8, x: usize, y: usize) -> Option<[u8; 4]> {
+unsafe fn read_pixel_rgba(fb_ptr: Pointer, x: usize, y: usize) -> Option<[u8; 4]> {
     if let Some(idx) = get_pixel_index(x, y) {
         let b0 = unsafe { *fb_ptr.add(idx) };
         let b1 = unsafe { *fb_ptr.add(idx + 1) };

@@ -1,20 +1,20 @@
 use std::alloc::{self, Layout};
 
-use crate::bindings;
+use crate::bindings::{self, Pointer};
 
 /// # Safety
 /// This fills a memory region with no region or value checks
-pub unsafe fn fill(addr: *const u8, len: i32, value: i32) {
+pub unsafe fn fill(addr: Pointer, len: i32, value: i32) {
     unsafe { bindings::mem_fill(addr, len, value) }
 }
 
 /// # Safety
 /// This copies a memory region with no region or value checks
-pub unsafe fn copy(dst: *const u8, src: *const u8, len: i32) {
+pub unsafe fn copy(dst: Pointer, src: Pointer, len: i32) {
     unsafe { bindings::mem_copy(dst, src, len) }
 }
 
-#[must_use] 
+#[must_use]
 pub fn alloc_bytes<T>(len: usize) -> *mut T {
     let layout = Layout::from_size_align(len, 4).unwrap();
     unsafe { alloc::alloc(layout).cast::<T>() }
@@ -36,7 +36,7 @@ pub fn write_i32(ptr: *mut i32, value: i32) {
     }
 }
 
-#[must_use] 
+#[must_use]
 pub const fn read_i32(ptr: *const i32) -> i32 {
     unsafe {
         let p = ptr;

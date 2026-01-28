@@ -1,6 +1,7 @@
 use crate::{
     bindings::{gpu_read, submit_gpu_commands},
     mem::alloc_bytes,
+    unsafe_casts,
 };
 
 pub const GB_GPU_STATUS: u32 = 0;
@@ -25,6 +26,7 @@ pub struct Vertex {
 
 impl Vertex {
     #[must_use]
+    #[allow(clippy::many_single_char_names)]
     pub const fn new(x: f32, y: f32, z: f32, u: f32, v: f32) -> Self {
         Self { x, y, z, u, v }
     }
@@ -153,7 +155,9 @@ impl GpuCommandBuffer {
     }
 
     pub fn upload(&mut self) {
-        unsafe { submit_gpu_commands(self.buffer.as_ptr(), self.buffer.len() as i32) };
+        unsafe {
+            submit_gpu_commands(self.buffer.as_ptr(), unsafe_casts::arr_len(&self.buffer));
+        }
     }
 
     pub fn clear(&mut self) {
@@ -170,8 +174,13 @@ impl Default for GpuCommandBuffer {
 #[must_use]
 pub fn gpu_read_value<T: Copy>(offset: u32) -> T {
     let ptr = alloc_bytes(size_of::<T>());
+
     unsafe {
-        gpu_read(offset as i32, ptr, size_of::<T>() as i32);
+        gpu_read(
+            unsafe_casts::u32_as_i32(offset),
+            ptr,
+            unsafe_casts::usize_as_i32(size_of::<T>()),
+        );
         *(ptr as *const T)
     }
 }
@@ -189,11 +198,11 @@ pub fn load_obj(obj_data: &str, flip_v: bool) -> Vec<Vertex> {
 
         match s.parse::<isize>() {
             Ok(i) if i > 0 => {
-                let idx = (i as usize).saturating_sub(1);
+                let idx = i.cast_unsigned().saturating_sub(1);
                 Some(idx)
             }
             Ok(i) if i < 0 => {
-                let abs = (-i) as usize;
+                let abs = (-i).cast_unsigned();
 
                 if abs == 0 || abs > len {
                     None

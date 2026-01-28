@@ -1,3 +1,6 @@
+#![allow(clippy::cast_precision_loss)]
+#![allow(clippy::cast_possible_truncation)]
+#![allow(clippy::cast_sign_loss)]
 use core::ops::{Range, RangeInclusive};
 
 /// Random number generator based off Splitmix64

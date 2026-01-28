@@ -1,30 +1,32 @@
+pub type Pointer = *const u8;
+
 #[link(wasm_import_module = "console")]
 unsafe extern "C" {
-    pub fn log(ptr: *const u8, len: i32);
+    pub fn log(ptr: Pointer, len: i32);
 }
 
 #[link(wasm_import_module = "framebuffer")]
 unsafe extern "C" {
     pub(crate) fn get_framebuffer_width() -> usize;
     pub(crate) fn get_framebuffer_height() -> usize;
-    pub(crate) fn clear_surface(ptr: *const u8, size: i32, color: i32);
+    pub(crate) fn clear_surface(ptr: Pointer, size: i32, color: i32);
     pub(crate) fn blit_premultiplied_clipped(
-        dest_ptr: *const u8,
+        dest_ptr: Pointer,
         dest_w: usize,
         dest_h: usize,
         dest_x: i32,
         dest_y: i32,
         src_w: usize,
         src_h: usize,
-        src_ptr: *const u8,
+        src_ptr: Pointer,
         blend: bool,
     );
 }
 
 #[link(wasm_import_module = "memory")]
 unsafe extern "C" {
-    pub(crate) fn mem_fill(addr: *const u8, len: i32, value: i32);
-    pub(crate) fn mem_copy(dst: *const u8, src: *const u8, len: i32);
+    pub(crate) fn mem_fill(addr: Pointer, len: i32, value: i32);
+    pub(crate) fn mem_copy(dst: Pointer, src: Pointer, len: i32);
 }
 
 #[link(wasm_import_module = "input")]
@@ -43,7 +45,7 @@ unsafe extern "C" {
 
 #[link(wasm_import_module = "audio")]
 unsafe extern "C" {
-    pub(crate) fn play_audio(ptr: *const u8, len: i32) -> i64;
+    pub(crate) fn play_audio(ptr: Pointer, len: i32) -> i64;
     pub(crate) fn stop_audio(id: i64);
     pub(crate) fn stop_all_audio();
     pub(crate) fn set_audio_volume(id: i64, volume: f32);
@@ -53,8 +55,8 @@ unsafe extern "C" {
 
 #[link(wasm_import_module = "storage")]
 unsafe extern "C" {
-    pub(crate) fn storage_read(offset: i32, ptr: *const u8, len: i32) -> i32;
-    pub(crate) fn storage_write(offset: i32, ptr: *const u8, len: i32) -> i32;
+    pub(crate) fn storage_read(offset: i32, ptr: Pointer, len: i32) -> i32;
+    pub(crate) fn storage_write(offset: i32, ptr: Pointer, len: i32) -> i32;
     pub(crate) fn storage_size() -> u32;
     pub(crate) fn storage_clear();
 }
@@ -67,8 +69,8 @@ unsafe extern "C" {
 
 #[link(wasm_import_module = "gpu")]
 unsafe extern "C" {
-    pub(crate) fn get_camera_transform(ptr: *const u8);
+    pub(crate) fn get_camera_transform(ptr: Pointer);
     pub(crate) fn set_camera_transform(x: f32, y: f32, z: f32, yaw: f32, pitch: f32);
-    pub(crate) fn submit_gpu_commands(ptr: *const u8, count: i32);
-    pub(crate) fn gpu_read(offset: i32, ptr: *const u8, len: i32) -> i32;
+    pub(crate) fn submit_gpu_commands(ptr: Pointer, count: i32);
+    pub(crate) fn gpu_read(offset: i32, ptr: Pointer, len: i32) -> i32;
 }

@@ -1,26 +1,33 @@
 use std::sync::{Mutex, MutexGuard};
 
-use crate::{bindings, color::Color};
+use crate::{
+    bindings::{self},
+    color::Color,
+    unsafe_casts,
+};
 
 pub static FRAMEBUFFER_SURFACE: Mutex<Option<Surface>> = Mutex::new(None);
+pub type RawFramebufferPointer = *const [u8; 4];
 
 #[unsafe(no_mangle)]
-pub extern "C" fn get_framebuffer_ptr() -> *const u8 {
-    get_framebuffer_surface_ref().rgba.as_ptr()
+pub extern "C" fn get_framebuffer_ptr() -> RawFramebufferPointer {
+    get_framebuffer_surface_ref().rgba.as_ptr() as RawFramebufferPointer
 }
 
 fn get_framebuffer_surface() -> MutexGuard<'static, Option<Surface>> {
     FRAMEBUFFER_SURFACE.lock().unwrap()
 }
 
-#[must_use] 
+#[must_use]
+#[allow(clippy::significant_drop_tightening)]
 pub fn get_framebuffer_surface_ref() -> &'static Surface {
     let guard = get_framebuffer_surface();
     let surface_ref: &Surface = guard.as_ref().expect("surface not initialized");
     unsafe { &*std::ptr::from_ref::<Surface>(surface_ref) }
 }
 
-#[must_use] 
+#[must_use]
+#[allow(clippy::significant_drop_tightening)]
 pub fn get_framebuffer_surface_mut() -> &'static mut Surface {
     let mut guard = get_framebuffer_surface();
     let surface_mut: &mut Surface = guard.as_mut().expect("surface not initialized");
@@ -37,12 +44,12 @@ pub fn init_fb() {
     }
 }
 
-#[must_use] 
+#[must_use]
 pub fn get_pixel_index(x: usize, y: usize) -> Option<usize> {
     get_pixel_index_ex(get_framebuffer_surface_ref(), x, y)
 }
 
-#[must_use] 
+#[must_use]
 pub fn get_pixel_index_ex(surface: &Surface, x: usize, y: usize) -> Option<usize> {
     if x >= surface.width || y >= surface.height {
         return None;
@@ -67,17 +74,17 @@ pub fn set_pixel_ex(surface: &mut Surface, x: usize, y: usize, color: Color) {
     }
 }
 
-#[must_use] 
+#[must_use]
 pub fn get_framebuffer_width() -> usize {
     get_framebuffer_surface_ref().width
 }
 
-#[must_use] 
+#[must_use]
 pub fn get_framebuffer_height() -> usize {
     get_framebuffer_surface_ref().height
 }
 
-#[must_use] 
+#[must_use]
 pub fn get_framebuffer_size() -> usize {
     get_framebuffer_width() * get_framebuffer_height() * 4
 }
@@ -88,13 +95,19 @@ pub fn clear_framebuffer(color: Color) {
 
 /// # Safety
 /// This expects ptr to be a pointer to an RGBA buffer (check Surface's rgba)
-pub unsafe fn clear_surface(ptr: *const u8, size: usize, color: Color) {
-    let color_val = (u32::from(color.a) << 24)
-        | (u32::from(color.b) << 16)
-        | (u32::from(color.g) << 8)
-        | u32::from(color.r);
+pub unsafe fn clear_surface(ptr: RawFramebufferPointer, size: usize, color: Color) {
+    let color_val = (usize::from(color.a) << 24)
+        | (usize::from(color.b) << 16)
+        | (usize::from(color.g) << 8)
+        | usize::from(color.r);
 
-    unsafe { bindings::clear_surface(ptr, size as i32, color_val as i32) };
+    unsafe {
+        bindings::clear_surface(
+            unsafe_casts::as_const_pointer(ptr),
+            unsafe_casts::usize_as_i32(size),
+            unsafe_casts::usize_as_i32(color_val),
+        );
+    };
 }
 
 #[derive(Clone)]
@@ -105,7 +118,7 @@ pub struct Surface {
 }
 
 impl Surface {
-    #[must_use] 
+    #[must_use]
     pub const fn new(width: usize, height: usize, rgba: Vec<u8>) -> Self {
         Self {
             rgba,
@@ -114,7 +127,7 @@ impl Surface {
         }
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn new_empty(width: usize, height: usize) -> Self {
         Self {
             width,
@@ -124,7 +137,13 @@ impl Surface {
     }
 
     pub fn clear(&mut self, color: Color) {
-        unsafe { clear_surface(self.rgba.as_mut_ptr(), self.width * self.height * 4, color) };
+        unsafe {
+            clear_surface(
+                self.rgba.as_mut_ptr() as RawFramebufferPointer,
+                self.width * self.height * 4,
+                color,
+            );
+        }
     }
 }
 
