@@ -50,7 +50,7 @@ unsafe extern "C" {
     pub(crate) fn stop_audio(id: i64);
     pub(crate) fn stop_all_audio();
     pub(crate) fn set_audio_volume(id: i64, volume: f32);
-    pub(crate) fn set_audio_pitch(id: i64, volume: f32);
+    pub(crate) fn set_audio_pitch(id: i64, pitch: f32);
     pub(crate) fn is_audio_playing(id: i64) -> bool;
 }
 
