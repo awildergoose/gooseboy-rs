@@ -1,3 +1,5 @@
+use crate::unsafe_casts;
+
 /// Requires Console permission
 #[macro_export]
 macro_rules! log {
@@ -8,10 +10,8 @@ macro_rules! log {
 }
 
 pub fn log_str(s: &str) {
-    #[allow(clippy::cast_possible_truncation)]
-    #[allow(clippy::cast_possible_wrap)]
     unsafe {
-        let len = s.len() as i32;
+        let len = unsafe_casts::str_len(s);
         crate::bindings::log(s.as_ptr(), len);
     }
 }
