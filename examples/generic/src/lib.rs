@@ -7,7 +7,7 @@ use gooseboy::{
     color::Color,
     framebuffer::{clear_framebuffer, get_framebuffer_width, init_fb},
     input::is_key_just_pressed,
-    keys::KEY_F,
+    keys::{KEY_F, KEY_G, KEY_H, KEY_J},
     make_audio,
     system::convert_nano_time_to_seconds_f64,
     text::{draw_text, get_text_width},
@@ -54,5 +54,30 @@ fn update(nano_time: i64) {
     if is_key_just_pressed(KEY_F) {
         // Play the TEST_AUDIO!
         TEST_AUDIO.lock().unwrap().play();
+    }
+
+    if is_key_just_pressed(KEY_G) {
+        let s = TEST_AUDIO.lock().unwrap().play();
+
+        if let Some(mut s) = s {
+            s.set_volume(2.0);
+        }
+    }
+
+    if is_key_just_pressed(KEY_H) {
+        let s = TEST_AUDIO.lock().unwrap().play();
+
+        if let Some(mut s) = s {
+            s.set_pitch(2.0);
+        }
+    }
+
+    if is_key_just_pressed(KEY_J) {
+        let s = TEST_AUDIO.lock().unwrap().play();
+
+        if let Some(mut s) = s {
+            s.set_volume(2.0);
+            s.set_pitch(2.0);
+        }
     }
 }
