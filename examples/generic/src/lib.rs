@@ -1,9 +1,19 @@
 #![no_main]
 
-use gooseboy::framebuffer::{get_framebuffer_width, init_fb};
-use gooseboy::system::convert_nano_time_to_seconds_f64;
-use gooseboy::text::{draw_text, get_text_width};
-use gooseboy::{color::Color, framebuffer::clear_framebuffer};
+use std::sync::{LazyLock, Mutex};
+
+use gooseboy::{
+    audio::Audio,
+    color::Color,
+    framebuffer::{clear_framebuffer, get_framebuffer_width, init_fb},
+    input::is_key_just_pressed,
+    keys::KEY_F,
+    make_audio,
+    system::convert_nano_time_to_seconds_f64,
+    text::{draw_text, get_text_width},
+};
+
+static TEST_AUDIO: LazyLock<Mutex<Audio>> = make_audio!(test);
 
 // Every crate has to have a main function, make sure to decorate it
 // with gooseboy::main though, or else the crate won't start
@@ -39,4 +49,10 @@ fn update(nano_time: i64) {
 
     // Finally, draw the text with the red color (or use Color::new(r, g, b, a) or Color::new_opaque(r, g, b))
     draw_text(x_pos, 0, text, Color::RED);
+
+    // If the F key waas just pressed:
+    if is_key_just_pressed(KEY_F) {
+        // Play the TEST_AUDIO!
+        TEST_AUDIO.lock().unwrap().play();
+    }
 }
