@@ -18,11 +18,8 @@ pub mod text;
 pub mod timer;
 pub mod unsafe_casts;
 
-pub use gooseboy_macros::gpu_main;
-pub use gooseboy_macros::main;
-pub use gooseboy_macros::update;
-pub use vek;
-pub use vek::{Aabb, Mat3, Mat4, Rect, Vec2, Vec3, Vec4};
+pub use gooseboy_macros::{gpu_main, main, update};
+pub use vek::{self, Aabb, Mat3, Mat4, Rect, Vec2, Vec3, Vec4};
 
 pub fn __internal_main() {
     panic::set_panic_handler();
