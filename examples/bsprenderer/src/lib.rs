@@ -2,11 +2,13 @@
 
 use std::sync::LazyLock;
 
-use gooseboy::framebuffer::init_fb;
-use gooseboy::gpu::{GpuCommandBuffer, PrimitiveType, gpu_read_value};
-use gooseboy::input::grab_mouse;
-use gooseboy::text::draw_text_formatted;
-use gooseboy::{color::Color, framebuffer::clear_framebuffer};
+use gooseboy::{
+    color::Color,
+    framebuffer::{clear_framebuffer, init_fb},
+    gpu::{gpu_read_value, GpuCommandBuffer, PrimitiveType},
+    input::grab_mouse,
+    text::draw_text_formatted,
+};
 
 mod sprites {
     include!("generated/sprites.rs");
@@ -29,13 +31,18 @@ fn main() {
 #[allow(clippy::cast_possible_wrap)]
 #[allow(clippy::cast_possible_truncation)]
 fn gpu_main() {
+    use std::collections::HashMap;
+
     use gooseboy::gpu::{GpuCommand, GpuCommandBuffer, Vertex};
     use qbsp::prelude::*;
-    use std::collections::HashMap;
 
     fn fract_positive(x: f32) -> f32 {
         let f = x - x.floor();
-        if f < 0.0 { f + 1.0 } else { f }
+        if f < 0.0 {
+            f + 1.0
+        } else {
+            f
+        }
     }
 
     fn triangulate_fan<I>(vertices: I) -> Vec<[qbsp::glam::Vec3; 3]>
@@ -187,7 +194,7 @@ fn gpu_main() {
     }
 
     buffer.insert(&GpuCommand::PopRecord);
-    buffer.upload();
+    let _ = buffer.upload();
 
     unsafe {
         GLOBAL_BUFFER.insert(&GpuCommand::Push);
@@ -218,6 +225,6 @@ fn update(_nano_time: i64) {
     );
 
     unsafe {
-        GLOBAL_BUFFER.upload();
+        let _ = GLOBAL_BUFFER.upload();
     }
 }

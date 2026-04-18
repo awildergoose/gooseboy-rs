@@ -1,4 +1,4 @@
-use crate::framebuffer::{Surface, get_framebuffer_surface_mut};
+use crate::framebuffer::{get_framebuffer_surface_mut, Surface};
 
 #[derive(Clone, Debug)]
 pub struct Sprite {

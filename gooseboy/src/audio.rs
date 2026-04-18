@@ -3,19 +3,52 @@ use crate::{
     unsafe_casts,
 };
 
+#[repr(i32)]
+pub enum AudioFormat {
+    Mono8,
+    Mono16,
+    Stereo8,
+    Stereo16,
+}
+
+impl AudioFormat {
+    #[must_use]
+    pub const fn repr(&self) -> i32 {
+        match self {
+            Self::Mono8 => 0x1100,
+            Self::Mono16 => 0x1101,
+            Self::Stereo8 => 0x1102,
+            Self::Stereo16 => 0x1103,
+        }
+    }
+}
+
 /// Requires Audio permission
 pub struct Audio {
     data: Vec<u8>,
+    sample_rate: i32,
+    format: AudioFormat,
 }
 
 impl Audio {
     #[must_use]
-    pub const fn new(data: Vec<u8>) -> Self {
-        Self { data }
+    pub const fn new(data: Vec<u8>, sample_rate: i32, format: AudioFormat) -> Self {
+        Self {
+            data,
+            sample_rate,
+            format,
+        }
     }
 
     pub fn play(&mut self) -> Option<AudioInstance> {
-        let id = unsafe { play_audio(self.data.as_ptr(), unsafe_casts::arr_len(&self.data)) };
+        let id = unsafe {
+            play_audio(
+                self.data.as_ptr(),
+                unsafe_casts::arr_len(&self.data),
+                self.sample_rate,
+                self.format.repr(),
+            )
+        };
         if id == -1 {
             return None;
         }
@@ -86,10 +119,12 @@ macro_rules! import_audio {
 /// Requires Audio permission
 #[macro_export]
 macro_rules! make_audio {
-    ($name:ident) => {
+    ($name:ident, $sample_rate:expr, $format:ident) => {
         std::sync::LazyLock::new(|| {
             std::sync::Mutex::new($crate::audio::Audio::new(
                 $crate::import_audio!($name).to_vec(),
+                $sample_rate,
+                $crate::audio::AudioFormat::$format,
             ))
         })
     };

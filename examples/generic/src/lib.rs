@@ -13,7 +13,7 @@ use gooseboy::{
     text::{draw_text, get_text_width},
 };
 
-static TEST_AUDIO: LazyLock<Mutex<Audio>> = make_audio!(test);
+static TEST_AUDIO: LazyLock<Mutex<Audio>> = make_audio!(test, 44100, Stereo16);
 
 // Every crate has to have a main function, make sure to decorate it
 // with gooseboy::main though, or else the crate won't start

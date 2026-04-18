@@ -8,10 +8,10 @@ unsafe extern "C" {
 
 #[link(wasm_import_module = "framebuffer")]
 unsafe extern "C" {
-    pub(crate) fn get_framebuffer_width() -> usize;
-    pub(crate) fn get_framebuffer_height() -> usize;
-    pub(crate) fn clear_surface(ptr: Pointer, size: i32, color: i32);
-    pub(crate) fn blit_premultiplied_clipped(
+    pub fn get_framebuffer_width() -> usize;
+    pub fn get_framebuffer_height() -> usize;
+    pub fn clear_surface(ptr: Pointer, size: i32, color: i32);
+    pub fn blit_premultiplied_clipped(
         dest_ptr: Pointer,
         dest_w: usize,
         dest_h: usize,
@@ -26,52 +26,52 @@ unsafe extern "C" {
 
 #[link(wasm_import_module = "memory")]
 unsafe extern "C" {
-    pub(crate) fn mem_fill(addr: PointerMut, len: i32, value: i32);
-    pub(crate) fn mem_copy(dst: PointerMut, src: Pointer, len: i32);
+    pub fn mem_fill(addr: PointerMut, len: i32, value: i32);
+    pub fn mem_copy(dst: PointerMut, src: Pointer, len: i32);
 }
 
 #[link(wasm_import_module = "input")]
 unsafe extern "C" {
-    pub(crate) fn get_key_code() -> i32;
-    pub(crate) fn get_key(key: i32) -> bool;
-    pub(crate) fn get_mouse_button(btn: i32) -> bool;
-    pub(crate) fn get_mouse_x() -> i32;
-    pub(crate) fn get_mouse_y() -> i32;
-    pub(crate) fn get_mouse_accumulated_dx() -> f64;
-    pub(crate) fn get_mouse_accumulated_dy() -> f64;
-    pub(crate) fn is_mouse_grabbed() -> bool;
-    pub(crate) fn grab_mouse();
-    pub(crate) fn release_mouse();
+    pub fn get_key_code() -> i32;
+    pub fn get_key(key: i32) -> bool;
+    pub fn get_mouse_button(btn: i32) -> bool;
+    pub fn get_mouse_x() -> i32;
+    pub fn get_mouse_y() -> i32;
+    pub fn get_mouse_accumulated_dx() -> f64;
+    pub fn get_mouse_accumulated_dy() -> f64;
+    pub fn is_mouse_grabbed() -> bool;
+    pub fn grab_mouse();
+    pub fn release_mouse();
 }
 
 #[link(wasm_import_module = "audio")]
 unsafe extern "C" {
-    pub(crate) fn play_audio(ptr: Pointer, len: i32) -> i64;
-    pub(crate) fn stop_audio(id: i64);
-    pub(crate) fn stop_all_audio();
-    pub(crate) fn set_audio_volume(id: i64, volume: f32);
-    pub(crate) fn set_audio_pitch(id: i64, pitch: f32);
-    pub(crate) fn is_audio_playing(id: i64) -> bool;
+    pub fn play_audio(ptr: Pointer, len: i32, sample_rate: i32, format: i32) -> i64;
+    pub fn stop_audio(id: i64);
+    pub fn stop_all_audio();
+    pub fn set_audio_volume(id: i64, volume: f32);
+    pub fn set_audio_pitch(id: i64, pitch: f32);
+    pub fn is_audio_playing(id: i64) -> bool;
 }
 
 #[link(wasm_import_module = "storage")]
 unsafe extern "C" {
-    pub(crate) fn storage_read(offset: i32, ptr: PointerMut, len: i32) -> i32;
-    pub(crate) fn storage_write(offset: i32, ptr: Pointer, len: i32) -> i32;
-    pub(crate) fn storage_size() -> u32;
-    pub(crate) fn storage_clear();
+    pub fn storage_read(offset: i32, ptr: PointerMut, len: i32) -> i32;
+    pub fn storage_write(offset: i32, ptr: Pointer, len: i32) -> i32;
+    pub fn storage_size() -> u32;
+    pub fn storage_clear();
 }
 
 #[link(wasm_import_module = "system")]
 unsafe extern "C" {
-    pub(crate) fn get_time_nanos() -> i64;
-    pub(crate) fn has_permission(permission: i32) -> bool;
+    pub fn get_time_nanos() -> i64;
+    pub fn has_permission(permission: i32) -> bool;
 }
 
 #[link(wasm_import_module = "gpu")]
 unsafe extern "C" {
-    pub(crate) fn get_camera_transform(ptr: PointerMut);
-    pub(crate) fn set_camera_transform(x: f32, y: f32, z: f32, yaw: f32, pitch: f32);
-    pub(crate) fn submit_gpu_commands(ptr: Pointer, count: i32);
-    pub(crate) fn gpu_read(offset: i32, ptr: Pointer, len: i32) -> i32;
+    pub fn get_camera_transform(ptr: PointerMut) -> bool;
+    pub fn set_camera_transform(x: f32, y: f32, z: f32, yaw: f32, pitch: f32) -> bool;
+    pub fn submit_gpu_commands(ptr: Pointer, count: i32) -> bool;
+    pub fn gpu_read(offset: i32, ptr: Pointer, len: i32) -> i32;
 }

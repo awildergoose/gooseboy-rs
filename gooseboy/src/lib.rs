@@ -2,6 +2,7 @@ pub mod audio;
 pub mod bindings;
 pub mod camera;
 pub mod color;
+pub mod error;
 pub mod font;
 pub mod framebuffer;
 pub mod gpu;

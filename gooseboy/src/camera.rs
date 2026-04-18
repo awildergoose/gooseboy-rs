@@ -1,4 +1,4 @@
-use crate::{Vec2, Vec3, bindings};
+use crate::{bindings, Vec2, Vec3};
 
 #[repr(C)]
 #[derive(Clone, Copy, Default)]
@@ -10,19 +10,23 @@ pub struct CameraTransform {
     pub pitch: f32,
 }
 
+/// Gets the camera transform from the GPU.
 #[must_use]
 pub fn get_camera_transform() -> CameraTransform {
     let mut transform = CameraTransform::default();
 
     unsafe {
+        // The error here is ignored for performance's sake.
         bindings::get_camera_transform((&raw mut transform).cast::<u8>());
     }
 
     transform
 }
 
+/// Sends the `transform` camera transform to the GPU.
 pub fn set_camera_transform(transform: CameraTransform) {
     unsafe {
+        // The error here is ignored for performance's sake.
         bindings::set_camera_transform(
             transform.x,
             transform.y,
@@ -151,8 +155,9 @@ pub fn get_camera_right_vector() -> Vec3<f32> {
 }
 
 pub fn update_debug_camera(sens: f64, speed: f32) {
+    use std::ops::{Add, Mul};
+
     use crate::{
-        Vec3,
         camera::{
             get_camera_forward_vector, get_camera_pitch, get_camera_position,
             get_camera_right_vector, get_camera_yaw, set_camera_pitch, set_camera_position,
@@ -163,8 +168,8 @@ pub fn update_debug_camera(sens: f64, speed: f32) {
             is_key_just_pressed, release_mouse,
         },
         keys::{KEY_A, KEY_D, KEY_G, KEY_LEFT_SHIFT, KEY_R, KEY_S, KEY_SPACE, KEY_W},
+        Vec3,
     };
-    use std::ops::{Add, Mul};
 
     if is_key_just_pressed(KEY_G) {
         grab_mouse();

@@ -10,7 +10,7 @@ pub enum Permission {
     InputGrabMouse = 5,
     StorageRead = 6,
     StorageWrite = 7,
-    ExtendedMemory = 8,
+    Gpu = 8,
 }
 
 #[must_use]

@@ -8,4 +8,5 @@ crate-type = ["rlib"]
 
 [dependencies]
 gooseboy_macros = { path = "../macros" }
+thiserror = "2.0.18"
 vek = { version = "0.17.2", default-features = false, features = ["std"] }

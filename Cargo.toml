@@ -11,6 +11,8 @@ members = [
     "examples/doom",
     "examples/axolotl",
     "examples/physics",
-    "examples/goosegpu", "examples/bsprenderer", "examples/riscv",
+    "examples/goosegpu",
+    "examples/bsprenderer",
+    "examples/riscv",
 ]
 resolver = "3"

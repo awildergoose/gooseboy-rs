@@ -1,5 +1,6 @@
 use crate::{
     bindings::{gpu_read, submit_gpu_commands},
+    error::GooseboyError,
     mem::alloc_bytes,
     unsafe_casts,
 };
@@ -154,9 +155,17 @@ impl GpuCommandBuffer {
         self
     }
 
-    pub fn upload(&mut self) {
-        unsafe {
-            submit_gpu_commands(self.buffer.as_ptr(), unsafe_casts::arr_len(&self.buffer));
+    /// Uploads the [`GpuCommandBuffer`] to the GPU.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if we aren't authorized to use the GPU
+    pub fn upload(&mut self) -> Result<(), GooseboyError> {
+        if unsafe { submit_gpu_commands(self.buffer.as_ptr(), unsafe_casts::arr_len(&self.buffer)) }
+        {
+            Ok(())
+        } else {
+            Err(GooseboyError::Unauthorized)
         }
     }
 

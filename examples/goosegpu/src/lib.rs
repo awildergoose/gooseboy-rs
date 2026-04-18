@@ -1,11 +1,13 @@
 #![no_main]
 
-use gooseboy::framebuffer::init_fb;
-use gooseboy::gpu::{GpuCommand, GpuCommandBuffer, PrimitiveType, Vertex, gpu_read_value};
-use gooseboy::input::grab_mouse;
-use gooseboy::system::convert_nano_time_to_seconds;
-use gooseboy::text::draw_text_formatted;
-use gooseboy::{color::Color, framebuffer::clear_framebuffer};
+use gooseboy::{
+    color::Color,
+    framebuffer::{clear_framebuffer, init_fb},
+    gpu::{gpu_read_value, GpuCommand, GpuCommandBuffer, PrimitiveType, Vertex},
+    input::grab_mouse,
+    system::convert_nano_time_to_seconds,
+    text::draw_text_formatted,
+};
 
 mod sprites {
     include!("generated/sprites.rs");
@@ -34,7 +36,7 @@ fn gpu_main() {
     }
     buffer.insert(&GpuCommand::PopRecord);
 
-    buffer.upload();
+    let _ = buffer.upload();
 }
 
 #[gooseboy::update]
@@ -70,5 +72,5 @@ fn update(nano_time: i64) {
     buffer.insert(&GpuCommand::BindTexture(0));
     buffer.insert(&GpuCommand::DrawRecorded(0));
     buffer.insert(&GpuCommand::Pop);
-    buffer.upload();
+    let _ = buffer.upload();
 }
