@@ -44,8 +44,6 @@ fn build_all() {
 
         do_project(&name);
     }
-
-    do_project("tests");
 }
 
 fn do_project(project: &str) {
