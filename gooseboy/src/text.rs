@@ -1,7 +1,7 @@
 use crate::{
     color::Color,
     font::FONT,
-    framebuffer::{get_framebuffer_surface_mut, get_framebuffer_width, set_pixel_ex, Surface},
+    framebuffer::{Surface, get_framebuffer_surface_mut, get_framebuffer_width, set_pixel_ex},
 };
 
 pub fn draw_char(x: usize, y: usize, c: u8, color: Color) {

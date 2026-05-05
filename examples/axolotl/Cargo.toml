@@ -12,3 +12,6 @@ gooseboy = { path = "../../gooseboy" }
 
 [build-dependencies]
 gooseboy_buildscript = { path = "../../buildscript" }
+
+[lints]
+workspace = true

@@ -49,33 +49,9 @@ pub fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
 }
 
 impl Color {
-    pub const TRANSPARENT: Self = Self {
-        r: 0,
-        g: 0,
-        b: 0,
-        a: 0,
-    };
     pub const BLACK: Self = Self {
         r: 0,
         g: 0,
-        b: 0,
-        a: 255,
-    };
-    pub const WHITE: Self = Self {
-        r: 255,
-        g: 255,
-        b: 255,
-        a: 255,
-    };
-    pub const RED: Self = Self {
-        r: 255,
-        g: 0,
-        b: 0,
-        a: 255,
-    };
-    pub const GREEN: Self = Self {
-        r: 0,
-        g: 255,
         b: 0,
         a: 255,
     };
@@ -85,16 +61,40 @@ impl Color {
         b: 255,
         a: 255,
     };
-    pub const YELLOW: Self = Self {
-        r: 255,
-        g: 255,
-        b: 0,
+    pub const BROWN: Self = Self {
+        r: 165,
+        g: 42,
+        b: 42,
         a: 255,
     };
     pub const CYAN: Self = Self {
         r: 0,
         g: 255,
         b: 255,
+        a: 255,
+    };
+    pub const DARK_GRAY: Self = Self {
+        r: 64,
+        g: 64,
+        b: 64,
+        a: 255,
+    };
+    pub const GRAY: Self = Self {
+        r: 128,
+        g: 128,
+        b: 128,
+        a: 255,
+    };
+    pub const GREEN: Self = Self {
+        r: 0,
+        g: 255,
+        b: 0,
+        a: 255,
+    };
+    pub const LIGHT_GRAY: Self = Self {
+        r: 211,
+        g: 211,
+        b: 211,
         a: 255,
     };
     pub const MAGENTA: Self = Self {
@@ -109,40 +109,40 @@ impl Color {
         b: 0,
         a: 255,
     };
-    pub const PURPLE: Self = Self {
-        r: 128,
-        g: 0,
-        b: 128,
-        a: 255,
-    };
     pub const PINK: Self = Self {
         r: 255,
         g: 192,
         b: 203,
         a: 255,
     };
-    pub const BROWN: Self = Self {
-        r: 165,
-        g: 42,
-        b: 42,
-        a: 255,
-    };
-    pub const GRAY: Self = Self {
+    pub const PURPLE: Self = Self {
         r: 128,
-        g: 128,
+        g: 0,
         b: 128,
         a: 255,
     };
-    pub const LIGHT_GRAY: Self = Self {
-        r: 211,
-        g: 211,
-        b: 211,
+    pub const RED: Self = Self {
+        r: 255,
+        g: 0,
+        b: 0,
         a: 255,
     };
-    pub const DARK_GRAY: Self = Self {
-        r: 64,
-        g: 64,
-        b: 64,
+    pub const TRANSPARENT: Self = Self {
+        r: 0,
+        g: 0,
+        b: 0,
+        a: 0,
+    };
+    pub const WHITE: Self = Self {
+        r: 255,
+        g: 255,
+        b: 255,
+        a: 255,
+    };
+    pub const YELLOW: Self = Self {
+        r: 255,
+        g: 255,
+        b: 0,
         a: 255,
     };
 

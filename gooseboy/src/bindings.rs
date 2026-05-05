@@ -6,6 +6,7 @@ unsafe extern "C" {
     pub fn log(ptr: Pointer, len: i32);
 }
 
+#[cfg(feature = "framebuffer")]
 #[link(wasm_import_module = "framebuffer")]
 unsafe extern "C" {
     pub fn get_framebuffer_width() -> usize;
@@ -30,6 +31,7 @@ unsafe extern "C" {
     pub fn mem_copy(dst: PointerMut, src: Pointer, len: i32);
 }
 
+#[cfg(feature = "input")]
 #[link(wasm_import_module = "input")]
 unsafe extern "C" {
     pub fn get_key_code() -> i32;
@@ -44,6 +46,7 @@ unsafe extern "C" {
     pub fn release_mouse();
 }
 
+#[cfg(feature = "audio")]
 #[link(wasm_import_module = "audio")]
 unsafe extern "C" {
     pub fn play_audio(ptr: Pointer, len: i32, sample_rate: i32, format: i32) -> i64;
@@ -54,6 +57,7 @@ unsafe extern "C" {
     pub fn is_audio_playing(id: i64) -> bool;
 }
 
+#[cfg(feature = "storage")]
 #[link(wasm_import_module = "storage")]
 unsafe extern "C" {
     pub fn storage_read(offset: i32, ptr: PointerMut, len: i32) -> i32;
@@ -68,6 +72,7 @@ unsafe extern "C" {
     pub fn has_permission(permission: i32) -> bool;
 }
 
+#[cfg(feature = "gpu")]
 #[link(wasm_import_module = "gpu")]
 unsafe extern "C" {
     pub fn get_camera_transform(ptr: PointerMut) -> bool;

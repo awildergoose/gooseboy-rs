@@ -9,3 +9,6 @@ crate-type = ["cdylib"]
 [dependencies]
 flate2 = "1.1.5"
 gooseboy = { path = "../../gooseboy" }
+
+[lints]
+workspace = true

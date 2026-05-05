@@ -12,3 +12,6 @@ qbsp = "0.13.0"
 
 [build-dependencies]
 gooseboy_buildscript = { path = "../../buildscript" }
+
+[lints]
+workspace = true

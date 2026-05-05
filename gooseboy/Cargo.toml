@@ -9,4 +9,16 @@ crate-type = ["rlib"]
 [dependencies]
 gooseboy_macros = { path = "../macros" }
 thiserror = "2.0.18"
-vek = { version = "0.17.2", default-features = false, features = ["std"] }
+vek = { version = "0.17.2", default-features = false, features = ["std"], optional = true }
+
+[features]
+audio = []
+gpu = ["dep:vek"]
+framebuffer = ["dep:vek"]
+storage = []
+input = []
+rand = []
+default = ["audio", "gpu", "framebuffer", "storage", "input", "rand"]
+
+[lints]
+workspace = true

@@ -1,4 +1,4 @@
-use crate::{bindings, Vec2, Vec3};
+use crate::{Vec2, Vec3, bindings};
 
 #[repr(C)]
 #[derive(Clone, Copy, Default)]
@@ -158,6 +158,7 @@ pub fn update_debug_camera(sens: f64, speed: f32) {
     use std::ops::{Add, Mul};
 
     use crate::{
+        Vec3,
         camera::{
             get_camera_forward_vector, get_camera_pitch, get_camera_position,
             get_camera_right_vector, get_camera_yaw, set_camera_pitch, set_camera_position,
@@ -168,7 +169,6 @@ pub fn update_debug_camera(sens: f64, speed: f32) {
             is_key_just_pressed, release_mouse,
         },
         keys::{KEY_A, KEY_D, KEY_G, KEY_LEFT_SHIFT, KEY_R, KEY_S, KEY_SPACE, KEY_W},
-        Vec3,
     };
 
     if is_key_just_pressed(KEY_G) {
