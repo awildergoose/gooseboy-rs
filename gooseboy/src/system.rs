@@ -24,6 +24,15 @@ pub fn has_permission(permission: Permission) -> bool {
 }
 
 #[must_use]
+pub fn get_platform_name() -> String {
+    let mut buf = [0u8; 256];
+    let len = unsafe { bindings::get_platform_name(buf.as_mut_ptr()) as usize };
+    let len = len.min(buf.len());
+    let bytes = &buf[..len];
+    String::from_utf8_lossy(bytes).into_owned()
+}
+
+#[must_use]
 #[allow(clippy::cast_possible_truncation)]
 #[allow(clippy::cast_precision_loss)]
 pub fn convert_nano_time_to_seconds(nano_time: i64) -> f32 {

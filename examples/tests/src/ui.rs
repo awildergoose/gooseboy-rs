@@ -1,10 +1,13 @@
-use crate::state::{PAGE_INDEX, RESULTS};
+use gooseboy::{
+    color::Color,
+    framebuffer::{clear_framebuffer, get_framebuffer_height, get_framebuffer_width},
+    input::is_key_just_pressed,
+    keys::{KEY_A, KEY_D, KEY_LEFT, KEY_RIGHT},
+    system::get_platform_name,
+    text::{draw_text, draw_text_formatted, get_formatted_text_width},
+};
 
-use gooseboy::framebuffer::{get_framebuffer_height, get_framebuffer_width};
-use gooseboy::input::is_key_just_pressed;
-use gooseboy::keys::{KEY_A, KEY_D, KEY_LEFT, KEY_RIGHT};
-use gooseboy::text::{draw_text_formatted, get_formatted_text_width};
-use gooseboy::{color::Color, framebuffer::clear_framebuffer};
+use crate::state::{PAGE_INDEX, RESULTS};
 
 #[allow(clippy::significant_drop_tightening)]
 pub fn render() {
@@ -15,6 +18,7 @@ pub fn render() {
 
     let ok_count = results.iter().filter(|f| f.status).count();
     let fail_count = results.iter().filter(|f| !f.status).count();
+    let platform = get_platform_name();
     let summary = format!("{ok_count} [green]OK[white] {fail_count} [red]FAIL");
 
     let fbw = get_framebuffer_width();
@@ -87,4 +91,6 @@ pub fn render() {
     let px = (fbw / 2).saturating_sub(get_formatted_text_width(&page_text) / 2);
     let py = fbh.saturating_sub(footer_h);
     draw_text_formatted(px, py, page_text, Color::WHITE);
+
+    draw_text(0, py, platform, Color::ORANGE);
 }

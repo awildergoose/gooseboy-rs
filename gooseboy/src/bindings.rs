@@ -70,6 +70,7 @@ unsafe extern "C" {
 unsafe extern "C" {
     pub fn get_time_nanos() -> i64;
     pub fn has_permission(permission: i32) -> bool;
+    pub fn get_platform_name(ptr: PointerMut) -> u32;
 }
 
 #[cfg(feature = "gpu")]
