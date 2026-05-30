@@ -1,16 +1,22 @@
 use crate::{Vec2, Vec3, bindings};
 
+/// A camera transform, including the position and rotations in yaw/pitch.
 #[repr(C)]
 #[derive(Clone, Copy, Default)]
 pub struct CameraTransform {
+    /// The X position of the camera in world space.
     pub x: f32,
+    /// The Y position of the camera in world space.
     pub y: f32,
+    /// The Z position of the camera in world space.
     pub z: f32,
+    /// The yaw rotation of the camera in radians.
     pub yaw: f32,
+    /// The pitch rotation of the camera in radians.
     pub pitch: f32,
 }
 
-/// Gets the camera transform from the GPU.
+/// Returns the current camera transform from the GPU.
 #[must_use]
 pub fn get_camera_transform() -> CameraTransform {
     let mut transform = CameraTransform::default();
@@ -37,31 +43,37 @@ pub fn set_camera_transform(transform: CameraTransform) {
     }
 }
 
+/// Returns the global camera transform X position.
 #[must_use]
 pub fn get_camera_x() -> f32 {
     get_camera_transform().x
 }
 
+/// Returns the global camera transform Y position.
 #[must_use]
 pub fn get_camera_y() -> f32 {
     get_camera_transform().y
 }
 
+/// Returns the global camera transform Z position.
 #[must_use]
 pub fn get_camera_z() -> f32 {
     get_camera_transform().z
 }
 
+/// Returns the global camera transform yaw rotation in radians.
 #[must_use]
 pub fn get_camera_yaw() -> f32 {
     get_camera_transform().yaw
 }
 
+/// Returns the global camera transform pitch rotation in radians.
 #[must_use]
 pub fn get_camera_pitch() -> f32 {
     get_camera_transform().pitch
 }
 
+/// Returns the global camera transform position.
 #[must_use]
 pub fn get_camera_position() -> Vec3<f32> {
     let transform = get_camera_transform();
@@ -73,6 +85,7 @@ pub fn get_camera_position() -> Vec3<f32> {
     }
 }
 
+/// Returns the global camera transform rotation.
 #[must_use]
 pub fn get_camera_rotation() -> Vec2<f32> {
     let transform = get_camera_transform();
@@ -83,36 +96,42 @@ pub fn get_camera_rotation() -> Vec2<f32> {
     }
 }
 
+/// Sets the global camera transform X position.
 pub fn set_camera_x(x: f32) {
     let mut transform = get_camera_transform();
     transform.x = x;
     set_camera_transform(transform);
 }
 
+/// Sets the global camera transform Y position.
 pub fn set_camera_y(y: f32) {
     let mut transform = get_camera_transform();
     transform.y = y;
     set_camera_transform(transform);
 }
 
+/// Sets the global camera transform Z position.
 pub fn set_camera_z(z: f32) {
     let mut transform = get_camera_transform();
     transform.z = z;
     set_camera_transform(transform);
 }
 
+/// Sets the global camera transform yaw rotation in radians.
 pub fn set_camera_yaw(yaw: f32) {
     let mut transform = get_camera_transform();
     transform.yaw = yaw;
     set_camera_transform(transform);
 }
 
+/// Sets the global camera transform pitch rotation in radians.
 pub fn set_camera_pitch(pitch: f32) {
     let mut transform = get_camera_transform();
     transform.pitch = pitch;
     set_camera_transform(transform);
 }
 
+/// Sets the global camera transform position.
 pub fn set_camera_position(position: Vec3<f32>) {
     let mut transform = get_camera_transform();
     transform.x = position.x;
@@ -121,13 +140,15 @@ pub fn set_camera_position(position: Vec3<f32>) {
     set_camera_transform(transform);
 }
 
-pub fn set_camera_rotation(position: Vec2<f32>) {
+/// Sets the global camera transform rotation.
+pub fn set_camera_rotation(rotation: Vec2<f32>) {
     let mut transform = get_camera_transform();
-    transform.yaw = position.x;
-    transform.pitch = position.y;
+    transform.yaw = rotation.x;
+    transform.pitch = rotation.y;
     set_camera_transform(transform);
 }
 
+/// Returns the global camera transform's forward vector.
 #[must_use]
 pub fn get_camera_forward_vector() -> Vec3<f32> {
     let transform = get_camera_transform();
@@ -146,6 +167,7 @@ pub fn get_camera_forward_vector() -> Vec3<f32> {
     }
 }
 
+/// Returns the global camera transform's right vector.
 #[must_use]
 pub fn get_camera_right_vector() -> Vec3<f32> {
     let forward = get_camera_forward_vector();
@@ -154,6 +176,7 @@ pub fn get_camera_right_vector() -> Vec3<f32> {
     forward.cross(up).normalized()
 }
 
+/// A utility function for a free camera.
 pub fn update_debug_camera(sens: f64, speed: f32) {
     use std::ops::{Add, Mul};
 

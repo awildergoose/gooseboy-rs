@@ -5,7 +5,7 @@ use std::sync::LazyLock;
 use gooseboy::{
     color::Color,
     framebuffer::{clear_framebuffer, init_fb},
-    gpu::{gpu_read_value, GpuCommandBuffer, PrimitiveType},
+    gpu::{GpuCommandBuffer, PrimitiveType, gpu_read_value},
     input::grab_mouse,
     text::draw_text_formatted,
 };
@@ -38,11 +38,7 @@ fn gpu_main() {
 
     fn fract_positive(x: f32) -> f32 {
         let f = x - x.floor();
-        if f < 0.0 {
-            f + 1.0
-        } else {
-            f
-        }
+        if f < 0.0 { f + 1.0 } else { f }
     }
 
     fn triangulate_fan<I>(vertices: I) -> Vec<[qbsp::glam::Vec3; 3]>

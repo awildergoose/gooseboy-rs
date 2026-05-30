@@ -4,14 +4,20 @@ use crate::{
 };
 
 #[repr(i32)]
+/// The playback format of the audio, with [Stereo16] being the default.
 pub enum AudioFormat {
+    /// Mono 8.
     Mono8,
+    /// Mono 16.
     Mono16,
+    /// Stereo 8.
     Stereo8,
+    /// Stereo 16, Also the default.
     Stereo16,
 }
 
 impl AudioFormat {
+    /// Returns the OpenAL (backend) representation of the audio format.
     #[must_use]
     pub const fn repr(&self) -> i32 {
         match self {
@@ -31,6 +37,9 @@ pub struct Audio {
 }
 
 impl Audio {
+    /// Creates a new `Audio`, to be played once or multiple times.
+    /// You should always create only one instance of an `Audio` for an audio file,
+    /// and when wanting to play, call [play](Audio::play)
     #[must_use]
     pub const fn new(data: Vec<u8>, sample_rate: i32, format: AudioFormat) -> Self {
         Self {
@@ -40,6 +49,8 @@ impl Audio {
         }
     }
 
+    /// Plays the `Audio` and returns an `AudioInstance` if successful.
+    /// Fails if there are too many sounds currently playing.
     pub fn play(&mut self) -> Option<AudioInstance> {
         let id = unsafe {
             play_audio(
@@ -56,6 +67,7 @@ impl Audio {
     }
 }
 
+/// An instance of an `Audio`.
 pub struct AudioInstance {
     id: i64,
     volume: f32,
@@ -63,6 +75,8 @@ pub struct AudioInstance {
 }
 
 impl AudioInstance {
+    /// Creates a new `AudioInstance` from an `id`.
+    /// You shouldn't use this unless you're manually using unsafe bindings.
     #[must_use]
     pub const fn new(id: i64) -> Self {
         Self {
@@ -72,6 +86,8 @@ impl AudioInstance {
         }
     }
 
+    /// Stops the `AudioInstance`, and therefore you should drop this `AudioInstance`
+    /// as the ID is now invalid.
     pub fn stop(&mut self) {
         unsafe {
             stop_audio(self.id);
@@ -79,6 +95,7 @@ impl AudioInstance {
         self.id = -1;
     }
 
+    /// Sets the volume of the `AudioInstance`, ranging from 0 to 10.
     pub fn set_volume(&mut self, new: f32) {
         unsafe {
             set_audio_volume(self.id, new);
@@ -86,6 +103,7 @@ impl AudioInstance {
         self.volume = new;
     }
 
+    /// Sets the pitch of the `AudioInstance`, ranging from 0.1 to 10.
     pub fn set_pitch(&mut self, new: f32) {
         unsafe {
             set_audio_pitch(self.id, new);
@@ -93,22 +111,30 @@ impl AudioInstance {
         self.pitch = new;
     }
 
+    /// Is this `AudioInstance` currently playing?
     #[must_use]
     pub fn is_playing(&self) -> bool {
         unsafe { is_audio_playing(self.id) }
     }
 
+    /// Returns the volume of this `AudioInstance`.
+    /// Note that the returned value is not fetched from the host,
+    /// but rather it's the stored value in this struct.
     #[must_use]
     pub const fn get_volume(&self) -> f32 {
         self.volume
     }
 
+    /// Returns the pitch of this `AudioInstance`.
+    /// Note that the returned value is not fetched from the host,
+    /// but rather it's the stored value in this struct.
     #[must_use]
     pub const fn get_pitch(&self) -> f32 {
         self.pitch
     }
 }
 
+/// `include_bytes` an audio file from `OUT_DIR/raw/$name.raw`
 #[macro_export]
 macro_rules! import_audio {
     ($name:ident) => {
@@ -116,6 +142,9 @@ macro_rules! import_audio {
     };
 }
 
+/// Creates a new `Audio` file, file is grabbed from the `OUT_DIR` that
+/// the buildscript emits to.
+/// Returns a `LazyLock<Mutex<Audio>>`
 /// Requires Audio permission
 #[macro_export]
 macro_rules! make_audio {
@@ -130,6 +159,7 @@ macro_rules! make_audio {
     };
 }
 
+/// Stops all running `AudioInstance`s
 pub fn stop_all_audio() {
     unsafe {
         bindings::stop_all_audio();

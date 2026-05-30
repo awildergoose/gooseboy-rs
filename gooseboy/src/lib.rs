@@ -1,3 +1,4 @@
+#![warn(missing_docs)]
 #[cfg(feature = "audio")]
 pub mod audio;
 pub mod bindings;

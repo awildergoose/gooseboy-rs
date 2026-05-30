@@ -38,6 +38,7 @@ fn make_wrapper(item: &TokenStream, export_name: &str) -> TokenStream {
 
     let mut attrs = renamed_fn.attrs.clone();
     let hidden_attr: syn::Attribute = syn::parse_quote!(#[doc(hidden)]);
+    // Clippy for some reason just does not give a fuck about this?
     let allow_clippy: syn::Attribute = syn::parse_quote!(#[allow(clippy::used_underscore_binding)]);
     attrs.insert(0, hidden_attr);
     attrs.insert(1, allow_clippy);

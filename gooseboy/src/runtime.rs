@@ -9,6 +9,8 @@ macro_rules! log {
     }};
 }
 
+/// Logs text to the console.
+/// Requires Console permission
 pub fn log_str(s: &str) {
     unsafe {
         let len = unsafe_casts::str_len(s);
