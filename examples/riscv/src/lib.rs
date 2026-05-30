@@ -10,6 +10,7 @@
 
 use std::{cell::RefCell, rc::Rc};
 
+use crossbeam_queue::SegQueue;
 use gooseboy::{
     color::Color,
     framebuffer::{clear_framebuffer, get_framebuffer_height, get_framebuffer_width, init_fb},
@@ -20,7 +21,6 @@ use gooseboy::{
     log,
     text::draw_text_wrapped_ex,
 };
-
 use rv64emu::{
     config::Config,
     device::{
@@ -37,7 +37,6 @@ use rv64emu::{
 };
 
 use crate::ansi::{AnsiCode, AnsiParser, AnsiState};
-use crossbeam_queue::SegQueue;
 
 mod ansi;
 
@@ -129,7 +128,9 @@ fn main() {
 }
 
 #[gooseboy::update]
-fn update(_nano_time: i64) {
+fn update(nano_time: i64) {
+    #[allow(path_statements)]
+    nano_time;
     clear_framebuffer(Color::BLACK);
 
     unsafe {

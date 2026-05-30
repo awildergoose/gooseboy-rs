@@ -5,9 +5,9 @@ mod suite;
 mod tests;
 mod ui;
 
-use crate::state::RESULTS;
-use crate::suite::run_tests;
 use gooseboy::framebuffer::init_fb;
+
+use crate::{state::RESULTS, suite::run_tests};
 
 #[gooseboy::main]
 fn main() {
@@ -18,6 +18,8 @@ fn main() {
 }
 
 #[gooseboy::update]
-fn update(_nano_time: i64) {
+fn update(nano_time: i64) {
+    #[allow(path_statements)]
+    nano_time;
     ui::render();
 }

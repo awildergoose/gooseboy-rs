@@ -18,6 +18,7 @@ framebuffer = ["dep:vek"]
 storage = []
 input = []
 rand = []
+library = []
 default = ["audio", "gpu", "framebuffer", "storage", "input", "rand"]
 
 [lints]
