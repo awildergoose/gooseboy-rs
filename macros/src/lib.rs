@@ -1,3 +1,5 @@
+//! Used for helper macros to export Gooseboy host functions.
+
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{FnArg, ItemFn};

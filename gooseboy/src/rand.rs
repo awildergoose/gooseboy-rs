@@ -10,12 +10,14 @@ pub struct Rng {
 }
 
 impl Rng {
+    /// Creates a new [`Rng`].
     #[inline]
     #[must_use]
     pub const fn new(seed: u64) -> Self {
         Self { state: seed }
     }
 
+    /// Returns the next u64 of this [`Rng`].
     #[inline]
     pub const fn next_u64(&mut self) -> u64 {
         self.state = self.state.wrapping_add(0x9E37_79B9_7F4A_7C15_u64);
@@ -25,6 +27,7 @@ impl Rng {
         z ^ (z >> 31)
     }
 
+    /// Returns the next bounded u64 of this [`Rng`].
     #[inline]
     fn next_u64_bounded(&mut self, bound: u64) -> u64 {
         debug_assert!(bound > 0);
@@ -38,6 +41,7 @@ impl Rng {
         }
     }
 
+    /// Returns the next `Range` u64 of this [`Rng`].
     #[inline]
     pub fn gen_range_u64(&mut self, range: Range<u64>) -> u64 {
         let start = range.start;
@@ -47,6 +51,7 @@ impl Rng {
         start + self.next_u64_bounded(size)
     }
 
+    /// Returns the next `RangeInclusive` u64 of this [`Rng`].
     #[inline]
     pub fn gen_range_u64_inclusive(&mut self, range: RangeInclusive<u64>) -> u64 {
         let (start, end) = (*range.start(), *range.end());
@@ -55,16 +60,19 @@ impl Rng {
         start + self.next_u64_bounded(size)
     }
 
+    /// Returns the next `Range` u32 of this [`Rng`].
     #[inline]
     pub fn gen_range_u32(&mut self, range: Range<u32>) -> u32 {
         self.gen_range_u64(u64::from(range.start)..u64::from(range.end)) as u32
     }
 
+    /// Returns the next `RangeInclusive` u32 of this [`Rng`].
     #[inline]
     pub fn gen_range_u32_inclusive(&mut self, range: RangeInclusive<u32>) -> u32 {
         self.gen_range_u64_inclusive(u64::from(*range.start())..=u64::from(*range.end())) as u32
     }
 
+    /// Returns the next `Range` i64 of this [`Rng`].
     #[inline]
     pub fn gen_range_i64(&mut self, range: Range<i64>) -> i64 {
         let start = i128::from(range.start);
@@ -74,6 +82,7 @@ impl Rng {
         (start + i128::from(self.next_u64_bounded(size))) as i64
     }
 
+    /// Returns the next `RangeInclusive` i64 of this [`Rng`].
     #[inline]
     pub fn gen_range_i64_inclusive(&mut self, range: RangeInclusive<i64>) -> i64 {
         let start = i128::from(*range.start());
@@ -83,26 +92,31 @@ impl Rng {
         (start + i128::from(self.next_u64_bounded(size))) as i64
     }
 
+    /// Returns the next `Range` i32 of this [`Rng`].
     #[inline]
     pub fn gen_range_i32(&mut self, range: Range<i32>) -> i32 {
         self.gen_range_i64(i64::from(range.start)..i64::from(range.end)) as i32
     }
 
+    /// Returns the next `RangeInclusive` i32 of this [`Rng`].
     #[inline]
     pub fn gen_range_i32_inclusive(&mut self, range: RangeInclusive<i32>) -> i32 {
         self.gen_range_i64_inclusive(i64::from(*range.start())..=i64::from(*range.end())) as i32
     }
 
+    /// Returns the next f32 of this [`Rng`].
     #[inline]
     pub fn next_f32(&mut self) -> f32 {
         ((self.next_u64() >> 40) as u32) as f32 / (1u32 << 24) as f32
     }
 
+    /// Returns the next f64 of this [`Rng`].
     #[inline]
     pub fn next_f64(&mut self) -> f64 {
         (self.next_u64() >> 11) as f64 / ((1u64 << 53) as f64)
     }
 
+    /// Returns the next `Range` f32 of this [`Rng`].
     #[inline]
     pub fn gen_range_f32(&mut self, range: Range<f32>) -> f32 {
         let start = range.start;
@@ -111,6 +125,7 @@ impl Rng {
         self.next_f32().mul_add(end - start, start)
     }
 
+    /// Returns the next `RangeInclusive` f32 of this [`Rng`].
     #[inline]
     pub fn gen_range_f32_inclusive(&mut self, range: RangeInclusive<f32>) -> f32 {
         let start = *range.start();
@@ -119,6 +134,7 @@ impl Rng {
         self.next_f32().mul_add(end - start, start)
     }
 
+    /// Returns the next `Range` f64 of this [`Rng`].
     #[inline]
     pub fn gen_range_f64(&mut self, range: Range<f64>) -> f64 {
         let start = range.start;
@@ -127,6 +143,7 @@ impl Rng {
         self.next_f64().mul_add(end - start, start)
     }
 
+    /// Returns the next `RangeInclusive` f64 of this [`Rng`].
     #[inline]
     pub fn gen_range_f64_inclusive(&mut self, range: RangeInclusive<f64>) -> f64 {
         let start = *range.start();

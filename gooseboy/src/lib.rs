@@ -36,16 +36,21 @@ pub use gooseboy_macros::{gpu_main, main, update};
 #[cfg(any(feature = "gpu", feature = "framebuffer"))]
 pub use vek::{self, Aabb, Mat3, Mat4, Rect, Vec2, Vec3, Vec4};
 
+/// Called pre-main
 #[doc(hidden)]
 pub fn __internal_main() {
     panic::set_panic_handler();
 }
 
+/// Called pre-update
 #[doc(hidden)]
 pub const fn __internal_update(_nano_time: i64) {}
+
+/// Called pre-gpu_main
 #[doc(hidden)]
 pub const fn __internal_gpu_main() {}
 
+/// Used to catch unwinds and log panics, I don't think it works though :(
 #[doc(hidden)]
 pub fn __internal_caught_unwind<R>(res: Result<R, Box<dyn std::any::Any + Send>>) {
     if let Err(payload) = res {
