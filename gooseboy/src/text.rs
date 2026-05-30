@@ -1,7 +1,7 @@
 use crate::{
     color::Color,
     font::FONT,
-    framebuffer::{Surface, get_framebuffer_surface_mut, get_framebuffer_width, set_pixel_ex},
+    framebuffer::{Surface, get_framebuffer_surface_mut, get_framebuffer_width},
 };
 
 pub fn draw_char(x: usize, y: usize, c: u8, color: Color) {
@@ -12,7 +12,7 @@ pub fn draw_char_ex(surface: &mut Surface, x: usize, y: usize, c: u8, color: Col
     for (row, &bits) in FONT[c as usize].iter().take(8).enumerate() {
         for col in 0..8 {
             if bits & (1 << (7 - col)) != 0 {
-                set_pixel_ex(surface, x + col, y + row, color);
+                surface.set_pixel(x + col, y + row, color);
             }
         }
     }

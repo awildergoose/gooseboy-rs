@@ -6,16 +6,22 @@ use crate::{
     unsafe_casts,
 };
 
+/// The global framebuffer surface.
 pub static FRAMEBUFFER_SURFACE: Mutex<Option<Surface>> = Mutex::new(None);
 
+/// Pointer to the raw framebuffer.
 pub type RawFramebufferPointer = *const [u8; 4];
+/// Mutable pointer to the raw framebuffer.
 pub type RawFramebufferPointerMut = *mut [u8; 4];
 
+/// Returns the pointer of the global framebuffer.
+/// The host only calls this function once.
 #[unsafe(no_mangle)]
 pub extern "C" fn get_framebuffer_ptr() -> RawFramebufferPointer {
     get_framebuffer_surface_ref().rgba.as_ptr() as RawFramebufferPointer
 }
 
+/// Returns the mutable pointer of the global framebuffer.
 #[must_use]
 pub fn get_framebuffer_ptr_mut() -> RawFramebufferPointerMut {
     get_framebuffer_surface_mut().rgba.as_mut_ptr() as RawFramebufferPointerMut
@@ -66,55 +72,45 @@ pub fn init_fb() {
     }
 }
 
+/// Returns an index from a position, using the global framebuffer surface's size, and `None` if out of bounds.
 #[must_use]
+#[inline]
 pub fn get_pixel_index(x: usize, y: usize) -> Option<usize> {
-    get_pixel_index_ex(get_framebuffer_surface_ref(), x, y)
+    get_framebuffer_surface_ref().get_pixel_index(x, y)
 }
 
-#[must_use]
-pub fn get_pixel_index_ex(surface: &Surface, x: usize, y: usize) -> Option<usize> {
-    if x >= surface.width || y >= surface.height {
-        return None;
-    }
-
-    let row = y.checked_mul(surface.width)?;
-    let pos = row.checked_add(x)?;
-    pos.checked_mul(4)
-}
-
+/// Sets a pixel on the global framebuffer surface.
 pub fn set_pixel(x: usize, y: usize, color: Color) {
     if let Some(index) = get_pixel_index(x, y) {
         unsafe { color.blit(index) };
     }
 }
 
-pub fn set_pixel_ex(surface: &mut Surface, x: usize, y: usize, color: Color) {
-    if let Some(index) = get_pixel_index_ex(surface, x, y) {
-        unsafe {
-            color.blit_ex(surface, index);
-        }
-    }
-}
-
+/// Returns the framebuffer width.
 #[must_use]
 pub fn get_framebuffer_width() -> usize {
     get_framebuffer_surface_ref().width
 }
 
+/// Returns the framebuffer height.
 #[must_use]
 pub fn get_framebuffer_height() -> usize {
     get_framebuffer_surface_ref().height
 }
 
+/// Returns the size of the framebuffer. (w*h*4)
 #[must_use]
 pub fn get_framebuffer_size() -> usize {
     get_framebuffer_width() * get_framebuffer_height() * 4
 }
 
+/// Clears the framebuffer with the following `color`.
 pub fn clear_framebuffer(color: Color) {
     unsafe { clear_surface(get_framebuffer_ptr(), get_framebuffer_size(), color) };
 }
 
+/// Clears a surface with the following `color`.
+///
 /// # Safety
 /// This expects ptr to be a pointer to an RGBA buffer (check Surface's rgba)
 pub unsafe fn clear_surface(ptr: RawFramebufferPointer, size: usize, color: Color) {
@@ -132,16 +128,22 @@ pub unsafe fn clear_surface(ptr: RawFramebufferPointer, size: usize, color: Colo
     };
 }
 
+/// A surface to render on.
 #[derive(Clone)]
 pub struct Surface {
+    /// Raw RGBA pixels. (this should always be divisible by 4)
     pub rgba: Vec<u8>,
+    /// The width of the surface.
     pub width: usize,
+    /// The height of the surface.
     pub height: usize,
 }
 
 impl Surface {
+    /// Creates a new surface with the dimensions of `width`x`height`, with `rgba` being in RGBA, and divisible by 4.
     #[must_use]
     pub const fn new(width: usize, height: usize, rgba: Vec<u8>) -> Self {
+        debug_assert!(rgba.len().is_multiple_of(4), "Surface RGBA is invalid");
         Self {
             rgba,
             width,
@@ -149,6 +151,7 @@ impl Surface {
         }
     }
 
+    /// Creates a new fully black surface with the dimensions of `width`x`height`.
     #[must_use]
     pub fn new_empty(width: usize, height: usize) -> Self {
         Self {
@@ -158,6 +161,7 @@ impl Surface {
         }
     }
 
+    /// Clears the surface with the following `color`.
     pub fn clear(&mut self, color: Color) {
         unsafe {
             clear_surface(
@@ -167,42 +171,67 @@ impl Surface {
             );
         }
     }
-}
 
-pub fn draw_rect(
-    surface: &mut Surface,
-    x: i32,
-    y: i32,
-    width: usize,
-    height: usize,
-    color: Color,
-    blend: bool,
-) {
-    let mut surf = Surface::new_empty(width, height);
-    surf.clear(color);
-    blit_premultiplied_clipped(surface, x, y, width, height, &surf.rgba, blend);
-}
+    /// Sets a pixel to the following `color`.
+    pub fn set_pixel(&mut self, x: usize, y: usize, color: Color) {
+        if let Some(index) = self.get_pixel_index(x, y) {
+            unsafe {
+                color.blit_ex(self, index);
+            }
+        }
+    }
 
-pub fn blit_premultiplied_clipped(
-    dest: &mut Surface,
-    dest_x: i32,
-    dest_y: i32,
-    src_w: usize,
-    src_h: usize,
-    src_rgba: &[u8],
-    blend: bool,
-) {
-    unsafe {
-        bindings::blit_premultiplied_clipped(
-            dest.rgba.as_ptr(),
-            dest.width,
-            dest.height,
-            dest_x,
-            dest_y,
-            src_w,
-            src_h,
-            src_rgba.as_ptr(),
-            blend,
-        );
+    /// Returns the index of a position, using `surface`'s size, and `None` if out of bounds.
+    #[must_use]
+    pub fn get_pixel_index(&self, x: usize, y: usize) -> Option<usize> {
+        if x >= self.width || y >= self.height {
+            return None;
+        }
+
+        let row = y.checked_mul(self.width)?;
+        let pos = row.checked_add(x)?;
+        pos.checked_mul(4)
+    }
+
+    /// Draws a rectangle to the following position with the following dimensions, to the following `color`,
+    /// with optional blending.
+    pub fn draw_rect(
+        &mut self,
+        x: i32,
+        y: i32,
+        width: usize,
+        height: usize,
+        color: Color,
+        blend: bool,
+    ) {
+        let mut surf = Self::new_empty(width, height);
+        surf.clear(color);
+        self.blit_premultiplied_clipped(x, y, width, height, &surf.rgba, blend);
+    }
+
+    /// Blits a surface to the following position with the following dimensions, to the following `color`,
+    /// with optional blending.
+    pub fn blit_premultiplied_clipped(
+        &self,
+        dest_x: i32,
+        dest_y: i32,
+        src_w: usize,
+        src_h: usize,
+        src_rgba: &[u8],
+        blend: bool,
+    ) {
+        unsafe {
+            bindings::blit_premultiplied_clipped(
+                self.rgba.as_ptr(),
+                self.width,
+                self.height,
+                dest_x,
+                dest_y,
+                src_w,
+                src_h,
+                src_rgba.as_ptr(),
+                blend,
+            );
+        }
     }
 }

@@ -5,33 +5,50 @@ use crate::{
     unsafe_casts,
 };
 
+/// `GooseGPU` virtual memory location of the last status.
 pub const GB_GPU_STATUS: u32 = 0;
+/// `GooseGPU` virtual memory location of the last record id.
 pub const GB_GPU_RECORD_ID: u32 = 4;
+/// `GooseGPU` virtual memory location of the last texture id.
 pub const GB_GPU_TEXTURE_ID: u32 = 8;
+/// `GooseGPU` virtual memory location of the last matrix depth.
 pub const GB_GPU_MATRIX_DEPTH: u32 = 12;
+/// `GooseGPU` status: OK
 pub const GB_STATUS_OK: u32 = 0;
+/// `GooseGPU` status for when the uploaded texture is too big.
 pub const GB_STATUS_BAD_TEXTURE_SIZE: u32 = 1;
+/// `GooseGPU` status for when the uploaded texture is malformed.
 pub const GB_STATUS_BAD_TEXTURE: u32 = 2;
+/// `GooseGPU` status for when the matrix is too small post-pop.
 pub const GB_STATUS_MATRIX_TOO_SMALL: u32 = 3;
+/// `GooseGPU` status for when the matrix is too big post-push.
 pub const GB_STATUS_MATRIX_TOO_BIG: u32 = 4;
 
+/// A vertex, with a position and UV.
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct Vertex {
+    /// The X position.
     pub x: f32,
+    /// The Y position.
     pub y: f32,
+    /// The Z position.
     pub z: f32,
+    /// The UV's U component.
     pub u: f32,
+    /// The UV's V component.
     pub v: f32,
 }
 
 impl Vertex {
+    /// Creates a new [`Vertex`].
     #[must_use]
     #[allow(clippy::many_single_char_names)]
     pub const fn new(x: f32, y: f32, z: f32, u: f32, v: f32) -> Self {
         Self { x, y, z, u, v }
     }
 
+    /// Returns the `Vertex` as a byte array.
     #[must_use]
     pub fn as_bytes(&self) -> [u8; 20] {
         let mut bytes = [0u8; 20];
@@ -44,13 +61,17 @@ impl Vertex {
     }
 }
 
+/// The type of the primitive.
 #[repr(u8)]
 pub enum PrimitiveType {
+    /// Triangles.
     Triangles,
+    /// Quads.
     Quads,
 }
 
 impl PrimitiveType {
+    /// Returns the representation of this [`PrimitiveType`].
     #[must_use]
     pub const fn repr(&self) -> u8 {
         match self {
@@ -60,26 +81,80 @@ impl PrimitiveType {
     }
 }
 
+/// A `GooseGPU` command.
 #[repr(u8)]
 pub enum GpuCommand<'a> {
+    /// Push onto the matrix.
     Push,
+    /// Pop from the matrix.
     Pop,
+    /// Push a label to start recording.
     PushRecord(PrimitiveType),
+    /// Pop the latest recording label.
     PopRecord,
+    /// Draw a recording with an id.
     DrawRecorded(u32),
+    /// Emit a single vertex.
     EmitVertex(Vertex),
+    /// Bind a texture with an id.
     BindTexture(u32),
-    RegisterTexture { w: u32, h: u32, rgba: &'a [u8] },
-    Translate { x: f32, y: f32, z: f32 },
-    RotateAxis { x: f32, y: f32, z: f32, angle: f32 },
-    RotateEuler { yaw: f32, pitch: f32, roll: f32 },
-    Scale { x: f32, y: f32, z: f32 },
+    /// Registers a texture.
+    RegisterTexture {
+        /// The width of the texture.
+        w: u32,
+        /// The height of the texture.
+        h: u32,
+        /// The RGBA bytes of the texture.
+        rgba: &'a [u8],
+    },
+    /// Translates the matrix by a position.
+    Translate {
+        /// The X position.
+        x: f32,
+        /// The Y position.
+        y: f32,
+        /// The Z position.
+        z: f32,
+    },
+    /// Rotates the matrix by a rotation.
+    RotateAxis {
+        /// The X rotation.
+        x: f32,
+        /// The Y rotation.
+        y: f32,
+        /// The Z rotation.
+        z: f32,
+        /// The angle.
+        angle: f32,
+    },
+    /// Rotates the matrix by Euler angles.
+    RotateEuler {
+        /// The yaw.
+        yaw: f32,
+        /// The pitch.
+        pitch: f32,
+        /// The roll.
+        roll: f32,
+    },
+    /// Rescales the matrix.
+    Scale {
+        /// The X scale.
+        x: f32,
+        /// The Y scale.
+        y: f32,
+        /// The Z scale.
+        z: f32,
+    },
+    /// Loads a matrix.
     LoadMatrix([f32; 16]),
+    /// Multiplies a matrix.
     MulMatrix([f32; 16]),
+    /// Resets the matrix.
     Identity,
 }
 
 impl GpuCommand<'_> {
+    /// Returns the representation of this [`GpuCommand`].
     #[must_use]
     pub const fn repr(&self) -> u8 {
         match self {
@@ -101,6 +176,7 @@ impl GpuCommand<'_> {
         }
     }
 
+    /// Serializes the GPU command onto a buffer.
     pub fn serialize(&self, buf: &mut Vec<u8>) {
         buf.push(self.repr());
         match self {
@@ -140,16 +216,19 @@ impl GpuCommand<'_> {
     }
 }
 
+/// A GPU command buffer to hold all GPU commands to be sent to the `GooseGPU`.
 pub struct GpuCommandBuffer {
     buffer: Vec<u8>,
 }
 
 impl GpuCommandBuffer {
+    /// Creates a new [`GpuCommandBuffer`].
     #[must_use]
     pub const fn new() -> Self {
         Self { buffer: Vec::new() }
     }
 
+    /// Inserts a command onto the buffer.
     pub fn insert(&mut self, cmd: &GpuCommand) -> &mut Self {
         cmd.serialize(&mut self.buffer);
         self
@@ -169,6 +248,7 @@ impl GpuCommandBuffer {
         }
     }
 
+    /// Clears this [`GpuCommandBuffer`].
     pub fn clear(&mut self) {
         self.buffer.clear();
     }
@@ -180,6 +260,7 @@ impl Default for GpuCommandBuffer {
     }
 }
 
+/// Reads a value from the `GooseGPU` virtual memory.
 #[must_use]
 pub fn gpu_read_value<T: Copy>(offset: u32) -> T {
     unsafe {

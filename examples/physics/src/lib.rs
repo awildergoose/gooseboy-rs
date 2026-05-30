@@ -6,16 +6,15 @@
 
 use std::collections::HashMap;
 
-use gooseboy::color::{Color, hsv_to_rgb};
-use gooseboy::framebuffer::{
-    Surface, clear_framebuffer, draw_rect, get_framebuffer_height, get_framebuffer_width, init_fb,
+use gooseboy::{
+    color::{Color, hsv_to_rgb},
+    framebuffer::{
+        Surface, clear_framebuffer, get_framebuffer_height, get_framebuffer_width, init_fb,
+    },
+    input::{get_mouse_x, get_mouse_y, is_mouse_button_down, is_mouse_button_just_pressed},
+    system::get_time_nanos,
+    text::draw_text,
 };
-use gooseboy::input::{
-    get_mouse_x, get_mouse_y, is_mouse_button_down, is_mouse_button_just_pressed,
-};
-use gooseboy::system::get_time_nanos;
-use gooseboy::text::draw_text;
-
 use rapier2d::prelude::*;
 
 static mut PHYSICS: Option<PhysicsState> = None;
@@ -260,7 +259,7 @@ fn update(nano_time: i64) {
                         *colors_ref.get(&body_handle.0).unwrap_or(&Color::ORANGE)
                     };
 
-                    draw_rect(surface, x_px, y_px, w_px, h_px, render_col, false);
+                    surface.draw_rect(x_px, y_px, w_px, h_px, render_col, false);
                     drawn = true;
                 }
 
@@ -269,7 +268,7 @@ fn update(nano_time: i64) {
         }
 
         if !drawn {
-            draw_rect(surface, sx - 6, sy - 6, 12, 12, Color::GREEN, false);
+            surface.draw_rect(sx - 6, sy - 6, 12, 12, Color::GREEN, false);
         }
     }
 

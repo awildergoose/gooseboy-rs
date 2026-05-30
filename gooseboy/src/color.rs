@@ -1,13 +1,19 @@
 use crate::framebuffer::{Surface, get_framebuffer_surface_mut};
 
+/// RGBA color, from 0-255.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Color {
+    /// Red.
     pub r: u8,
+    /// Green.
     pub g: u8,
+    /// Blue.
     pub b: u8,
+    /// Alpha.
     pub a: u8,
 }
 
+/// Converts an HSV color to an RGB color tuple
 #[must_use]
 #[allow(clippy::many_single_char_names)]
 pub fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
@@ -49,96 +55,112 @@ pub fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
 }
 
 impl Color {
+    /// Black.
     pub const BLACK: Self = Self {
         r: 0,
         g: 0,
         b: 0,
         a: 255,
     };
+    /// Blue.
     pub const BLUE: Self = Self {
         r: 0,
         g: 0,
         b: 255,
         a: 255,
     };
+    /// Brown.
     pub const BROWN: Self = Self {
         r: 165,
         g: 42,
         b: 42,
         a: 255,
     };
+    /// Cyan.
     pub const CYAN: Self = Self {
         r: 0,
         g: 255,
         b: 255,
         a: 255,
     };
+    /// Dark gray.
     pub const DARK_GRAY: Self = Self {
         r: 64,
         g: 64,
         b: 64,
         a: 255,
     };
+    /// Gray.
     pub const GRAY: Self = Self {
         r: 128,
         g: 128,
         b: 128,
         a: 255,
     };
+    /// Green.
     pub const GREEN: Self = Self {
         r: 0,
         g: 255,
         b: 0,
         a: 255,
     };
+    /// Light gray.
     pub const LIGHT_GRAY: Self = Self {
         r: 211,
         g: 211,
         b: 211,
         a: 255,
     };
+    /// Magenta.
     pub const MAGENTA: Self = Self {
         r: 255,
         g: 0,
         b: 255,
         a: 255,
     };
+    /// Orange.
     pub const ORANGE: Self = Self {
         r: 255,
         g: 165,
         b: 0,
         a: 255,
     };
+    /// Pink.
     pub const PINK: Self = Self {
         r: 255,
         g: 192,
         b: 203,
         a: 255,
     };
+    /// Purple.
     pub const PURPLE: Self = Self {
         r: 128,
         g: 0,
         b: 128,
         a: 255,
     };
+    /// Red.
     pub const RED: Self = Self {
         r: 255,
         g: 0,
         b: 0,
         a: 255,
     };
+    /// Transparent.
     pub const TRANSPARENT: Self = Self {
         r: 0,
         g: 0,
         b: 0,
         a: 0,
     };
+    /// White.
     pub const WHITE: Self = Self {
         r: 255,
         g: 255,
         b: 255,
         a: 255,
     };
+    /// Yellow.
     pub const YELLOW: Self = Self {
         r: 255,
         g: 255,
@@ -146,26 +168,34 @@ impl Color {
         a: 255,
     };
 
+    /// Returns a new RGBA color.
     #[must_use]
     pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
         Self { r, g, b, a }
     }
 
+    /// Returns a new RGB color.
     #[must_use]
     pub const fn new_opaque(r: u8, g: u8, b: u8) -> Self {
         Self { r, g, b, a: 255 }
     }
 
+    /// Blits the color onto the global surface.
+    ///
     /// # Safety
     /// This directly sets pixels in the framebuffer without checking the index
+    #[inline]
     pub unsafe fn blit(&self, index: usize) {
         unsafe {
             self.blit_ex(get_framebuffer_surface_mut(), index);
         }
     }
 
+    /// Blits the color onto `surface`.
+    ///
     /// # Safety
     /// This directly sets pixels in the framebuffer without checking the index
+    #[inline]
     pub unsafe fn blit_ex(&self, surface: &mut Surface, index: usize) {
         surface.rgba[index] = self.r;
         surface.rgba[index + 1] = self.g;

@@ -4,8 +4,8 @@ use glam::{Mat3, Vec2};
 use gooseboy::{
     color::Color,
     framebuffer::{
-        Surface, blit_premultiplied_clipped, clear_surface, get_framebuffer_height,
-        get_framebuffer_ptr, get_framebuffer_ptr_mut, get_framebuffer_width,
+        Surface, clear_surface, get_framebuffer_height, get_framebuffer_ptr,
+        get_framebuffer_ptr_mut, get_framebuffer_width,
     },
     log, mem,
     sprite::Sprite,
@@ -147,8 +147,7 @@ impl Renderer {
                         resampling,
                         true,
                     );
-                blit_premultiplied_clipped(
-                    surface,
+                surface.blit_premultiplied_clipped(
                     off_x,
                     off_y,
                     out_width,
@@ -174,8 +173,7 @@ impl Renderer {
                         true,
                     );
                 transformer::tint_rgba(&mut transformed, color);
-                blit_premultiplied_clipped(
-                    surface,
+                surface.blit_premultiplied_clipped(
                     off_x,
                     off_y,
                     out_width,
@@ -200,7 +198,7 @@ impl Renderer {
                     resampling,
                     true,
                 );
-                blit_premultiplied_clipped(surface, off_x, off_y, out_w, out_h, &transformed, true);
+                surface.blit_premultiplied_clipped(off_x, off_y, out_w, out_h, &transformed, true);
             }
             Command::BeginGroup { label, layer } => {
                 if let Some(text) = label {
