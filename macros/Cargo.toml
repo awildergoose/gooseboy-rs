@@ -7,7 +7,7 @@ description = "The Minecraft Gooseboy mod's macros."
 license-file = "LICENSE"
 repository = "https://github.com/awildergoose/gooseboy-rs.git"
 keywords = ["minecraft", "wasm", "macro", "proc-macro"]
-categories = ["game-development", "os", , "wasm"]
+categories = ["game-development", "os", "wasm"]
 
 [lib]
 proc-macro = true

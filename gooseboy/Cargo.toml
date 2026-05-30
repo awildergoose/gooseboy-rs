@@ -13,7 +13,7 @@ categories = ["game-development", "os", "rendering", "wasm"]
 crate-type = ["rlib"]
 
 [dependencies]
-gooseboy_macros = { path = "../macros" }
+gooseboy_macros = { path = "../macros", version = "0.3" }
 thiserror = "2.0.18"
 vek = { version = "0.17.2", default-features = false, features = ["std"], optional = true }
 
