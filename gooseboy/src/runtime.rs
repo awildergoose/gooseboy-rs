@@ -1,6 +1,8 @@
+//! Used to hold runtime (or just util) functions.
 use crate::unsafe_casts;
 
-/// Requires Console permission
+/// Logs text to the console.
+/// Requires [`Console`](crate::system::Permission::Console) permission
 #[macro_export]
 macro_rules! log {
     ($($arg:tt)*) => {{
@@ -10,7 +12,7 @@ macro_rules! log {
 }
 
 /// Logs text to the console.
-/// Requires Console permission
+/// Requires [`Console`](crate::system::Permission::Console) permission
 pub fn log_str(s: &str) {
     unsafe {
         let len = unsafe_casts::str_len(s);

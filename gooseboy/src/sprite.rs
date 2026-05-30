@@ -1,3 +1,15 @@
+//! Used to hold sprites and sprite code.
+//!
+//! Example:
+//! ```rs
+//! // The buildscript automatically generates this from the project root's images folder
+//! mod sprites {
+//!     include!("generated/sprites.rs");
+//! }
+//!
+//! // Renders the sprite onto 0,0 of the framebuffer
+//! sprites::MY_SPRITE.blit(0, 0);
+//! ```
 use crate::framebuffer::get_framebuffer_surface_mut;
 
 /// A sprite.

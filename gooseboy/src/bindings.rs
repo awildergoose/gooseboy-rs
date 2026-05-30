@@ -1,3 +1,6 @@
+//! This is used for calling the WASM host functions directly,
+//! This is *not* recommended to be used, unless you know what you're doing.
+
 /// WASM pointer
 pub type Pointer = *const u8;
 /// WASM mutable pointer

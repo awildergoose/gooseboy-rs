@@ -1,3 +1,8 @@
+//! Used to cast values to other values, without clippy lints getting in the way.
+//! The name may be "unsafe casts", but they're all sound/safe.
+//!
+//! The sole purpose of this is to try and prevent internal code to cast to the wrong
+//! type and prevent host platform differences.
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_possible_wrap)]
 #![allow(clippy::cast_sign_loss)]

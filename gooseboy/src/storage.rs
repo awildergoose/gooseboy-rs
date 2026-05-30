@@ -1,10 +1,13 @@
+//! Used to hold functions to read/write from/to crate storage.
 use crate::{
     bindings::{self, storage_read, storage_write},
     mem::alloc_bytes,
     unsafe_casts,
 };
 
-/// Requires `StorageWrite` permission
+/// Writes a value to the crate storage at `offset`.
+///
+/// Requires [`StorageWrite`](crate::system::Permission::StorageWrite) permission
 pub fn storage_write_value<T: Copy>(offset: i32, value: T) {
     let size = unsafe { unsafe_casts::usize_as_i32(size_of::<T>()) };
     debug_assert!(offset + size <= storage_size().cast_signed());
@@ -15,7 +18,9 @@ pub fn storage_write_value<T: Copy>(offset: i32, value: T) {
     }
 }
 
-/// Requires `StorageRead` permission
+/// Reads a value from the crate storage at `offset`.
+///
+/// Requires [`StorageRead`](crate::system::Permission::StorageRead) permission
 #[must_use]
 pub fn storage_read_value<T: Copy>(offset: i32) -> T {
     unsafe {
@@ -25,14 +30,18 @@ pub fn storage_read_value<T: Copy>(offset: i32) -> T {
     }
 }
 
-/// Requires `StorageWrite` permission
+/// Writes a slice to the crate storage at `offset`.
+///
+/// Requires [`StorageWrite`](crate::system::Permission::StorageWrite) permission
 pub fn storage_write_slice(offset: i32, data: &[u8]) {
     unsafe {
         storage_write(offset, data.as_ptr(), unsafe_casts::arr_len(data));
     }
 }
 
-/// Requires `StorageRead` permission
+/// Reads a slice from the crate storage at `offset`.
+///
+/// Requires [`StorageRead`](crate::system::Permission::StorageRead) permission
 pub fn storage_read_slice(offset: i32, buf: &mut [u8]) -> u32 {
     unsafe {
         unsafe_casts::i32_as_u32(storage_read(
@@ -43,14 +52,18 @@ pub fn storage_read_slice(offset: i32, buf: &mut [u8]) -> u32 {
     }
 }
 
-/// Requires `StorageWrite` permission
+/// Clears the storage.
+///
+/// Requires [`StorageWrite`](crate::system::Permission::StorageWrite) permission
 pub fn storage_clear() {
     unsafe {
         bindings::storage_clear();
     }
 }
 
-/// Requires `StorageRead` permission
+/// Returns the storage size.
+///
+/// Requires [`StorageRead`](crate::system::Permission::StorageRead) permission
 #[must_use]
 pub fn storage_size() -> u32 {
     unsafe { bindings::storage_size() }

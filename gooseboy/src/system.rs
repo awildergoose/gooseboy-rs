@@ -1,3 +1,4 @@
+//! Used to hold enums and functions for system/platform-related functions.
 use crate::bindings;
 
 /// A Gooseboy host permission.

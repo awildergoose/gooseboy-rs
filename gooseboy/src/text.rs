@@ -1,3 +1,4 @@
+//! Used to do font/text rendering.
 use crate::{
     color::Color,
     font::FONT,

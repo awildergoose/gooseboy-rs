@@ -1,3 +1,13 @@
+//! This is used for playing and managing audio.
+//!
+//! Example:
+//! ```rs
+//! static TEST_AUDIO: LazyLock<Mutex<Audio>> = make_audio!(test, 44100, Stereo16);
+//!
+//! fn play_audio() {
+//!     TEST_AUDIO.lock().unwrap().play();
+//! }
+//! ```
 use crate::{
     bindings::{self, is_audio_playing, play_audio, set_audio_pitch, set_audio_volume, stop_audio},
     unsafe_casts,
@@ -29,7 +39,7 @@ impl AudioFormat {
     }
 }
 
-/// Requires Audio permission
+/// Requires [Audio](crate::system::Permission::Audio) permission
 pub struct Audio {
     data: Vec<u8>,
     sample_rate: i32,
@@ -145,7 +155,7 @@ macro_rules! import_audio {
 /// Creates a new `Audio` file, file is grabbed from the `OUT_DIR` that
 /// the buildscript emits to.
 /// Returns a `LazyLock<Mutex<Audio>>`
-/// Requires Audio permission
+/// Requires [Audio](crate::system::Permission::Audio) permission
 #[macro_export]
 macro_rules! make_audio {
     ($name:ident, $sample_rate:expr, $format:ident) => {

@@ -1,3 +1,4 @@
+//! This is used to hold all the keys and their corresponding key codes for easy usage.
 /// A keyboard key, corresponding to GLFW's keys.
 pub type Key = i32;
 

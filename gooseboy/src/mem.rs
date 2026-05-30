@@ -1,13 +1,18 @@
+//! This is used to hold memory-related unsafe functions.
 use std::alloc::{self, Layout};
 
 use crate::bindings::{self, Pointer, PointerMut};
 
+/// Fills a region of memory.
+///
 /// # Safety
 /// This fills a memory region with no region or value checks
 pub unsafe fn fill(addr: PointerMut, len: i32, value: i32) {
     unsafe { bindings::mem_fill(addr, len, value) }
 }
 
+/// Copies a region of memory to another place.
+///
 /// # Safety
 /// This copies a memory region with no region or value checks
 pub unsafe fn copy(dst: PointerMut, src: Pointer, len: i32) {

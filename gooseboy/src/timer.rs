@@ -1,3 +1,4 @@
+//! Simple, and precise timer for utility uses.
 use std::time::Duration;
 
 /// A timer that triggers on intervals.

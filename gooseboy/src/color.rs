@@ -1,3 +1,10 @@
+//! This is used as a generic struct to hold colors and blit
+//! them onto surfaces.
+//!
+//! ```rs
+//! let red = Color::RED;
+//! unsafe { red.blit(0); }
+//! ```
 use crate::framebuffer::{Surface, get_framebuffer_surface_mut};
 
 /// RGBA color, from 0-255.

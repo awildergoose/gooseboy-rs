@@ -1,3 +1,4 @@
+//! This is used to hold font(s).
 #![allow(clippy::unreadable_literal)]
 
 /// A unscii-8 font.

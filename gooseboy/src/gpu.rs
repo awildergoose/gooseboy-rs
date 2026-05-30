@@ -1,3 +1,20 @@
+//! This is used to hold `GooseGPU` related functions and structs.
+//!
+//! Example:
+//! ```rs
+//! let mut buffer = GpuCommandBuffer::new();
+//! buffer.insert(&GpuCommand::Push);
+//! buffer.insert(&GpuCommand::RotateAxis {
+//!     x: 0.0,
+//!     y: 1.0,
+//!     z: 0.0,
+//!     angle,
+//! });
+//! buffer.insert(&GpuCommand::BindTexture(0));
+//! buffer.insert(&GpuCommand::DrawRecorded(0));
+//! buffer.insert(&GpuCommand::Pop);
+//! let _ = buffer.upload();
+//! ```
 use crate::{
     bindings::{gpu_read, submit_gpu_commands},
     error::GooseboyError,
@@ -235,6 +252,7 @@ impl GpuCommandBuffer {
     }
 
     /// Uploads the [`GpuCommandBuffer`] to the GPU.
+    /// Requires [`Gpu`](crate::system::Permission::Gpu) permission
     ///
     /// # Errors
     ///
@@ -261,6 +279,7 @@ impl Default for GpuCommandBuffer {
 }
 
 /// Reads a value from the `GooseGPU` virtual memory.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 #[must_use]
 pub fn gpu_read_value<T: Copy>(offset: u32) -> T {
     unsafe {

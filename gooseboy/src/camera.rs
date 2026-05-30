@@ -1,3 +1,9 @@
+//! This is used to control the camera of the `GooseGPU`.
+//!
+//! Example:
+//! ```rs
+//! set_camera_y(get_camera_y() + 0.01);
+//! ```
 use crate::{Vec2, Vec3, bindings};
 
 /// A camera transform, including the position and rotations in yaw/pitch.
@@ -17,6 +23,7 @@ pub struct CameraTransform {
 }
 
 /// Returns the current camera transform from the GPU.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 #[must_use]
 pub fn get_camera_transform() -> CameraTransform {
     let mut transform = CameraTransform::default();
@@ -30,6 +37,7 @@ pub fn get_camera_transform() -> CameraTransform {
 }
 
 /// Sends the `transform` camera transform to the GPU.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 pub fn set_camera_transform(transform: CameraTransform) {
     unsafe {
         // The error here is ignored for performance's sake.
@@ -44,36 +52,42 @@ pub fn set_camera_transform(transform: CameraTransform) {
 }
 
 /// Returns the global camera transform X position.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 #[must_use]
 pub fn get_camera_x() -> f32 {
     get_camera_transform().x
 }
 
 /// Returns the global camera transform Y position.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 #[must_use]
 pub fn get_camera_y() -> f32 {
     get_camera_transform().y
 }
 
 /// Returns the global camera transform Z position.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 #[must_use]
 pub fn get_camera_z() -> f32 {
     get_camera_transform().z
 }
 
 /// Returns the global camera transform yaw rotation in radians.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 #[must_use]
 pub fn get_camera_yaw() -> f32 {
     get_camera_transform().yaw
 }
 
 /// Returns the global camera transform pitch rotation in radians.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 #[must_use]
 pub fn get_camera_pitch() -> f32 {
     get_camera_transform().pitch
 }
 
 /// Returns the global camera transform position.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 #[must_use]
 pub fn get_camera_position() -> Vec3<f32> {
     let transform = get_camera_transform();
@@ -86,6 +100,7 @@ pub fn get_camera_position() -> Vec3<f32> {
 }
 
 /// Returns the global camera transform rotation.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 #[must_use]
 pub fn get_camera_rotation() -> Vec2<f32> {
     let transform = get_camera_transform();
@@ -97,6 +112,7 @@ pub fn get_camera_rotation() -> Vec2<f32> {
 }
 
 /// Sets the global camera transform X position.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 pub fn set_camera_x(x: f32) {
     let mut transform = get_camera_transform();
     transform.x = x;
@@ -104,6 +120,7 @@ pub fn set_camera_x(x: f32) {
 }
 
 /// Sets the global camera transform Y position.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 pub fn set_camera_y(y: f32) {
     let mut transform = get_camera_transform();
     transform.y = y;
@@ -111,6 +128,7 @@ pub fn set_camera_y(y: f32) {
 }
 
 /// Sets the global camera transform Z position.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 pub fn set_camera_z(z: f32) {
     let mut transform = get_camera_transform();
     transform.z = z;
@@ -118,6 +136,7 @@ pub fn set_camera_z(z: f32) {
 }
 
 /// Sets the global camera transform yaw rotation in radians.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 pub fn set_camera_yaw(yaw: f32) {
     let mut transform = get_camera_transform();
     transform.yaw = yaw;
@@ -125,6 +144,7 @@ pub fn set_camera_yaw(yaw: f32) {
 }
 
 /// Sets the global camera transform pitch rotation in radians.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 pub fn set_camera_pitch(pitch: f32) {
     let mut transform = get_camera_transform();
     transform.pitch = pitch;
@@ -132,6 +152,7 @@ pub fn set_camera_pitch(pitch: f32) {
 }
 
 /// Sets the global camera transform position.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 pub fn set_camera_position(position: Vec3<f32>) {
     let mut transform = get_camera_transform();
     transform.x = position.x;
@@ -141,6 +162,7 @@ pub fn set_camera_position(position: Vec3<f32>) {
 }
 
 /// Sets the global camera transform rotation.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 pub fn set_camera_rotation(rotation: Vec2<f32>) {
     let mut transform = get_camera_transform();
     transform.yaw = rotation.x;
@@ -149,6 +171,7 @@ pub fn set_camera_rotation(rotation: Vec2<f32>) {
 }
 
 /// Returns the global camera transform's forward vector.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 #[must_use]
 pub fn get_camera_forward_vector() -> Vec3<f32> {
     let transform = get_camera_transform();
@@ -168,6 +191,7 @@ pub fn get_camera_forward_vector() -> Vec3<f32> {
 }
 
 /// Returns the global camera transform's right vector.
+/// Requires [`Gpu`](crate::system::Permission::Gpu) permission
 #[must_use]
 pub fn get_camera_right_vector() -> Vec3<f32> {
     let forward = get_camera_forward_vector();
@@ -177,6 +201,12 @@ pub fn get_camera_right_vector() -> Vec3<f32> {
 }
 
 /// A utility function for a free camera.
+///
+/// Requires the following permissions:
+/// [`Gpu`](crate::system::Permission::Gpu),
+/// [`InputMousePos`](crate::system::Permission::InputMousePos),
+/// [`InputGrabMouse`](crate::system::Permission::InputGrabMouse),
+/// [`InputKeyboard`](crate::system::Permission::InputKeyboard)
 pub fn update_debug_camera(sens: f64, speed: f32) {
     use std::ops::{Add, Mul};
 

@@ -1,3 +1,4 @@
+//! This is used to hold the Gooseboy host's errors.
 use thiserror::Error;
 
 /// An error returned from the Gooseboy host.

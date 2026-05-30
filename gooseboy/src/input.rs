@@ -1,3 +1,4 @@
+//! This is used to hold input related functions, for keyboard and mouse functions.
 use std::{
     collections::HashMap,
     sync::{LazyLock, Mutex},
@@ -10,13 +11,15 @@ static PREV_KEYS: LazyLock<Mutex<HashMap<Key, bool>>> =
 static PREV_MOUSE: LazyLock<Mutex<HashMap<i32, bool>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
-/// Requires `InputKeyboard` permission
+/// Is any key held down?
+/// Requires [`InputKeyboard`](crate::system::Permission::InputKeyboard) permission
 #[must_use]
 pub fn is_any_key_down() -> bool {
     unsafe { bindings::get_key_code() != -1 }
 }
 
-/// Requires `InputKeyboard` permission
+/// Returns the current active key (or `None` if none)
+/// Requires [`InputKeyboard`](crate::system::Permission::InputKeyboard) permission
 #[must_use]
 pub fn get_key() -> Option<i32> {
     let key = unsafe { bindings::get_key_code() };
@@ -26,59 +29,70 @@ pub fn get_key() -> Option<i32> {
     Some(key)
 }
 
-/// Requires `InputKeyboard` permission
+/// Is `key` down?
+/// Requires [`InputKeyboard`](crate::system::Permission::InputKeyboard) permission
 #[must_use]
 pub fn is_key_down(key: Key) -> bool {
     unsafe { bindings::get_key(key) }
 }
 
-/// Requires `InputMouse` permission
+/// Is `button` down?
+/// Requires [`InputMouse`](crate::system::Permission::InputMouse) permission
 #[must_use]
 pub fn is_mouse_button_down(button: i32) -> bool {
     unsafe { bindings::get_mouse_button(button) }
 }
 
-/// Requires `InputMousePos` permission
+/// Returns the mouse X position.
+/// Requires [`InputMousePos`](crate::system::Permission::InputMousePos) permission
 #[must_use]
 pub fn get_mouse_x() -> i32 {
     unsafe { bindings::get_mouse_x() }
 }
 
-/// Requires `InputMousePos` permission
+/// Returns the mouse Y position.
+/// Requires [`InputMousePos`](crate::system::Permission::InputMousePos) permission
 #[must_use]
 pub fn get_mouse_y() -> i32 {
     unsafe { bindings::get_mouse_y() }
 }
 
-/// Requires `InputMousePos` permission
+/// Returns the mouse accumulated delta X, helpful for first-person games.
+/// Requires [`InputMousePos`](crate::system::Permission::InputMousePos) permission
 #[must_use]
 pub fn get_mouse_accumulated_dx() -> f64 {
     unsafe { bindings::get_mouse_accumulated_dx() }
 }
 
-/// Requires `InputMousePos` permission
+/// Returns the mouse accumulated delta Y, helpful for first-person games.
+/// Requires [`InputMousePos`](crate::system::Permission::InputMousePos) permission
 #[must_use]
 pub fn get_mouse_accumulated_dy() -> f64 {
     unsafe { bindings::get_mouse_accumulated_dy() }
 }
 
-/// Requires `InputGrabMouse` permission
+/// Is the mouse grabbed?
+/// Requires [`InputGrabMouse`](crate::system::Permission::InputGrabMouse) permission
 #[must_use]
 pub fn is_mouse_grabbed() -> bool {
     unsafe { bindings::is_mouse_grabbed() }
 }
 
-/// Requires `InputGrabMouse` permission
+/// Grabs the mouse.
+/// Requires [`InputGrabMouse`](crate::system::Permission::InputGrabMouse) permission
 pub fn grab_mouse() {
     unsafe { bindings::grab_mouse() }
 }
 
-/// Requires `InputGrabMouse` permission
+/// Releases the mouse.
+/// Requires [`InputGrabMouse`](crate::system::Permission::InputGrabMouse) permission
 pub fn release_mouse() {
     unsafe { bindings::release_mouse() }
 }
 
-/// Requires `InputKeyboard` permission
+/// Was `key` just pressed?
+///
+/// Requires [`InputKeyboard`](crate::system::Permission::InputKeyboard) permission
 ///
 /// # Panics
 /// Panics if the previous keys static was accessed by another thread and had panicked. (never)
@@ -93,7 +107,9 @@ pub fn is_key_just_pressed(key: Key) -> bool {
     currently_pressed && !was_pressed
 }
 
-/// Requires `InputMouse` permission
+/// Was `button` just pressed?
+///
+/// Requires [`InputMouse`](crate::system::Permission::InputMouse) permission
 ///
 /// # Panics
 /// Panics if the previous mouse buttons static was accessed by another thread and had panicked. (never)

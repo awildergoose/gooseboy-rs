@@ -1,3 +1,9 @@
+//! This is used to manage and control the framebuffer.
+//!
+//! Example:
+//! ```rs
+//! get_framebuffer_surface_mut().clear(Color::GREEN);
+//! ```
 use std::sync::{Mutex, MutexGuard};
 
 use crate::{
@@ -106,7 +112,7 @@ pub fn get_framebuffer_size() -> usize {
 
 /// Clears the framebuffer with the following `color`.
 pub fn clear_framebuffer(color: Color) {
-    unsafe { clear_surface(get_framebuffer_ptr(), get_framebuffer_size(), color) };
+    get_framebuffer_surface_mut().clear(color);
 }
 
 /// Clears a surface with the following `color`.

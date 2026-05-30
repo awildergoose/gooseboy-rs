@@ -1,4 +1,6 @@
+//! The Gooseboy standard library, used for making Gooseboy crates.
 #![warn(missing_docs)]
+
 #[cfg(feature = "audio")]
 pub mod audio;
 pub mod bindings;
