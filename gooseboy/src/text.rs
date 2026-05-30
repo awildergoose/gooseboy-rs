@@ -4,10 +4,12 @@ use crate::{
     framebuffer::{Surface, get_framebuffer_surface_mut, get_framebuffer_width},
 };
 
+/// Draws a single character onto the global framebuffer surface.
 pub fn draw_char(x: usize, y: usize, c: u8, color: Color) {
     draw_char_ex(get_framebuffer_surface_mut(), x, y, c, color);
 }
 
+/// Draws a single character onto a surface.
 pub fn draw_char_ex(surface: &mut Surface, x: usize, y: usize, c: u8, color: Color) {
     for (row, &bits) in FONT[c as usize].iter().take(8).enumerate() {
         for col in 0..8 {
@@ -18,6 +20,7 @@ pub fn draw_char_ex(surface: &mut Surface, x: usize, y: usize, c: u8, color: Col
     }
 }
 
+/// Draws text that wraps around a surface.
 pub fn draw_text_wrapped_ex<S: AsRef<str>>(
     surface: &mut Surface,
     x: usize,
@@ -47,6 +50,7 @@ pub fn draw_text_wrapped_ex<S: AsRef<str>>(
     }
 }
 
+/// Draws text onto the global framebuffer surface.
 pub fn draw_text<S: AsRef<str>>(x: usize, y: usize, text: S, color: Color) {
     draw_text_wrapped_ex(
         get_framebuffer_surface_mut(),
@@ -58,6 +62,7 @@ pub fn draw_text<S: AsRef<str>>(x: usize, y: usize, text: S, color: Color) {
     );
 }
 
+/// Draws wrapped text onto the global framebuffer surface.
 pub fn draw_text_wrapped<S: AsRef<str>>(x: usize, y: usize, text: S, color: Color) {
     draw_text_wrapped_ex(
         get_framebuffer_surface_mut(),
@@ -69,6 +74,7 @@ pub fn draw_text_wrapped<S: AsRef<str>>(x: usize, y: usize, text: S, color: Colo
     );
 }
 
+/// Returns a color from its' name.
 #[must_use]
 pub fn color_from_name(name: &str) -> Option<Color> {
     match name.to_ascii_lowercase().as_str() {
@@ -91,6 +97,7 @@ pub fn color_from_name(name: &str) -> Option<Color> {
     }
 }
 
+/// Draws formatted text onto the global framebuffer surface.
 pub fn draw_text_formatted<S: AsRef<str>>(x: usize, y: usize, text: S, default_color: Color) {
     draw_text_formatted_ex(
         get_framebuffer_surface_mut(),
@@ -102,6 +109,7 @@ pub fn draw_text_formatted<S: AsRef<str>>(x: usize, y: usize, text: S, default_c
     );
 }
 
+/// Draws formatted wrapped text onto the global framebuffer surface.
 pub fn draw_text_formatted_wrapped<S: AsRef<str>>(
     x: usize,
     y: usize,
@@ -119,6 +127,7 @@ pub fn draw_text_formatted_wrapped<S: AsRef<str>>(
     );
 }
 
+/// Draws formatted text onto the surface.
 pub fn draw_text_formatted_ex(
     surface: &mut Surface,
     x: usize,
@@ -178,6 +187,7 @@ pub fn draw_text_formatted_ex(
     }
 }
 
+/// Returns the width of the following text.
 pub fn get_text_width<S: AsRef<str>>(text: S) -> usize {
     let text = text.as_ref();
     let mut max_width = 0;
@@ -198,6 +208,7 @@ pub fn get_text_width<S: AsRef<str>>(text: S) -> usize {
     max_width.max(current_width)
 }
 
+/// Returns the height of the following text.
 pub fn get_text_height<S: AsRef<str>>(text: S) -> usize {
     let text = text.as_ref();
     let mut lines = 1;
@@ -211,6 +222,7 @@ pub fn get_text_height<S: AsRef<str>>(text: S) -> usize {
     lines * 8
 }
 
+/// Returns the width of the following formatted text.
 pub fn get_formatted_text_width<S: AsRef<str>>(text: S) -> usize {
     let text = text.as_ref();
     let bytes = text.as_bytes();
@@ -244,6 +256,7 @@ pub fn get_formatted_text_width<S: AsRef<str>>(text: S) -> usize {
     core::cmp::max(max_width, current_width)
 }
 
+/// Returns the height of the following formatted text.
 pub fn get_formatted_text_height<S: AsRef<str>>(text: S) -> usize {
     get_text_height(text)
 }
