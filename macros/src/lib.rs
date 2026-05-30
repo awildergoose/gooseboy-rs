@@ -1,11 +1,17 @@
 //! Used for helper macros to export Gooseboy host functions.
 
 use proc_macro::TokenStream;
-use quote::{format_ident, quote};
-use syn::{FnArg, ItemFn};
+use quote::{ToTokens, format_ident, quote};
+use syn::{FnArg, ItemFn, PatType, spanned::Spanned};
 
-fn make_wrapper(item: &TokenStream, export_name: &str) -> TokenStream {
-    let input_fn: ItemFn = match syn::parse::<ItemFn>(item.clone()) {
+/// Creates a wrapper for a Gooseboy host function.
+///
+/// # Panics
+///
+/// Panics if an argument really fucks everything up for us!
+#[allow(clippy::too_many_lines)]
+fn make_wrapper(item: &TokenStream, export_name: &str, call_args_vec: &[FnArg]) -> TokenStream {
+    let mut input_fn: ItemFn = match syn::parse::<ItemFn>(item.clone()) {
         Ok(i) => i,
         Err(e) => return TokenStream::from(e.to_compile_error()),
     };
@@ -35,20 +41,65 @@ fn make_wrapper(item: &TokenStream, export_name: &str) -> TokenStream {
         orig_ident
     };
 
-    let mut renamed_fn = input_fn.clone();
-    renamed_fn.sig.ident = internal_ident.clone();
+    input_fn.sig.ident = internal_ident.clone();
 
-    let mut attrs = renamed_fn.attrs.clone();
+    let mut attrs = input_fn.attrs.clone();
     let hidden_attr: syn::Attribute = syn::parse_quote!(#[doc(hidden)]);
     // Clippy for some reason just does not give a fuck about this?
     let allow_clippy: syn::Attribute = syn::parse_quote!(#[allow(clippy::used_underscore_binding)]);
     attrs.insert(0, hidden_attr);
     attrs.insert(1, allow_clippy);
-    renamed_fn.attrs = attrs;
+    input_fn.attrs = attrs;
 
-    let call_args_vec: Vec<proc_macro2::TokenStream> = input_fn
-        .sig
-        .inputs
+    let original_args = input_fn.sig.inputs.clone();
+    input_fn.sig.inputs.clear();
+
+    for (i, arg) in call_args_vec.iter().enumerate() {
+        if let Some(arg) = original_args.get(i) {
+            input_fn.sig.inputs.insert(i, arg.clone());
+        } else {
+            input_fn.sig.inputs.insert(i, arg.clone());
+        }
+    }
+
+    {
+        let left = call_args_vec.iter().map(|u| match u {
+            FnArg::Typed(pat_type) => {
+                let ty = &*pat_type.ty;
+                ty.to_token_stream().to_string()
+            }
+            FnArg::Receiver(_) => String::new(),
+        });
+        let right = input_fn.sig.inputs.iter().map(|u| match u {
+            FnArg::Typed(pat_type) => {
+                let ty = &*pat_type.ty;
+                ty.to_token_stream().to_string()
+            }
+            FnArg::Receiver(_) => String::new(),
+        });
+
+        if !left.clone().eq(right.clone()) {
+            return syn::Error::new(
+                input_fn.span(),
+                format!(
+                    "The function argument types do not match. (expected {}, got {})",
+                    left.map(|u| u.to_token_stream().to_string())
+                        .collect::<Vec<String>>()
+                        .first()
+                        .unwrap(),
+                    right
+                        .map(|u| u.to_token_stream().to_string())
+                        .collect::<Vec<String>>()
+                        .first()
+                        .unwrap(),
+                ),
+            )
+            .to_compile_error()
+            .into();
+        }
+    }
+
+    let call_args_vec: Vec<proc_macro2::TokenStream> = input_fn.sig.inputs
         .iter()
         .map(|arg| match arg {
             FnArg::Typed(pat_type) => {
@@ -66,7 +117,7 @@ fn make_wrapper(item: &TokenStream, export_name: &str) -> TokenStream {
     let call_args_for_user = call_args_vec;
 
     let expanded = quote! {
-        #renamed_fn
+        #input_fn
 
         #[unsafe(no_mangle)]
         pub extern "C" fn #export_ident(#wrapper_inputs) {
@@ -81,20 +132,45 @@ fn make_wrapper(item: &TokenStream, export_name: &str) -> TokenStream {
         }
     };
 
+    // for debugging :)
+    // syn::Error::new(expanded.span(), expanded.to_string())
+    //     .to_compile_error()
+    //     .into()
     TokenStream::from(expanded)
 }
 
+/// This is called on startup.
 #[proc_macro_attribute]
 pub fn main(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    make_wrapper(&item, "main")
+    make_wrapper(&item, "main", &[])
 }
 
+/// This is called every frame.
+///
+/// # Panics
+///
+/// Panics if something has gone REALLY wrong!
 #[proc_macro_attribute]
 pub fn update(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    make_wrapper(&item, "update")
+    make_wrapper(
+        &item,
+        "update",
+        &[FnArg::Typed(
+            syn::parse::<PatType>(
+                quote! {
+                    nano_time: i64
+                }
+                .into(),
+            )
+            .as_ref()
+            .unwrap()
+            .clone(),
+        )],
+    )
 }
 
+/// This is called when the `GooseGPU` is ready to receive commands.
 #[proc_macro_attribute]
 pub fn gpu_main(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    make_wrapper(&item, "gpu_main")
+    make_wrapper(&item, "gpu_main", &[])
 }

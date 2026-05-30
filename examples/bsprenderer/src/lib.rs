@@ -202,9 +202,7 @@ fn gpu_main() {
 
 #[allow(static_mut_refs)]
 #[gooseboy::update]
-fn update(nano_time: i64) {
-    #[allow(path_statements)]
-    nano_time;
+fn update() {
     let sens = 0.008;
     let speed = 3.0;
 

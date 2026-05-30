@@ -128,9 +128,7 @@ fn main() {
 }
 
 #[gooseboy::update]
-fn update(nano_time: i64) {
-    #[allow(path_statements)]
-    nano_time;
+fn update() {
     clear_framebuffer(Color::BLACK);
 
     unsafe {
