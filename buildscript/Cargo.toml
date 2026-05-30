@@ -1,7 +1,13 @@
 [package]
 name = "gooseboy_buildscript"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2024"
+authors = ["awildergoose"]
+description = "The Minecraft Gooseboy mod's buildscript."
+license-file = "LICENSE"
+repository = "https://github.com/awildergoose/gooseboy-rs.git"
+keywords = ["minecraft", "wasm"]
+categories = ["game-development", "os", "rendering", "wasm"]
 
 [dependencies]
 png = "0.18.0"
