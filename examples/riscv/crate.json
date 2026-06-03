@@ -1,8 +1,8 @@
 {
-	"version": 1,
-	"name": "RiscV",
-	"description": "RiscV test",
-	"entrypoint": "app.wasm",
-	"permissions": [],
-	"allowsMovement": false
+    "version": 1,
+    "name": "RiscV",
+    "description": "RiscV test",
+    "entrypoint": "app.wasm",
+    "permissions": [],
+    "isMiniview": false
 }

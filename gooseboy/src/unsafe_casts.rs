@@ -33,6 +33,19 @@ pub const unsafe fn usize_as_i32(value: usize) -> i32 {
     value as i32
 }
 
+/// Converts a usize into an u32.
+///
+/// # Safety
+///
+/// The caller must ensure that the value can fit inside a u32.
+/// This shouldn't be an issue if you're dealing with bindings though,
+/// as we only use 32-bit.
+#[inline]
+#[must_use]
+pub const unsafe fn usize_as_u32(value: usize) -> u32 {
+    value as u32
+}
+
 /// Converts a u32 into an i32.
 ///
 /// # Safety

@@ -8,17 +8,17 @@
 //!     x: 0.0,
 //!     y: 1.0,
 //!     z: 0.0,
-//!     angle,
+//!     angle: 30.0,
 //! });
-//! buffer.insert(&GpuCommand::BindTexture(0));
 //! buffer.insert(&GpuCommand::DrawRecorded(0));
 //! buffer.insert(&GpuCommand::Pop);
 //! let _ = buffer.upload();
 //! ```
 use crate::{
-    bindings::{gpu_read, submit_gpu_commands},
+    bindings::{self, gpu_read, submit_gpu_commands},
     error::GooseboyError,
     mem::alloc_bytes,
+    sprite::Sprite,
     unsafe_casts,
 };
 
@@ -40,6 +40,8 @@ pub const GB_STATUS_BAD_TEXTURE: u32 = 2;
 pub const GB_STATUS_MATRIX_TOO_SMALL: u32 = 3;
 /// `GooseGPU` status for when the matrix is too big post-push.
 pub const GB_STATUS_MATRIX_TOO_BIG: u32 = 4;
+/// `GooseGPU` status for when failing to emit vertices because we never got a call to start recording.
+pub const GB_STATUS_NOT_RECORDING: u32 = 5;
 
 /// A vertex, with a position and UV.
 #[repr(C)]
@@ -168,6 +170,8 @@ pub enum GpuCommand<'a> {
     MulMatrix([f32; 16]),
     /// Resets the matrix.
     Identity,
+    /// Emits an array of vertices.
+    EmitVertices(Box<[Vertex]>),
 }
 
 impl GpuCommand<'_> {
@@ -190,6 +194,7 @@ impl GpuCommand<'_> {
             GpuCommand::LoadMatrix(_) => 0x0C,
             GpuCommand::MulMatrix(_) => 0x0D,
             GpuCommand::Identity => 0x0E,
+            GpuCommand::EmitVertices { .. } => 0x0F,
         }
     }
 
@@ -228,6 +233,12 @@ impl GpuCommand<'_> {
                     buf.extend_from_slice(&f.to_le_bytes());
                 }
             }
+            GpuCommand::EmitVertices(vertices) => {
+                buf.extend_from_slice(&vertices.len().to_le_bytes());
+                for v in vertices {
+                    buf.extend_from_slice(&v.as_bytes());
+                }
+            }
             _ => {}
         }
     }
@@ -248,6 +259,17 @@ impl GpuCommandBuffer {
     /// Inserts a command onto the buffer.
     pub fn insert(&mut self, cmd: &GpuCommand) -> &mut Self {
         cmd.serialize(&mut self.buffer);
+        self
+    }
+
+    /// Inserts a `GpuCommand` for registering a `Sprite`.
+    pub fn insert_register_sprite(&mut self, sprite: &Sprite) -> &mut Self {
+        (GpuCommand::RegisterTexture {
+            w: unsafe { unsafe_casts::usize_as_u32(sprite.width) },
+            h: unsafe { unsafe_casts::usize_as_u32(sprite.height) },
+            rgba: &sprite.rgba,
+        })
+        .serialize(&mut self.buffer);
         self
     }
 
@@ -290,6 +312,13 @@ pub fn gpu_read_value<T: Copy>(offset: u32) -> T {
             unsafe_casts::usize_as_i32(size_of::<T>()),
         );
         *(ptr as *const T)
+    }
+}
+
+/// Defers until the queued GPU commands run.
+pub fn defer_gpu() {
+    unsafe {
+        bindings::defer_gpu();
     }
 }
 

@@ -1,9 +1,12 @@
+use gooseboy::{
+    bindings::Pointer,
+    color::Color,
+    framebuffer::{clear_framebuffer, get_framebuffer_ptr, get_pixel_index},
+    sprite::Sprite,
+    unsafe_casts,
+};
+
 use crate::test;
-use gooseboy::bindings::Pointer;
-use gooseboy::color::Color;
-use gooseboy::framebuffer::{clear_framebuffer, get_framebuffer_ptr, get_pixel_index};
-use gooseboy::sprite::Sprite;
-use gooseboy::unsafe_casts;
 
 unsafe fn read_pixel_rgba(fb_ptr: Pointer, x: usize, y: usize) -> Option<[u8; 4]> {
     get_pixel_index(x, y).map(|idx| {
@@ -27,8 +30,9 @@ pub fn test_sprite() {
     s.blit(1, 1);
 
     let fb_ptr = unsafe_casts::as_raw_pointer(get_framebuffer_ptr());
+    test!("sprite:fb_ptr_non_null", !fb_ptr.is_null());
     if fb_ptr.is_null() {
-        test!("sprite:fb_ptr_null", false);
+        test!("sprite:blit_all_pixels_opaque", false);
         return;
     }
 

@@ -3,10 +3,7 @@ use gooseboy::storage::{storage_clear, storage_read_slice, storage_size, storage
 
 pub fn test_storage() {
     let size = storage_size() as usize;
-    if size == 0 {
-        test!("storage:slice_no_storage", true);
-        return;
-    }
+    test!("storage:has_enough_storage", size >= 4);
 
     storage_clear();
 

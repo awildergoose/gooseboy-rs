@@ -1,9 +1,13 @@
-use crate::test;
-use gooseboy::color::Color;
-use gooseboy::framebuffer::{
-    get_framebuffer_height, get_framebuffer_ptr, get_framebuffer_width, get_pixel_index, set_pixel,
+use gooseboy::{
+    color::Color,
+    framebuffer::{
+        get_framebuffer_height, get_framebuffer_ptr, get_framebuffer_width, get_pixel_index,
+        set_pixel,
+    },
+    unsafe_casts,
 };
-use gooseboy::unsafe_casts;
+
+use crate::test;
 
 pub fn test_framebuffer() {
     let w = get_framebuffer_width();
@@ -17,12 +21,12 @@ pub fn test_framebuffer() {
     set_pixel(0, 0, col);
 
     unsafe {
-        if let Some(idx) = get_pixel_index(0, 0) {
+        let t = get_pixel_index(0, 0);
+        test!("fb:get_pixel_index", t.is_some());
+
+        if let Some(idx) = t {
             let fb_ptr = unsafe_casts::as_raw_pointer(get_framebuffer_ptr());
-            if fb_ptr.is_null() {
-                test!("fb:fb_ptr_null", false);
-                return;
-            }
+            test!("fb:fb_ptr_non_null", !fb_ptr.is_null());
 
             let b0 = *fb_ptr.add(idx);
             let b1 = *fb_ptr.add(idx + 1);
@@ -31,7 +35,8 @@ pub fn test_framebuffer() {
             let ok = b0 == col.r && b1 == col.g && b2 == col.b;
             test!("fb:set_pixel_writes_bytes", ok);
         } else {
-            test!("fb:set_pixel_skipped", false);
+            test!("fb:fb_ptr_non_null", false);
+            test!("fb:set_pixel_writes_bytes", false);
         }
     }
 }

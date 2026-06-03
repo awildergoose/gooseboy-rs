@@ -1,8 +1,8 @@
 {
-	"version": 1,
-	"name": "GooseGPU",
-	"description": "GooseGPU test",
-	"entrypoint": "app.wasm",
-	"permissions": [],
-	"allowsMovement": true
+    "version": 1,
+    "name": "GooseGPU",
+    "description": "GooseGPU test",
+    "entrypoint": "app.wasm",
+    "permissions": [],
+    "isMiniview": false
 }

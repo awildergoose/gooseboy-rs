@@ -123,6 +123,8 @@ unsafe extern "C" {
     pub fn set_camera_transform(x: f32, y: f32, z: f32, yaw: f32, pitch: f32) -> bool;
     /// Submits a group of GPU commands, and returns true if successful.
     pub fn submit_gpu_commands(ptr: Pointer, count: i32) -> bool;
+    /// Defers until the queued GPU commands run.
+    pub fn defer_gpu();
     /// Reads from the GPU memory, and returns the amount of read bytes.
     pub fn gpu_read(offset: i32, ptr: Pointer, len: i32) -> u32;
 }
