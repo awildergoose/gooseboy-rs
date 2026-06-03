@@ -525,7 +525,7 @@ dependencies = [
 
 [[package]]
 name = "gooseboy"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "gooseboy_macros",
  "thiserror",
@@ -534,14 +534,14 @@ dependencies = [
 
 [[package]]
 name = "gooseboy_buildscript"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "png",
 ]
 
 [[package]]
 name = "gooseboy_macros"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1475,7 +1475,7 @@ checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
 
 [[package]]
 name = "xtask"
-version = "0.3.0"
+version = "0.3.1"
 
 [[package]]
 name = "zerocopy"
