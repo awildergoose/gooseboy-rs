@@ -4,9 +4,9 @@ use gooseboy::{
     camera::{get_camera_pitch, get_camera_x, get_camera_y, get_camera_yaw, get_camera_z},
     color::Color,
     framebuffer::{clear_framebuffer, init_fb},
-    gpu::{GpuCommand, GpuCommandBuffer, PrimitiveType, gpu_read_value, load_obj},
+    gpu::{GpuCommand, GpuCommandBuffer, PrimitiveType, Vertex, gpu_read_value, load_obj},
     input::{grab_mouse, is_key_down},
-    keys::KEY_F,
+    keys::{KEY_F, KEY_G},
     system::convert_nano_time_to_seconds,
     text::draw_text_formatted,
     vek::Wrap,
@@ -33,10 +33,24 @@ fn gpu_main() {
     buffer.insert(&GpuCommand::BindTexture(0));
     buffer.insert(&GpuCommand::EmitVertices(vertices.into()));
     buffer.insert(&GpuCommand::PopRecord);
+
     buffer.insert(&GpuCommand::PushRecord(PrimitiveType::Triangles));
     buffer.insert(&GpuCommand::BindTexture(0));
     buffer.insert(&GpuCommand::EmitVertices(vertices2.into()));
     buffer.insert(&GpuCommand::PopRecord);
+
+    let quad_vertices = [
+        Vertex::new(-0.5, -0.5, 0.0, 0.0, 0.0),
+        Vertex::new(0.5, -0.5, 0.0, 1.0, 0.0),
+        Vertex::new(0.5, 0.5, 0.0, 1.0, 1.0),
+        Vertex::new(-0.5, 0.5, 0.0, 0.0, 1.0),
+    ];
+
+    buffer.insert(&GpuCommand::PushRecord(PrimitiveType::Quads));
+    buffer.insert(&GpuCommand::BindTexture(0));
+    buffer.insert(&GpuCommand::EmitVertices(quad_vertices.into()));
+    buffer.insert(&GpuCommand::PopRecord);
+
     let _ = buffer.upload();
 }
 
@@ -75,11 +89,6 @@ fn update(nano_time: i64) {
         z: 0.0,
         angle: (180.0_f32).to_radians(),
     });
-    // buffer.insert(&GpuCommand::Translate {
-    //     x: 0.0,
-    //     y: 320.0,
-    //     z: 0.0,
-    // });
     buffer.insert(&GpuCommand::DrawRecorded(0));
     buffer.insert(&GpuCommand::Pop);
 
@@ -91,6 +100,16 @@ fn update(nano_time: i64) {
             z: 0.0,
         });
         buffer.insert(&GpuCommand::DrawRecorded(1));
+        buffer.insert(&GpuCommand::Pop);
+    }
+    if is_key_down(KEY_G) {
+        buffer.insert(&GpuCommand::Push);
+        buffer.insert(&GpuCommand::Translate {
+            x: 10.0,
+            y: 0.0,
+            z: 0.0,
+        });
+        buffer.insert(&GpuCommand::DrawRecorded(2));
         buffer.insert(&GpuCommand::Pop);
     }
 
