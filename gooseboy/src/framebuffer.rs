@@ -22,7 +22,7 @@ pub type RawFramebufferPointerMut = *mut [u8; 4];
 
 /// Returns the pointer of the global framebuffer.
 /// The host only calls this function once.
-#[cfg(not(feature = "library"))]
+#[cfg(feature = "binary")]
 #[unsafe(no_mangle)]
 pub extern "C" fn get_framebuffer_ptr() -> RawFramebufferPointer {
     get_framebuffer_surface_ref().rgba.as_ptr() as RawFramebufferPointer

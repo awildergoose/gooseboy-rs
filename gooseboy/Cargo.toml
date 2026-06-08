@@ -1,6 +1,6 @@
 [package]
 name = "gooseboy"
-version = "0.3.1"
+version = "0.3.2"
 edition = "2024"
 authors = ["awildergoose"]
 description = "The Minecraft Gooseboy mod's standard library."
@@ -25,7 +25,7 @@ framebuffer = ["dep:vek"]
 storage = []
 input = []
 rand = []
-library = []
+binary = []
 default = ["audio", "gpu", "framebuffer", "storage", "input", "rand"]
 
 [lints]

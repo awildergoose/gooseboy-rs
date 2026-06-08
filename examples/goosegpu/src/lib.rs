@@ -46,8 +46,9 @@ fn gpu_main() {
         Vertex::new(-0.5, 0.5, 0.0, 0.0, 1.0),
     ];
 
+    buffer.insert_register_sprite(&sprites::ICON);
     buffer.insert(&GpuCommand::PushRecord(PrimitiveType::Quads));
-    buffer.insert(&GpuCommand::BindTexture(0));
+    buffer.insert(&GpuCommand::BindTexture(1));
     buffer.insert(&GpuCommand::EmitVertices(quad_vertices.into()));
     buffer.insert(&GpuCommand::PopRecord);
 
@@ -63,22 +64,22 @@ fn update(nano_time: i64) {
     gooseboy::camera::update_debug_camera(sens, speed);
 
     clear_framebuffer(Color::TRANSPARENT);
-    draw_text_formatted(
-        0,
-        0,
-        format!(
-            "status: {:#?}\nlast record: {:#?}\nlast texture: {:#?}\nangle: {angle}\nrot: {} {}\npos: {} {} {} ",
-            gpu_read_value::<u32>(gooseboy::gpu::GB_GPU_STATUS),
-            gpu_read_value::<u32>(gooseboy::gpu::GB_GPU_RECORD_ID),
-            gpu_read_value::<u32>(gooseboy::gpu::GB_GPU_TEXTURE_ID),
-            get_camera_yaw(),
-            get_camera_pitch(),
-            get_camera_x(),
-            get_camera_y(),
-            get_camera_z()
-        ),
-        Color::RED,
-    );
+    // draw_text_formatted(
+    //     0,
+    //     0,
+    //     format!(
+    //         "status: {:#?}\nlast record: {:#?}\nlast texture: {:#?}\nangle: {angle}\nrot: {} {}\npos: {} {} {} ",
+    //         gpu_read_value::<u32>(gooseboy::gpu::GB_GPU_STATUS),
+    //         gpu_read_value::<u32>(gooseboy::gpu::GB_GPU_RECORD_ID),
+    //         gpu_read_value::<u32>(gooseboy::gpu::GB_GPU_TEXTURE_ID),
+    //         get_camera_yaw(),
+    //         get_camera_pitch(),
+    //         get_camera_x(),
+    //         get_camera_y(),
+    //         get_camera_z()
+    //     ),
+    //     Color::RED,
+    // );
 
     let mut buffer = GpuCommandBuffer::new();
 
@@ -92,26 +93,26 @@ fn update(nano_time: i64) {
     buffer.insert(&GpuCommand::DrawRecorded(0));
     buffer.insert(&GpuCommand::Pop);
 
-    if is_key_down(KEY_F) {
-        buffer.insert(&GpuCommand::Push);
-        buffer.insert(&GpuCommand::Translate {
-            x: 30.0,
-            y: 0.0,
-            z: 0.0,
-        });
-        buffer.insert(&GpuCommand::DrawRecorded(1));
-        buffer.insert(&GpuCommand::Pop);
-    }
-    if is_key_down(KEY_G) {
-        buffer.insert(&GpuCommand::Push);
-        buffer.insert(&GpuCommand::Translate {
-            x: 10.0,
-            y: 0.0,
-            z: 0.0,
-        });
-        buffer.insert(&GpuCommand::DrawRecorded(2));
-        buffer.insert(&GpuCommand::Pop);
-    }
+    // if is_key_down(KEY_F) {
+    buffer.insert(&GpuCommand::Push);
+    buffer.insert(&GpuCommand::Translate {
+        x: 10.0,
+        y: 0.0,
+        z: 0.0,
+    });
+    buffer.insert(&GpuCommand::DrawRecorded(1));
+    buffer.insert(&GpuCommand::Pop);
+    // }
+    // if is_key_down(KEY_G) {
+    buffer.insert(&GpuCommand::Push);
+    buffer.insert(&GpuCommand::Translate {
+        x: 5.0,
+        y: 0.0,
+        z: 0.0,
+    });
+    buffer.insert(&GpuCommand::DrawRecorded(2));
+    buffer.insert(&GpuCommand::Pop);
+    // }
 
     let _ = buffer.upload();
 }
