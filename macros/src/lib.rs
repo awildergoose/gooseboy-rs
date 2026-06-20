@@ -99,7 +99,9 @@ fn make_wrapper(item: &TokenStream, export_name: &str, call_args_vec: &[FnArg]) 
         }
     }
 
-    let call_args_vec: Vec<proc_macro2::TokenStream> = input_fn.sig.inputs
+    let call_args_vec: Vec<proc_macro2::TokenStream> = input_fn
+        .sig
+        .inputs
         .iter()
         .map(|arg| match arg {
             FnArg::Typed(pat_type) => {

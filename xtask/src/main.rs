@@ -49,8 +49,9 @@ fn build_all() {
 fn do_project(project: &str) {
     let is_release = std::env::args().any(|a| a == "--release");
     let should_copy = !std::env::args().any(|a| a == "--no-copy");
-    let mut cmd = Command::new("cargo-gooseboy");
+    let mut cmd = Command::new("cargo");
     cmd.current_dir(std::env::current_dir().expect("failed to get current directory"));
+    cmd.arg("gooseboy");
     cmd.args(["pack", project]);
 
     if !should_copy {

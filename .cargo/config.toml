@@ -9,8 +9,10 @@ bphysics = "run -p xtask -- physics"
 bgpu = "run -p xtask -- goosegpu"
 bbsp = "run -p xtask -- bsprenderer"
 briscv = "run -p xtask -- riscv"
+basync = "run -p xtask -- async"
 bci = "run -p xtask -- all --release --no-copy"
 ball = "run -p xtask -- all"
+ballr = "run -p xtask -- all --release"
 
 [profile.release]
 opt-level = 3

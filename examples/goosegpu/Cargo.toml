@@ -7,7 +7,7 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-gooseboy = { path = "../../gooseboy" }
+gooseboy = { path = "../../gooseboy", features = ["binary"] }
 
 [build-dependencies]
 gooseboy_buildscript = { path = "../../buildscript" }

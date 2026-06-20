@@ -14,6 +14,7 @@ members = [
     "examples/goosegpu",
     "examples/bsprenderer",
     "examples/riscv",
+    "examples/async",
 ]
 resolver = "3"
 

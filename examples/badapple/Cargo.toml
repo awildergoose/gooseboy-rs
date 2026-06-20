@@ -8,7 +8,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 flate2 = "1.1.5"
-gooseboy = { path = "../../gooseboy" }
+gooseboy = { path = "../../gooseboy", features = ["binary"] }
 
 [lints]
 workspace = true

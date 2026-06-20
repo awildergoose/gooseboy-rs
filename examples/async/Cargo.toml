@@ -1,16 +1,13 @@
 [package]
-name = "generic"
+name = "async"
 version = "0.1.0"
 edition = "2024"
-
-[lib]
-crate-type = ["cdylib"]
 
 [dependencies]
 gooseboy = { path = "../../gooseboy", features = ["binary"] }
 
-[build-dependencies]
-gooseboy_buildscript = { path = "../../buildscript" }
-
 [lints]
 workspace = true
+
+[lib]
+crate-type = ["cdylib"]

@@ -8,7 +8,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 glam = { version = "0.30.9", default-features = false, features = ["libm"] }
-gooseboy = { path = "../../gooseboy" }
+gooseboy = { path = "../../gooseboy", features = ["binary"] }
 
 [build-dependencies]
 gooseboy_buildscript = { path = "../../buildscript" }
